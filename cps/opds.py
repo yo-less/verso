@@ -712,19 +712,21 @@ def get_database_stats():
     return Response(json.dumps(stat), mimetype="application/json")
 
 
-@opds.route("/opds/thumb_240_240/<book_id>")
-@opds.route("/opds/cover_240_240/<book_id>")
-@opds.route("/opds/cover_90_90/<book_id>")
 @opds.route("/opds/cover/<book_id>")
 @requires_basic_auth_if_no_ano
 def feed_get_cover(book_id):
-    # feed.xml / json.txt link every book's cover AND thumbnail rel to this one
-    # route, and it's used for every book in every catalog page (i.e. mostly
-    # list/grid browsing, not single-cover detail views) -- MEDIUM is truthy
-    # (so it already hits the cache/on-demand generation in
-    # get_book_cover_internal) and keeps per-book cost down for that common
-    # case, while still being plenty for the occasional single-cover view.
-    return get_book_cover(book_id, constants.COVER_THUMBNAIL_MEDIUM)
+    # The OPDS image relation is the unmodified master, not a thumbnail.
+    return get_book_cover(book_id, constants.COVER_THUMBNAIL_ORIGINAL)
+
+
+@opds.route("/opds/cover_240_240/<book_id>")
+@opds.route("/opds/cover_90_90/<book_id>")
+@opds.route("/opds/thumb_240_240/<book_id>")
+@requires_basic_auth_if_no_ano
+def feed_get_thumbnail(book_id):
+    # Stable, optimized browser-independent thumbnail. The helper returns the
+    # original if generation is pending and sets the actual response MIME type.
+    return get_book_cover(book_id, 12)
 
 
 @opds.route("/opds/readbooks")

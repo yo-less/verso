@@ -76,6 +76,10 @@ High quality (the default), or Original (unmodified cover artwork). Book-detail 
 always display original covers. Covers are lazy-loaded and the setting does not affect
 Kobo or KOReader synchronization.
 
+OPDS and JSON metadata advertise separate image resources: `/opds/cover/<id>` returns
+original artwork, while `/opds/thumb_240_240/<id>` returns an optimized thumbnail.
+These URLs are independent of personal cover-quality settings.
+
 ## Instance branding
 
 Open **Settings → Branding** to customize the site name, upload SVG logos and choose the login colours and decoration. Settings persist alongside the application database. Download the KOReader plugin from the application to get the current instance name; existing devices must reinstall the ZIP to change their displayed name.

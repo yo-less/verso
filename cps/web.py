@@ -44,7 +44,7 @@ from .helper import check_valid_domain, check_email, check_username, \
 from .pagination import Pagination
 from .redirect import get_redirect_location
 from .cw_babel import get_available_locale
-from .usermanagement import login_required_if_no_ano
+from .usermanagement import login_required_if_no_ano, requires_basic_auth_if_no_ano
 from .kobo_sync_status import remove_synced_book
 from . import magic_shelf
 from . import annotations, reading_overview, similar
@@ -1859,8 +1859,13 @@ def category_list():
 
 @web.route("/cover/<int:book_id>")
 @web.route("/cover/<int:book_id>/<string:resolution>")
-@login_required_if_no_ano
 def get_cover(book_id, resolution=None):
+    if request.authorization and request.authorization.type.lower() == "basic":
+        return requires_basic_auth_if_no_ano(_serve_cover)(book_id, resolution)
+    return login_required_if_no_ano(_serve_cover)(book_id, resolution)
+
+
+def _serve_cover(book_id, resolution=None):
     resolutions = {
         'og': constants.COVER_THUMBNAIL_ORIGINAL,
         'sm': constants.COVER_THUMBNAIL_SMALL,
