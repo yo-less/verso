@@ -1,12 +1,10 @@
-<p align="center">
-  <img src="cps/static/verso-favicon.svg" width="96" height="96" alt="Verso logo">
-</p>
-
-<h1 align="center">Verso</h1>
+<h1 align="center">
+  <img src="cps/static/verso-wordmark.svg" width="460" alt="Verso">
+</h1>
 
 <p align="center">
   <strong>A self-hosted ebook library and reading platform.</strong><br>
-  A fork of Scriptorium, built on Calibre-Web-Automated and Calibre-Web.<br>
+  A fork of <a href="https://github.com/MrColoo/scriptorium-library">Scriptorium</a>, built on Calibre-Web-Automated and Calibre-Web.<br>
   Retains the standard Calibre library format and adds customizable instance branding.
 </p>
 
@@ -28,6 +26,7 @@
 
 <p align="center">
   <img src="docs/screenshots/hero.png" alt="Scriptorium on an e-reader, a desktop and a phone: Moby-Dick open at 38% on the e-reader, the same book at 38% in Continue reading on the desktop, and the Highlights page on the phone" width="100%">
+  <br><sub>Upstream Scriptorium interface preview; Verso retains this library interface.</sub>
 </p>
 
 ---
@@ -68,7 +67,7 @@ itself in order** and **a place you actually enjoy opening**.
 ## See it in action
 
 https://github.com/user-attachments/assets/0daf9b44-333a-4edd-873a-d19131faa2f7
-<p align="center"><sub>One minute: importing a book, the library, Kobo and KOReader sync, reading statistics, highlights, your year in books and personal styles.</sub></p>
+<p align="center"><sub>Upstream Scriptorium demonstration: importing a book, the library, device synchronization, statistics, highlights and personal styles.</sub></p>
 
 ## Instance branding
 

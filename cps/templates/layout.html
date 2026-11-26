@@ -51,7 +51,7 @@
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="{{ _('Library navigation') }}">
     <a class="brand" href="{{ url_for('web.index') }}">
-      <img src="{{ url_for('admin.branding_asset', kind='wordmark') }}" alt="{{ branding.name }}" width="177" height="32" class="instance-wordmark">
+      <img src="{{ url_for('admin.branding_asset', kind='wordmark') }}" alt="{{ branding.name }}" width="177" height="{{ 32 if 'wordmark' in branding.assets else 58 }}" class="instance-wordmark">
     </a>
 
     <nav class="nav-group" aria-label="{{ _('Library') }}">

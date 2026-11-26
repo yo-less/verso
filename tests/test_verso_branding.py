@@ -85,3 +85,15 @@ def test_custom_bookmark_requires_an_uploaded_decoration(tmp_path, monkeypatch):
     monkeypatch.setattr(branding, "settings_path", lambda: tmp_path / "branding.json")
     with pytest.raises(ValueError, match="decoration SVG"):
         branding.update({"name": "My library", "background": "#ffffff", "accent": "#123456", "decoration": "ribbon"}, {})
+
+def test_logo_layouts_and_no_embedded_raster():
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+    static = Path(branding.__file__).parent / "static"
+    ns = "{http://www.w3.org/2000/svg}"
+    for name, direction in (("wordmark", "wide"), ("login", "tall"), ("favicon", "square"), ("background", "square")):
+        root = ET.parse(static / ("verso-" + name + ".svg")).getroot()
+        _, _, width, height = map(float, root.attrib["viewBox"].split())
+        assert (width > height if direction == "wide" else height > width if direction == "tall" else width == height)
+        assert not list(root.iter(ns + "image"))
+        assert not list(root.iter(ns + "text"))

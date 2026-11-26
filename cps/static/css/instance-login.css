@@ -16,6 +16,9 @@
 }
 .instance-login-wordmark { align-self: center; margin: 0 0 14px; width: min(300px,100%); }
 .instance-login-wordmark img { display: block; width: 100%; height: auto; }
+.instance-login-wordmark--stacked { width: min(205px, 58vw); margin-bottom: 10px; }
+.instance-login-wordmark--stacked img { max-height: 29svh; object-fit: contain; }
+@media (max-height: 550px) { .instance-login-wordmark--stacked { width: min(155px, 46vw); } }
 .instance-login .auth-panel { padding: 0; border: 0; box-shadow: none; background: transparent; gap: 14px; }
 .instance-login-field { position: relative; }
 .instance-login-field .input {

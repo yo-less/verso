@@ -7,8 +7,8 @@
 {% block body %}
 <div class="auth-card instance-login decoration-{{ branding.decoration }}">
   {% if branding.decoration == "watermark" %}<img class="login-decoration" src="{{ url_for('admin.branding_asset', kind='background') }}" alt="" aria-hidden="true">{% endif %}
-  <h1 class="instance-login-wordmark">
-    <img src="{{ url_for('admin.branding_asset', kind='login') }}" alt="{{ branding.name }}" width="300" height="100">
+  <h1 class="instance-login-wordmark{% if 'login' not in branding.assets %} instance-login-wordmark--stacked{% endif %}">
+    <img src="{{ url_for('admin.branding_asset', kind='login') }}" alt="{{ branding.name }}" width="{{ 300 if 'login' in branding.assets else 480 }}" height="{{ 100 if 'login' in branding.assets else 555 }}">
   </h1>
 
   {%- for category, message in get_flashed_messages(with_categories=True) %}
