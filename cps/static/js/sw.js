@@ -51,6 +51,10 @@ self.addEventListener("fetch", function (event) {
   }
   if (request.method !== "GET") return;
 
+  // Branding resources are instance settings, not immutable static assets.
+  // Cache Storage ignores HTTP no-store unless explicitly handled here.
+  if (url.href.indexOf(SCOPE + "static/instance-branding/") === 0) return;
+
   // Static files: answer from the cache, refresh in the background (URLs carry a content hash).
   if (url.href.indexOf(SCOPE + "static/") === 0) {
     event.respondWith(caches.open(STATIC_CACHE).then(function (cache) {

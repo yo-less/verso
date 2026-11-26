@@ -3,6 +3,17 @@
 {%- set is_home = page == 'newest' %}
 {%- set total = pagination.total_count if pagination else (entries|length) %}
 
+{%- if is_home and update_notice and not update_notice.dismissed %}
+<div class="section-header">
+  <span class="grow"></span>
+  <button class="btn btn-link status-line update-trigger" type="button" data-dialog-open="update-dialog"
+          data-update-seen-url="{{ url_for('whats_new.dismiss_update') }}">
+    <span class="status-dot status-dot--warn" aria-hidden="true"></span>
+    {{ _('Scriptorium %(version)s released', version=update_notice.version) }}
+  </button>
+</div>
+{%- endif %}
+
 {%- if year_teaser %}
 <a class="year-teaser" href="{{ url_for('year_review.show', year=year_teaser) }}">
   <span class="year-teaser-spines" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>

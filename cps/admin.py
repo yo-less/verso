@@ -3122,3 +3122,50 @@ def restore_calibre_db():
                     pass
         except Exception:
             pass
+
+# Instance branding settings and public, image-only assets.
+from . import branding as instance_branding
+
+@admi.app_context_processor
+def branding_context():
+    return {"branding": instance_branding.load()}
+
+@admi.route("/admin/branding", methods=["GET", "POST"])
+@user_login_required
+@admin_required
+def branding_settings():
+    if request.method == "POST":
+        try:
+            instance_branding.update(request.form, request.files)
+            flash(_("Branding saved."), category="success")
+        except (ValueError, OSError) as exc:
+            flash(str(exc), category="error")
+        return redirect(url_for("admin.branding_settings"))
+    return render_title_template("branding.html", title=_("Branding"), page="admin")
+
+@admi.route("/static/instance-branding/<kind>.svg")
+def branding_asset(kind):
+    return instance_branding.asset_response(kind)
+
+@admi.route("/static/instance-branding/login.css")
+def branding_css():
+    return instance_branding.stylesheet()
+
+@admi.route("/static/instance-branding/manifest.webmanifest")
+def branding_manifest():
+    import json
+    from pathlib import Path
+    state = instance_branding.load()
+    data = json.loads((Path(current_app.static_folder) / "manifest.webmanifest").read_text())
+    data["name"] = data["short_name"] = state["name"]
+    data["id"] = data["start_url"] = data["scope"] = request.script_root + "/"
+    data["background_color"] = data["theme_color"] = state["background"]
+    data["icons"] = [{"src": url_for("admin.branding_asset", kind="favicon"), "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]
+    for shortcut in data.get("shortcuts", []):
+        shortcut["url"] = request.script_root + "/" + shortcut["url"].removeprefix("../")
+        shortcut["icons"] = data["icons"]
+    data["share_target"]["action"] = request.script_root + "/share-target"
+    response = jsonify(data)
+    response.mimetype = "application/manifest+json"
+    response.headers["Cache-Control"] = "no-store"
+    return response

@@ -946,3 +946,19 @@ def handle_internal_error(error):
         "error": ERROR_INTERNAL,
         "message": "Internal server error"
     }, 500)
+
+
+@kosync.route("/kosync/plugin.zip")
+def branded_plugin_download():
+    from flask import abort, current_app, send_file
+    from pathlib import Path
+    from ...branding import plugin_zip, site_name
+    if not is_koreader_sync_enabled():
+        abort(404)
+    source = Path(current_app.static_folder) / "koplugin.zip"
+    if not source.is_file():
+        abort(404)
+    response = send_file(plugin_zip(source, site_name()), mimetype="application/zip",
+                         as_attachment=True, download_name="koplugin.zip")
+    response.headers["Cache-Control"] = "no-store"
+    return response

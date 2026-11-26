@@ -112,7 +112,8 @@ sqlalchemy_version2 = ([int(x) for x in sql_version.split('.')] >= [2, 0, 0])
 
 _start_time = time.time()
 
-_PASSWORD_CHANGE_ALLOWED_ENDPOINTS = {"web.profile", "web.logout", "static", "web.login", "web.login_post"}
+_PASSWORD_CHANGE_ALLOWED_ENDPOINTS = {"web.profile", "web.logout", "static", "web.login", "web.login_post",
+                                      "admin.branding_asset", "admin.branding_css", "admin.branding_manifest"}
 
 
 @app.before_request
@@ -178,7 +179,8 @@ def _content_security_policy():
 
 @app.after_request
 def add_security_headers(resp):
-    resp.headers['Content-Security-Policy'] = _content_security_policy()
+    if request.endpoint != "admin.branding_asset" or "Content-Security-Policy" not in resp.headers:
+        resp.headers['Content-Security-Policy'] = _content_security_policy()
     resp.headers['X-Content-Type-Options'] = 'nosniff'
     resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
     # The legacy XSS auditor is gone from browsers and could be abused; CSP replaces it.

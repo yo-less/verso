@@ -3,6 +3,6 @@
 local _ = require("gettext")
 return {
     name = "cwasync",
-    fullname = _("Scriptorium Sync"),
-    description = _([[Synchronizes your reading progress and highlights with Scriptorium and across your KOReader devices.]]),
+    fullname = _("Verso Sync"),
+    description = _([[Synchronizes your reading progress and highlights with Verso and across your KOReader devices.]]),
 }

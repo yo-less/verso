@@ -18,7 +18,7 @@
     <div class="form-grid">
       <div class="field span-all">
         <label for="config_calibre_web_title">{{ _('Title') }}</label>
-        <input class="input" type="text" name="config_calibre_web_title" id="config_calibre_web_title" value="{{ conf.config_calibre_web_title or '' }}">
+        <input class="input" type="text" id="config_calibre_web_title" value="{{ branding.name }}" readonly><a href="{{ url_for('admin.branding_settings') }}">Change in Branding</a>
         <span class="field-hint">{{ _('The title displayed in the browser tab and navbar.') }}</span>
       </div>
       <div class="field">

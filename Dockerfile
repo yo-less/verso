@@ -176,7 +176,7 @@ ARG KEPUBIFY_RELEASE
 LABEL build_version="Version:- ${VERSION}"
 LABEL build_date="${BUILD_DATE}"
 LABEL maintainer="Mrcoloo"
-LABEL org.opencontainers.image.title="Scriptorium" \
+LABEL org.opencontainers.image.title="Verso" \
       org.opencontainers.image.description="A self-hosted library that tends itself. Based on Calibre-Web-Automated." \
       org.opencontainers.image.source="https://github.com/Mrcoloo/scriptorium-library" \
       org.opencontainers.image.url="https://github.com/Mrcoloo/scriptorium-library" \

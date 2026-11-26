@@ -93,7 +93,7 @@
       <div class="setting-body" data-show-if="kindle_epub_fixer">
         {{ toggle('kindle_epub_fixer_aggressive', _('Enable Aggressive EPUB Fixer Mode (riskier)'), _('Also rewrites markup that is valid but often breaks on Kindle. Can change how some books look.')) }}
       </div>
-      {{ toggle('koreader_sync_enabled', _('Enable KOReader Sync (Scriptorium Plugin)'), _('Lets the KOReader plugin sync reading progress. The first start after enabling it indexes every book, which can briefly lock the library.')) }}
+      {{ toggle('koreader_sync_enabled', _('Enable KOReader Sync (%(name)s Plugin)', name=branding.name), _('Lets the KOReader plugin sync reading progress. The first start after enabling it indexes every book, which can briefly lock the library.')) }}
       {{ toggle('config_kobo_sync_magic_shelves', _('Sync Magic Shelves to Kobo'), _('Smart shelves with Kobo sync turned on appear as collections on the device.'), checked=config.config_kobo_sync_magic_shelves) }}
       {{ toggle('archived_cleanup_enabled', _('Enable Archived Book Cleanup'), _('Removes leftover references to books deleted from the library.')) }}
       <div class="setting-body" data-show-if="archived_cleanup_enabled">

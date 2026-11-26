@@ -22,10 +22,10 @@
   {%- if not kosync_enabled %}
   <p class="muted">{{ _('KOReader sync is turned off for this library. Ask an administrator to turn it on in Settings → Automation.') }}</p>
   {%- else %}
-  <p class="muted">{{ _('KOReader measures how long you read. Share it with Scriptorium and every device shows the same time, streaks and progress.') }}</p>
+  <p class="muted">{{ _('KOReader measures how long you read. Share it with this library and every device shows the same time, streaks and progress.') }}</p>
   <ol class="rs-steps">
-    <li>{{ _('Install version 1.2 or later of the Scriptorium plugin on each device.') }} <a href="{{ url_for('kosync.kosync_plugin_page') }}">{{ _('Download plugin') }}</a></li>
-    <li>{{ _('In KOReader, open Tools → Scriptorium Sync and turn on Sync reading statistics.') }}</li>
+    <li>{{ _('Install version 1.2 or later of the sync plugin on each device.') }} <a href="{{ url_for('kosync.kosync_plugin_page') }}">{{ _('Download plugin') }}</a></li>
+    <li>{{ _('In KOReader, open Tools → %(name)s Sync and turn on Sync reading statistics.', name=branding.name) }}</li>
     <li>{{ _('Read a few pages. The statistics appear here after the next sync.') }}</li>
   </ol>
   <details class="rs-manual">

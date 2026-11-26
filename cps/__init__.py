@@ -128,6 +128,11 @@ def create_app():
 
     config_sql.load_configuration(ub.session, encrypt_key)
     config.init_config(ub.session, encrypt_key, cli_param)
+    from . import branding
+    try:
+        branding.initialize()
+    except OSError as exc:
+        log.warning("Could not initialize instance branding: %s", exc)
 
     # Intelligent Security Configuration
     # Force SESSION_COOKIE_SECURE if OAuth is enabled OR if "Use via HTTPS" is checked

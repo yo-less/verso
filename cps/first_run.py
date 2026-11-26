@@ -59,7 +59,7 @@ def _reset():
 
 @first_run.before_app_request
 def lead_to_setup():
-    if request.endpoint in ("first_run.setup", "first_run.create", "static") or not needs_setup():
+    if request.endpoint in ("first_run.setup", "first_run.create", "static", "admin.branding_asset", "admin.branding_css", "admin.branding_manifest") or not needs_setup():
         return None
     if request.path.startswith(_API_PREFIXES):
         return jsonify({"error": "Scriptorium is not set up yet. Open it in a browser to create the first account."}), 503

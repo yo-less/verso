@@ -1,9 +1,9 @@
-# Scriptorium — https://github.com/Mrcoloo/scriptorium-library
+# Verso — based on Scriptorium
 # New to this? Follow docs/start-here.md in the repository: it explains every step.
 # Start with:  docker compose up -d   then open http://<your-server>:8083 and create your account
 services:
   scriptorium:
-    image: ghcr.io/mrcoloo/scriptorium-library:latest
+    image: ghcr.io/yo-less/verso:latest
     container_name: scriptorium
     environment:
       - PUID=1000            # owner of the files on your volumes: run `id -u`

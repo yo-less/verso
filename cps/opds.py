@@ -774,7 +774,8 @@ def feed_search(term):
 
 def render_xml_template(*args, **kwargs):
     currtime = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
-    xml = render_template(current_time=currtime, instance=config.config_calibre_web_title, constants=constants.sidebar_settings, *args, **kwargs)
+    from .branding import site_name
+    xml = render_template(current_time=currtime, instance=site_name(), constants=constants.sidebar_settings, *args, **kwargs)
     response = make_response(xml)
     response.headers["Content-Type"] = "application/atom+xml; charset=utf-8"
     return response

@@ -1,12 +1,12 @@
 # KOReader
 
 [KOReader](https://koreader.rocks/) is free reading software for Kobo, Kindle, PocketBook, Android
-and more. The Scriptorium Sync plugin keeps your reading position and highlights in step between
+and more. The Verso Sync plugin (named after your configured library) keeps your reading position and highlights in step between
 KOReader and the library, so you can stop on one device and continue on another, or in the browser.
 
 ## Enable it (administrator)
 
-Turn on *Settings → Automation → Services → Enable KOReader Sync (Scriptorium Plugin)*.
+Turn on *Settings → Automation → Services → Enable KOReader Sync (Verso Plugin)*.
 
 The first start after enabling it computes a checksum for every book file, so KOReader's documents
 can be matched to library books. On large libraries this takes a while and can briefly lock the
@@ -25,12 +25,15 @@ sync** page (`/kosync`).
 
 ## Sign in
 
-Open a book, tap the top of the screen, open the **Tools** menu and choose **Scriptorium Sync**.
+Open a book, tap the top of the screen, open the **Tools** menu and choose **Verso Sync**.
 Enter:
 
 - **Server URL**: your library address, exactly as shown under *Profile → Devices → KOReader*
   (for example `https://books.example.com`). Do not add `/kosync`: the plugin does that itself.
 - **Username** and **password**: the same ones you use for the web interface.
+
+Enable **Automatically keep documents in sync** in the same menu to sync progress when the
+reader sleeps or powers off while connected.
 
 ## Keeping the plugin up to date
 
@@ -55,7 +58,9 @@ from the library:
 ## How it works
 
 - Progress is saved when you turn pages, close or switch books, or leave KOReader, and uploaded
-  in the background. Without a connection the plugin retries once the device is back online.
+  in the background. With automatic sync enabled and Wi-Fi connected, Verso Sync also sends
+  the latest position before sleep or a power-off initiated in KOReader. A disconnected or
+  abruptly powered-off device cannot upload until it is active and connected again.
 - Books are matched by a checksum of the file, so the copy on the device must be one downloaded
   from the library. A file converted or edited elsewhere will not match.
 - Progress updates the read status in the library: 0% is *unread*, anything in between is
@@ -101,7 +106,7 @@ your KOReader devices and show them on the **Reading statistics** page in the si
 today and this week, your current and best streak, a calendar of your reading year, the hours and
 days you read most, your pace, and the time spent on each book with an estimate of the time left.
 
-Turn it on once on each device: *Tools → Scriptorium Sync → Sync reading statistics*. It needs
+Turn it on once on each device: *Tools → Verso Sync → Sync reading statistics*. It needs
 plugin 1.2 or later, and KOReader's own *Reading statistics* and *Cloud storage* plugins, which are
 on by default.
 
@@ -134,7 +139,7 @@ progress and read status are kept.
 **The plugin does not appear in the Tools menu.** Check that the folder is exactly
 `koreader/plugins/cwasync.koplugin`, then enable it in *Settings → Tools → Plugin management*.
 
-**Set Scriptorium Server does nothing.** Some KOReader add-ons that replace the menus, such as
+**Set Verso Server does nothing.** Some KOReader add-ons that replace the menus, such as
 ZenOS, ignored this entry in plugin 1.1. Download the plugin again (version 1.2 or later) and replace
 the old folder.
 

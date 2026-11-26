@@ -137,7 +137,7 @@ function CWASyncClient:update_progress(
         percentage,
         device,
         device_id,
-        callback)
+        callback, blocking)
     self.client:reset_middlewares()
     self.client:enable("Format.JSON")
     self.client:enable("GinClient")
@@ -161,10 +161,12 @@ function CWASyncClient:update_progress(
             callback(res.status == 200, res.body)
         else
             logger.dbg("CWASyncClient:update_progress failure:", res)
-            callback(false, res.body)
+            callback(false)
         end
     end)
-    self.client:enable("AsyncHTTP", {thread = co})
+    if not blocking then
+        self.client:enable("AsyncHTTP", {thread = co})
+    end
     coroutine.resume(co)
     if UIManager.looper then UIManager:setInputTimeout() end
     socketutil:reset_timeout()

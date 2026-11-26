@@ -24,8 +24,8 @@ end
 
 local CWASync = WidgetContainer:extend{
     name = "cwasync",
-    title = _("Login to Scriptorium Server"),
-    version = "1.3.0",  -- Plugin version
+    title = _("Login to Verso Server"),
+    version = "1.3.1",  -- Plugin version
 
     push_timestamp = nil,
     pull_timestamp = nil,
@@ -153,7 +153,7 @@ local function ensureServerConfigured(server)
         return true
     end
     UIManager:show(InfoMessage:new{
-        text = _("Please set the Scriptorium Server address first."),
+        text = _("Please set the Verso Server address first."),
         timeout = 3,
     })
     return false
@@ -212,11 +212,11 @@ end
 
 function CWASync:addToMainMenu(menu_items)
     menu_items.cwa_progress_sync = {
-        text = _("Scriptorium Sync"),
+        text = _("Verso Sync"),
         sorting_hint = "tools",
         sub_item_table = {
             {
-                text = _("Set Scriptorium Server"),
+                text = _("Set Verso Server"),
                 keep_menu_open = true,
                 -- A plain callback rather than tap_input_func: menus that replace KOReader's own
                 -- (such as ZenOS) ignore tap_input_func, and the item then did nothing.
@@ -241,9 +241,9 @@ function CWASync:addToMainMenu(menu_items)
             },
             {
                 text = _("Sync reading statistics"),
-                help_text = _([[Shares KOReader's reading statistics (reading time, pages, streaks) between all your devices through Scriptorium, and shows them on its Reading statistics page.
+                help_text = _([[Shares KOReader's reading statistics (reading time, pages, streaks) between all your devices through Verso, and shows them on its Reading statistics page.
 
-This sets the cloud sync of the Reading statistics plugin to your Scriptorium server.]]),
+This sets the cloud sync of the Reading statistics plugin to your Verso server.]]),
                 keep_menu_open = true,
                 checked_func = function() return self.settings.sync_stats end,
                 callback = function(touchmenu_instance)
@@ -414,7 +414,7 @@ If set to 0, updating progress based on page turns will be disabled.]]),
                 keep_menu_open = true,
                 callback = function()
                     UIManager:show(InfoMessage:new{
-                        text = T(_("Scriptorium Sync Plugin\nVersion: %1\n\nThis plugin syncs your reading progress to Scriptorium (based on Calibre-Web-Automated)."), self.version),
+                        text = T(_("Verso Sync Plugin\nVersion: %1\n\nThis plugin syncs your reading progress to Verso (based on Calibre-Web-Automated)."), self.version),
                     })
                 end,
             },
@@ -441,7 +441,7 @@ function CWASync:editServer()
     local dialog
     dialog = InputDialog:new{
         -- @translators Server address defined by user for progress sync.
-        title = _("Scriptorium Server Address"),
+        title = _("Verso Server Address"),
         input = self.settings.server or "https://",
         input_hint = "https://books.example.com",
         buttons = {
@@ -575,7 +575,7 @@ function CWASync:doLogin(username, password, menu)
             menu:updateItems()
         end
         UIManager:show(InfoMessage:new{
-            text = _("Logged in to Scriptorium server."),
+            text = _("Logged in to Verso server."),
         })
     else
         UIManager:show(InfoMessage:new{
@@ -687,7 +687,7 @@ function CWASync:syncToProgress(progress, percentage)
     end
 end
 
-function CWASync:updateProgress(ensure_networking, interactive, on_suspend)
+function CWASync:updateProgress(ensure_networking, interactive, flush)
     if not self.settings.username or not self.settings.password then
         if interactive then
             promptLogin()
@@ -695,17 +695,20 @@ function CWASync:updateProgress(ensure_networking, interactive, on_suspend)
         return
     end
 
+    if flush and (not self.settings.server or not NetworkMgr:isConnected()) then
+        return
+    end
     if not ensureServerConfigured(self.settings.server) then
         return
     end
 
     local now = UIManager:getElapsedTimeSinceBoot()
-    if not interactive and now - self.push_timestamp <= API_CALL_DEBOUNCE_DELAY then
+    if not flush and not interactive and now - self.push_timestamp <= API_CALL_DEBOUNCE_DELAY then
         logger.dbg("CWASync: We've already pushed progress less than 25s ago!")
         return
     end
 
-    if ensure_networking and NetworkMgr:willRerunWhenOnline(function() self:updateProgress(ensure_networking, interactive, on_suspend) end) then
+    if ensure_networking and NetworkMgr:willRerunWhenOnline(function() self:updateProgress(ensure_networking, interactive, flush) end) then
         return
     end
 
@@ -728,6 +731,11 @@ function CWASync:updateProgress(ensure_networking, interactive, on_suspend)
     end
     local progress = self:getLastProgress()
     local percentage = self:getLastPercent()
+    local position = table.concat({self.settings.server, doc_digest, tostring(progress), tostring(percentage)}, "|")
+    if flush and self.last_sent_position == position then
+        return
+    end
+    local file = self.ui.document.file
     local ok, err = pcall(client.update_progress,
         client,
         self.settings.username,
@@ -738,7 +746,10 @@ function CWASync:updateProgress(ensure_networking, interactive, on_suspend)
         Device.model,
         self.device_id,
         function(ok, body)
-            logger.dbg("CWASync: [Push] progress to", percentage * 100, "% =>", progress, "for", self.view.document.file)
+            if ok then
+                self.last_sent_position = position
+            end
+            logger.dbg("CWASync: [Push] progress to", percentage * 100, "% =>", progress, "for", file)
             logger.dbg("CWASync: ok:", ok, "body:", body)
             if interactive then
                 if ok then
@@ -750,7 +761,7 @@ function CWASync:updateProgress(ensure_networking, interactive, on_suspend)
                     showSyncError()
                 end
             end
-        end)
+        end, flush)
     if not ok then
         if interactive then showSyncError() end
         if err then logger.dbg("err:", err) end
@@ -759,33 +770,10 @@ function CWASync:updateProgress(ensure_networking, interactive, on_suspend)
         -- can never stop progress sync.
         local ann_ok, ann_err = pcall(self.pushAnnotations, self, doc_digest)
         if not ann_ok then logger.warn("CWASync: could not send highlights:", ann_err) end
-        -- Wi-Fi goes off right after a push on suspend, so statistics wait for the next one.
-        if not on_suspend then
+        if not flush then
             self:syncStatistics(false)
         end
-        -- This is solely for onSuspend's sake, to clear the ghosting left by the "Connected" InfoMessage
-        if on_suspend then
-            -- Our top-level widget should be the "Connected to network" InfoMessage from NetworkMgr's reconnectOrShowNetworkMenu
-            local widget = UIManager:getTopmostVisibleWidget()
-            if widget and widget.modal and widget.tag == "NetworkMgr" and not widget.dismiss_callback then
-                -- We want a full-screen flash on dismiss
-                widget.dismiss_callback = function()
-                    -- Enqueued, because we run before the InfoMessage's close
-                    UIManager:setDirty(nil, "full")
-                end
-            end
-        end
     end
-
-    if on_suspend then
-        -- NOTE: We want to murder Wi-Fi once we're done in this specific case (i.e., Suspend),
-        --       because some of our hasWifiManager targets will horribly implode when attempting to suspend with the Wi-Fi chip powered on,
-        --       and they'll have attempted to kill Wi-Fi well before *we* run (e.g., in `Device:onPowerEvent`, *before* actually sending the Suspend Event)...
-        if Device:hasWifiManager() then
-            NetworkMgr:disableWifi()
-        end
-    end
-
     self.push_timestamp = now
 end
 
@@ -1204,7 +1192,7 @@ function CWASync:statsServer()
 end
 
 -- Keep the statistics plugin's sync server in step with ours: same address and credentials while
--- statistics sync is on, and no Scriptorium server once it is off. Returns the statistics plugin.
+-- statistics sync is on, and no Verso server once it is off. Returns the statistics plugin.
 function CWASync:applyStatsServer()
     local statistics = self:getStatistics()
     if not statistics then return nil end
@@ -1243,7 +1231,7 @@ function CWASync:toggleStatsSync(touchmenu_instance)
         return
     end
     if not self.settings.password or not self.settings.server then
-        UIManager:show(InfoMessage:new{ text = _("Set the Scriptorium server and log in first.") })
+        UIManager:show(InfoMessage:new{ text = _("Set the Verso server and log in first.") })
         return
     end
     local function enable()
@@ -1255,8 +1243,8 @@ function CWASync:toggleStatsSync(touchmenu_instance)
     local current = statistics.settings.sync_server
     if current and not isScriptoriumStatsServer(current) then
         UIManager:show(ConfirmBox:new{
-            text = _("Reading statistics already sync with another cloud server. Sync them with Scriptorium instead?"),
-            ok_text = _("Use Scriptorium"),
+            text = _("Reading statistics already sync with another cloud server. Sync them with Verso instead?"),
+            ok_text = _("Use Verso"),
             ok_callback = enable,
         })
     else
@@ -1470,6 +1458,9 @@ end
 
 function CWASync:_onCloseDocument()
     logger.dbg("CWASync: onCloseDocument")
+    if self.powering_off then
+        return
+    end
     -- NOTE: Because everything is terrible, on Android, opening the system settings to enable WiFi means we lose focus,
     --       and we handle those system focus events via... Suspend & Resume events, so we need to neuter those handlers early.
     self.onResume = nil
@@ -1480,7 +1471,7 @@ function CWASync:_onCloseDocument()
     --       (and quite likely ours, too).
     NetworkMgr:goOnlineToRun(function()
         -- Drop the inner willRerunWhenOnline ;).
-        self:updateProgress(false, false)
+        self:updateProgress(false, false, true)
         self:syncStatistics(false, true)
     end)
 end
@@ -1525,8 +1516,12 @@ end
 
 function CWASync:_onSuspend()
     logger.dbg("CWASync: onSuspend")
-    -- We request an extra flashing refresh on success, to deal with potential ghosting left by the NetworkMgr UI
-    self:updateProgress(true, false, true)
+    self:updateProgress(false, false, true)
+end
+
+function CWASync:_onPowerOff()
+    self.powering_off = true
+    self:updateProgress(false, false, true)
 end
 
 function CWASync:_onNetworkConnected()
@@ -1539,8 +1534,8 @@ end
 
 function CWASync:_onNetworkDisconnecting()
     logger.dbg("CWASync: onNetworkDisconnecting")
-    -- Network is supposed to be on already, don't wrap this in willRerunWhenOnline
-    self:updateProgress(false, false)
+    -- Some devices disconnect Wi-Fi before broadcasting Suspend.
+    self:updateProgress(false, false, true)
 end
 
 function CWASync:onCWASyncPushProgress()
@@ -1557,6 +1552,7 @@ function CWASync:registerEvents()
         self.onPageUpdate = self._onPageUpdate
         self.onResume = self._onResume
         self.onSuspend = self._onSuspend
+        self.onPowerOff = self._onPowerOff
         self.onNetworkConnected = self._onNetworkConnected
         self.onNetworkDisconnecting = self._onNetworkDisconnecting
     else
@@ -1564,6 +1560,7 @@ function CWASync:registerEvents()
         self.onPageUpdate = nil
         self.onResume = nil
         self.onSuspend = nil
+        self.onPowerOff = nil
         self.onNetworkConnected = nil
         self.onNetworkDisconnecting = nil
     end

@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="cps/static/icon.svg" width="96" height="96" alt="Scriptorium logo: a white quill on a dark tile">
+  <img src="cps/static/verso-favicon.svg" width="96" height="96" alt="Verso logo">
 </p>
 
-<h1 align="center">Scriptorium</h1>
+<h1 align="center">Verso</h1>
 
 <p align="center">
-  <strong>The self-hosted library that tends itself.</strong><br>
-  Drop in a book. Scriptorium imports it, converts it, finds its cover and metadata,<br>
-  and puts it on your Kobo by the next sync. You just read.
+  <strong>A self-hosted ebook library and reading platform.</strong><br>
+  A fork of Scriptorium, built on Calibre-Web-Automated and Calibre-Web.<br>
+  Retains the standard Calibre library format and adds customizable instance branding.
 </p>
 
 <p align="center">
@@ -32,16 +32,16 @@
 
 ---
 
-## Why Scriptorium
+## Why Verso
 
-Most ebook servers are file browsers with a login page. Scriptorium is a **library that keeps
+Most ebook servers are file browsers with a login page. Verso is a **library that keeps
 itself in order** and **a place you actually enjoy opening**.
 
 <table>
   <tr>
     <td width="50%" valign="top">
       <h3>📥&nbsp;Drop it in, forget it</h3>
-      Copy a file into one folder. Scriptorium imports it, converts it to the format your reader
+      Copy a file into one folder. Verso imports it, converts it to the format your reader
       wants, fetches cover and metadata, catches duplicates and repairs EPUBs that Amazon would
       reject. All automatically.
     </td>
@@ -70,6 +70,12 @@ itself in order** and **a place you actually enjoy opening**.
 https://github.com/user-attachments/assets/0daf9b44-333a-4edd-873a-d19131faa2f7
 <p align="center"><sub>One minute: importing a book, the library, Kobo and KOReader sync, reading statistics, highlights, your year in books and personal styles.</sub></p>
 
+## Instance branding
+
+Open **Settings → Branding** to customize the site name, upload SVG logos and choose the login colours and decoration. Settings persist alongside the application database. Download the KOReader plugin from the application to get the current instance name; existing devices must reinstall the ZIP to change their displayed name.
+
+Verso is the default identity for new and existing installations without saved custom branding. Restore default branding or upload your own artwork in Settings → Branding. Custom branding stays in the installation's configuration, not the repository.
+
 ## Quick start
 
 All you need is [Docker](https://docs.docker.com/get-docker/) with the Compose plugin. New to
@@ -77,8 +83,8 @@ self-hosting? **[Start here](docs/start-here.md)**: a friendly, step-by-step gui
 nothing.
 
 ```bash
-mkdir scriptorium && cd scriptorium
-curl -O https://raw.githubusercontent.com/MrColoo/scriptorium-library/main/docker-compose.yml
+git clone https://github.com/yo-less/verso.git verso
+cd verso
 docker compose up -d
 ```
 
@@ -95,7 +101,7 @@ two minutes.
 ```yaml
 services:
   scriptorium:
-    image: ghcr.io/mrcoloo/scriptorium-library:latest
+    image: ghcr.io/yo-less/verso:latest
     container_name: scriptorium
     environment:
       - PUID=1000        # run `id -u` to find yours
@@ -110,7 +116,7 @@ services:
     restart: unless-stopped
 ```
 
-Already have a Calibre library? Point `./library` at it. Scriptorium uses it as it is.
+Already have a Calibre library? Point `./library` at it. Verso uses it as it is.
 </details>
 
 ## How it works
@@ -174,8 +180,8 @@ time. Nothing is locked in.
 
 **Interface**
 - Designed page by page, light and dark, **fully usable on a phone** with a bottom navigation bar.
-- **Installable app**: add Scriptorium to your home screen, and send a book to the library with
-  *Share → Scriptorium* from any app (needs HTTPS).
+- **Installable app**: add Verso to your home screen, and send a book to the library with
+  *Share → Verso* from any app (needs HTTPS).
 - **What's new** after every update, and an update button for administrators with the highlights of
   the next release.
 - **Personal styles**: eleven themes, a "Surprise me" button and a palette editor, with a live preview.
@@ -276,7 +282,7 @@ docker compose pull && docker compose up -d
 
 When a new release is out, administrators get an update button in the top bar with its highlights
 and this command. After updating, every user gets a short *What's new*. To pin a version, use a release tag such as
-`ghcr.io/mrcoloo/scriptorium-library:v1.0.0` instead of `latest`.
+a published commit SHA tag instead of `latest`.
 
 ### Backup
 
@@ -299,7 +305,7 @@ Scriptorium is built on [Calibre-Web-Automated](https://github.com/crocodilestic
 v4.0.8 and reads and writes exactly the same data, so switching is an image swap:
 
 1. Back up your `config` and `library` folders ([how](#backup)).
-2. In your compose file, change only the image to `ghcr.io/mrcoloo/scriptorium-library:latest`.
+2. In your compose file, change only the image to `ghcr.io/yo-less/verso:latest`.
    Keep the volumes, ports and environment variables as they are.
 3. Run `docker compose up -d`.
 
@@ -311,8 +317,7 @@ What carries over, and what to know:
 - **Your devices keep working.** The Kobo sync address and the KOReader endpoint are unchanged.
   Download the KOReader plugin again if you want your KOReader highlights in Scriptorium.
 - **Personal styles** are stored inside each user's existing view settings. CWA simply ignores them.
-- **Your instance title is kept.** To show "Scriptorium" in the header, change it in
-  *Settings → Interface*.
+- **Instance branding** is managed in *Settings → Branding*. Restore the Verso defaults or upload your own SVG artwork.
 - **Newer CWA releases** that changed the database have not been tested. Keep your backup at hand.
 
 Coming from plain Calibre-Web? See [the installation guide](docs/installation.md#migrating-from-calibre-web).
@@ -358,6 +363,6 @@ backend stays close to upstream so fixes can flow both ways.
 
 ## License
 
-Scriptorium is free software under the [GNU General Public License v3.0 or later](LICENSE) and
+Verso is free software under the [GNU General Public License v3.0 or later](LICENSE) and
 comes with no warranty. Source files keep their original copyright notices. Third-party
 libraries and fonts are listed in [NOTICE](NOTICE) and [CONTRIBUTORS](CONTRIBUTORS).

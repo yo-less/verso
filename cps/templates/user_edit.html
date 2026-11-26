@@ -276,7 +276,7 @@
     <strong>{{ _('Update the KOReader plugin') }}</strong>
     <span>{{ _('Version %(version)s of the plugin is out, with new features and fixes. These devices still use an older one: %(devices)s.', version=koreader_plugin_version(), devices=outdated|map(attribute='device')|join(', ')) }}</span>
     <span>{{ _('Download it, replace the cwasync.koplugin folder in koreader/plugins/ on each device and restart KOReader.') }}</span>
-    <div><a class="btn btn-sm" href="{{ url_for('static', filename='koplugin.zip') }}" download>{{ ui.icon('download') }}{{ _('Download plugin') }}</a></div>
+    <div><a class="btn btn-sm" href="{{ url_for('kosync.branded_plugin_download') }}" download>{{ ui.icon('download') }}{{ _('Download plugin') }}</a></div>
   </div></div>
   {%- endif %}
   <div class="split">
@@ -286,14 +286,14 @@
         <div class="step-body">
           <h3>{{ _('Install the plugin') }}</h3>
           <p class="muted">{{ _('Unzip it into the %(dir)s folder on the device, then restart KOReader.', dir='koreader/plugins/') }}</p>
-          <div><a class="btn" href="{{ url_for('static', filename='koplugin.zip') }}" download>{{ ui.icon('download') }}{{ _('Download plugin') }}</a></div>
+          <div><a class="btn" href="{{ url_for('kosync.branded_plugin_download') }}" download>{{ ui.icon('download') }}{{ _('Download plugin') }}</a></div>
         </div>
       </li>
       <li class="step">
         <span class="step-marker {{ 'step-marker--done' if koreader.last_sync else '' }}">{% if koreader.last_sync %}{{ ui.icon('check') }}{% else %}2{% endif %}</span>
         <div class="step-body">
           <h3>{{ _('Sign in from KOReader') }}</h3>
-          <p class="muted">{{ _('Open a book, tap the top of the screen and choose Tools → Scriptorium Sync. Use this server address with your username and password:') }}</p>
+          <p class="muted">{{ _('Open a book, tap the top of the screen and choose Tools → %(name)s Sync. Use this server address with your username and password:', name=branding.name) }}</p>
           <div class="code-line">
             <code id="koreader-server">{{ request.url_root.rstrip('/') }}</code>
             <button class="btn btn-primary" type="button" data-copy-target="#koreader-server">{{ ui.icon('copy') }}{{ _('Copy') }}</button>

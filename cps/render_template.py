@@ -280,7 +280,8 @@ def render_title_template(*args, **kwargs):
     except Exception as e:
         log.debug("[cwa-duplicates] Failed to build duplicate notification context: %s", str(e))
     try:
-        return render_template(instance=config.config_calibre_web_title, sidebar=sidebar, simple=simple,
+        from .branding import site_name
+        return render_template(instance=site_name(), sidebar=sidebar, simple=simple,
                        accept=config.upload_formats(),
                        magic_shelf_routes=magic_shelf_routes,
                        duplicate_notification=duplicate_notification,

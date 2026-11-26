@@ -3,7 +3,7 @@
 {% block body %}
 <div class="auth-card setup-card">
   <div class="auth-head">
-    <img class="brand-logo brand-logo--lg" src="{{ url_for('static', filename='icon.svg') }}" alt="" width="64" height="64">
+    <img class="brand-logo brand-logo--lg" src="{{ url_for('admin.branding_asset', kind='favicon') }}" alt="" width="64" height="64">
     <div class="stack-sm">
       <span class="setup-eyebrow">{{ _('First start') }}</span>
       <h1 class="setup-title">{{ _('Welcome to %(name)s', name=instance) }}</h1>

@@ -60,6 +60,7 @@
 <section class="section" aria-labelledby="config-h">
   <h2 id="config-h">{{ _('Configuration') }}</h2>
   <div class="card-grid">
+    <a class="card card-link" href="{{ url_for('admin.branding_settings') }}"><span class="icon-tile">{{ ui.icon('sliders') }}</span><span class="card-title">Branding</span><span class="card-subtitle">Site name, logos, login colours and decoration.</span></a>
     <a class="card card-link" href="{{ url_for('cwa_settings.set_cwa_settings') }}" id="cwa-settings">
       <span class="icon-tile">{{ ui.icon('zap') }}</span>
       <span class="card-title">{{ _('Automation') }}</span>

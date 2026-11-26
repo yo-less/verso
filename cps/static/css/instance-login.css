@@ -1,0 +1,49 @@
+.auth:has(.instance-login) {
+  position: relative; isolation: isolate; overflow: hidden;
+  background: var(--brand-bg, #f4e9d6); color: var(--brand-ink, #181a18);
+  padding: 36px 20px; min-height: 100svh;
+}
+.auth-card.instance-login { position: relative; width: min(410px, 100%); gap: 16px; }
+.instance-login > :not(.login-decoration) { position: relative; z-index: 1; }
+.login-decoration { position: absolute; pointer-events: none; z-index: 0; }
+.decoration-watermark .login-decoration {
+  width: min(78vw, 680px); height: min(78vw, 680px);
+  left: 50%; top: 50%; transform: translate(-50%, -50%); object-fit: contain;
+}
+.decoration-ribbon .login-decoration {
+  width: clamp(50px, 9vw, 100px); height: 100vh; object-fit: fill;
+  right: -23%; bottom: calc(100% + 10px); z-index: -1;
+}
+.instance-login-wordmark { align-self: center; margin: 0 0 14px; width: min(300px,100%); }
+.instance-login-wordmark img { display: block; width: 100%; height: auto; }
+.instance-login .auth-panel { padding: 0; border: 0; box-shadow: none; background: transparent; gap: 14px; }
+.instance-login-field { position: relative; }
+.instance-login-field .input {
+  height: 58px; width: 100%; padding: 23px 18px 7px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brand-ink) 23%, transparent);
+  background: color-mix(in srgb, var(--brand-bg) 93%, var(--brand-ink)); color: var(--brand-ink);
+  box-shadow: 0 2px 6px rgb(0 0 0 / .04);
+}
+.instance-login-field.password-field .input { padding-inline-end: 48px; }
+.instance-login-field label {
+  position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+  color: var(--brand-ink); opacity: .76; pointer-events: none;
+  transition: top .15s, font-size .15s, transform .15s;
+}
+.instance-login-field .input:focus + label,
+.instance-login-field .input:not(:placeholder-shown) + label { top: 7px; transform: none; font-size: 11px; }
+.instance-login-field .input:focus-visible { outline: 2px solid var(--brand-detail); outline-offset: 2px; }
+.instance-login-field.password-field .btn-icon { top: 50%; transform: translateY(-50%); color: var(--brand-ink); right: 12px; }
+.instance-login-options { flex-wrap: wrap; gap: 8px 12px; }
+.instance-login-options .check, .instance-login-options .btn-link, .instance-login .auth-foot a { color: var(--brand-detail); }
+.instance-login-options input { accent-color: var(--brand-accent); }
+.instance-login .auth-panel .btn-primary { border-radius: 999px; background: var(--brand-accent); color: var(--brand-button-ink); border: 0; }
+.instance-login .alert:not(.alert--danger):not(.alert--warning) {
+  background: color-mix(in srgb, var(--brand-accent) 9%, var(--brand-bg));
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 20%, transparent);
+  color: var(--brand-detail); border-radius: 14px;
+}
+.instance-login .auth-foot, .instance-login .auth-divider { color: var(--brand-ink); }
+@media (prefers-reduced-motion: reduce) { .instance-login-field label { transition: none; } }
+
+@media (max-width: 600px) { .decoration-ribbon .login-decoration { right: 0; width: 38px; opacity: .42; } }
