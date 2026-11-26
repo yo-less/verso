@@ -69,6 +69,13 @@ itself in order** and **a place you actually enjoy opening**.
 https://github.com/user-attachments/assets/0daf9b44-333a-4edd-873a-d19131faa2f7
 <p align="center"><sub>Upstream Scriptorium demonstration: importing a book, the library, device synchronization, statistics, highlights and personal styles.</sub></p>
 
+## Cover quality
+
+In **Customize → Cover quality**, each reader can choose Optimized (smaller downloads),
+High quality (the default), or Original (unmodified cover artwork). Book-detail pages
+always display original covers. Covers are lazy-loaded and the setting does not affect
+Kobo or KOReader synchronization.
+
 ## Instance branding
 
 Open **Settings → Branding** to customize the site name, upload SVG logos and choose the login colours and decoration. Settings persist alongside the application database. Download the KOReader plugin from the application to get the current instance name; existing devices must reinstall the ZIP to change their displayed name.

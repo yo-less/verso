@@ -32,6 +32,7 @@ from werkzeug.datastructures import Headers
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import constants, logger, isoLanguages, services, helper
+from .cover_quality import cover_quality_for
 from . import db, ub, config, app
 from . import calibre_db, kobo_sync_status
 from .search import render_search_results, render_adv_search_results
@@ -1866,7 +1867,23 @@ def get_cover(book_id, resolution=None):
         'md': constants.COVER_THUMBNAIL_MEDIUM,
         'lg': constants.COVER_THUMBNAIL_LARGE,
     }
-    cover_resolution = resolutions.get(resolution, None)
+    # The explicitly named responsive candidates have stable URLs. Older
+    # templates requesting sm/md/lg also respect the user's preference.
+    optimized = {'opt-sm': 11, 'opt-md': 12, 'opt-lg': 14}
+    if resolution in optimized:
+        return get_book_cover(book_id, optimized[resolution])
+    cover_resolution = resolutions.get(resolution)
+    if cover_resolution and 'v' not in request.args:
+        mode = cover_quality_for(current_user)
+        if mode == 'original':
+            cover_resolution = constants.COVER_THUMBNAIL_ORIGINAL
+        elif mode == 'optimized':
+            cover_resolution += 10
+        response = make_response(get_book_cover(book_id, cover_resolution))
+        response.vary.add('Cookie')
+        response.cache_control.private = True
+        response.cache_control.no_cache = True
+        return response
     return get_book_cover(book_id, cover_resolution)
 
 

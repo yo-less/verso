@@ -213,8 +213,11 @@ COVER_THUMBNAIL_LARGE    = 4
 # resolution multipliers unchanged. Changing the encoder bumps this version.
 WEB_COVER_WIDTHS = {COVER_THUMBNAIL_SMALL: 240, COVER_THUMBNAIL_MEDIUM: 480,
                     COVER_THUMBNAIL_LARGE: 960}
+OPTIMIZED_COVER_WIDTHS = {11: 160, 12: 320, 14: 640}
+WEB_COVER_WIDTHS.update(OPTIMIZED_COVER_WIDTHS)
 WEB_COVER_CACHE_VERSION = 2
 WEB_COVER_QUALITY = 92
+OPTIMIZED_COVER_QUALITY = 80
 
 
 def web_cover_filename(book_id, resolution):

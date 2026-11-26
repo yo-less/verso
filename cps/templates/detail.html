@@ -18,7 +18,7 @@
 
 <div class="detail" data-book-id="{{ entry.id }}">
   <aside class="detail-aside">
-    <span class="cover">{{ ui.cover_img(entry, sizes='(max-width: 860px) 132px, 300px', alt=_('Cover of %(title)s', title=entry.title)) }}</span>
+    <span class="cover">{{ ui.cover_img(entry, sizes='(max-width: 860px) 132px, 300px', alt=_('Cover of %(title)s', title=entry.title), original=True) }}</span>
     {%- if entry.data|length %}
     <div class="format-tiles" aria-label="{{ _('Formats') }}">
       {%- for format in entry.data %}

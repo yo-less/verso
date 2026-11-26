@@ -5,9 +5,10 @@
 <svg class="icon{% if cls %} {{ cls }}{% endif %}" aria-hidden="true"><use href="{{ url_for('static', filename='img/icons.svg') }}#{{ name }}"></use></svg>
 {%- endmacro %}
 
-{% macro cover_img(book, sizes='(max-width: 860px) 34vw, 180px', alt=None) -%}
-{%- set srcset = book|get_cover_srcset -%}
-<img srcset="{{ srcset }}" sizes="auto, {{ sizes }}"
+{% macro cover_img(book, sizes='(max-width: 860px) 34vw, 180px', alt=None, original=False) -%}
+{%- set mode = 'original' if original else current_user|cover_quality -%}
+{%- set srcset = book|get_cover_srcset(mode) -%}
+<img{% if srcset %} srcset="{{ srcset }}" sizes="auto, {{ sizes }}"{% endif %}
      src="{{ url_for('web.get_cover', book_id=book.id, resolution='og', c=book|last_modified) }}"
      alt="{{ alt if alt is not none else book.title }}" loading="lazy" decoding="async">
 {%- endmacro %}

@@ -897,14 +897,15 @@ def get_book_cover_internal(book, resolution=None):
             cache = fs.FileSystem()
             # Check for both webp and jpg thumbnails, generate missing ones
             webp_thumb = get_book_cover_thumbnail_by_format(book, resolution, 'webp')
-            jpg_thumb = get_book_cover_thumbnail_by_format(book, resolution, 'jpg')
+            optimized = resolution in constants.OPTIMIZED_COVER_WIDTHS
+            jpg_thumb = None if optimized else get_book_cover_thumbnail_by_format(book, resolution, 'jpg')
 
             # Check if files actually exist on disk
             webp_exists = webp_thumb and cache.get_cache_file_exists(webp_thumb.filename, CACHE_TYPE_THUMBNAILS)
             jpg_exists = jpg_thumb and cache.get_cache_file_exists(jpg_thumb.filename, CACHE_TYPE_THUMBNAILS)
 
             # Generate missing thumbnails on-demand (skip for Kobo requests to avoid delays)
-            if not webp_exists or not jpg_exists:
+            if not webp_exists or (not optimized and not jpg_exists):
                 try:
                     from flask import has_request_context, request
                     is_kobo_request = (has_request_context() and
@@ -917,7 +918,9 @@ def get_book_cover_internal(book, resolution=None):
                         
                         # Queue thumbnail generation task if not already pending (prevents duplicate tasks)
                         if book.id not in _pending_thumbnail_books:
-                            thumbnail_task = TaskGenerateCoverThumbnails(book_id=book.id)
+                            thumbnail_task = TaskGenerateCoverThumbnails(
+                                book_id=book.id, book_path=book.path,
+                                last_modified=book.last_modified, optimized=optimized)
                             try:
                                 WorkerThread.add(None, thumbnail_task, hidden=True)
                                 # CRITICAL: Only add to pending set AFTER successful queue

@@ -59,7 +59,12 @@ def write_book_thumbnail(img, filename, resolution, fmt):
     if (width, height) != (img.width, img.height):
         img.resize(width=width, height=height, filter='lanczos')
     img.format = fmt
-    img.compression_quality = constants.WEB_COVER_QUALITY if fmt.lower() == "webp" else 82
+    if fmt.lower() == "webp":
+        img.compression_quality = (constants.OPTIMIZED_COVER_QUALITY
+                                   if resolution in constants.OPTIMIZED_COVER_WIDTHS
+                                   else constants.WEB_COVER_QUALITY)
+    else:
+        img.compression_quality = 82
     # Requests must never observe an incomplete image during regeneration.
     fd, temp = tempfile.mkstemp(dir=os.path.dirname(filename), suffix="." + fmt)
     os.close(fd)
@@ -90,12 +95,13 @@ def get_best_fit(width, height, image_width, image_height):
 
 
 class TaskGenerateCoverThumbnails(CalibreTask):
-    def __init__(self, book_id=-1, task_message='', book_path=None, last_modified=None):
+    def __init__(self, book_id=-1, task_message='', book_path=None, last_modified=None, optimized=False):
         super(TaskGenerateCoverThumbnails, self).__init__(task_message)
         self.log = logger.create()
         self.book_id = book_id
         self.book_path = book_path
         self.last_modified = last_modified
+        self.optimized = optimized
         self.app_db_session = ub.get_new_session_instance()
         self.cache = fs.FileSystem()
         self.resolutions = [
@@ -192,28 +198,33 @@ class TaskGenerateCoverThumbnails(CalibreTask):
 
         formats = ['webp', 'jpg']
         handled = set()
-        for resolution in self.resolutions:
-            for fmt in formats:
-                thumb = thumb_map.get((resolution, fmt))
-                if thumb is None:
-                    generated += 1
-                    self.create_book_cover_single_thumbnail_format(book, resolution, fmt)
-                    continue
-                handled.add(thumb.id)
-                expected = (constants.web_cover_filename(book.id, resolution) if fmt == 'webp'
-                            else f'book_{book.id}_r{resolution}.jpg')
-                source_newer = book.last_modified.replace(tzinfo=None) > thumb.generated_at.replace(tzinfo=None)
-                if (thumb.filename != expected or source_newer or
-                        not self.cache.get_cache_file_exists(thumb.filename, constants.CACHE_TYPE_THUMBNAILS)):
-                    generated += 1
-                    self.update_book_cover_thumbnail(book, thumb, expected)
+        # Optimized variants are generated only when requested, or refreshed
+        # if that book already has them. The default cache remains six files.
+        optimized = list(constants.OPTIMIZED_COVER_WIDTHS)
+        variants = [(resolution, fmt) for resolution in self.resolutions for fmt in formats]
+        variants.extend((resolution, 'webp') for resolution in optimized
+                        if self.optimized or (resolution, 'webp') in thumb_map)
+        for resolution, fmt in variants:
+            thumb = thumb_map.get((resolution, fmt))
+            if thumb is None:
+                generated += 1
+                self.create_book_cover_single_thumbnail_format(book, resolution, fmt)
+                continue
+            handled.add(thumb.id)
+            expected = (constants.web_cover_filename(book.id, resolution) if fmt == 'webp'
+                        else f'book_{book.id}_r{resolution}.jpg')
+            source_newer = book.last_modified.replace(tzinfo=None) > thumb.generated_at.replace(tzinfo=None)
+            if (thumb.filename != expected or source_newer or
+                    not self.cache.get_cache_file_exists(thumb.filename, constants.CACHE_TYPE_THUMBNAILS)):
+                generated += 1
+                self.update_book_cover_thumbnail(book, thumb, expected)
 
         # Keep the legacy migration for nonstandard formats/resolutions. Do not
         # regenerate a selected entry twice or delete a current shared filename.
         for thumbnail in book_cover_thumbnails:
             if thumbnail.id in handled:
                 continue
-            if (thumbnail.resolution, thumbnail.format.lower()) in thumb_map and thumbnail.resolution in self.resolutions and thumbnail.format.lower() in formats:
+            if (thumbnail.resolution, thumbnail.format.lower()) in variants:
                 selected = thumb_map[(thumbnail.resolution, thumbnail.format.lower())]
                 if selected.id != thumbnail.id:
                     old_filename = thumbnail.filename

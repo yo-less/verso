@@ -69,6 +69,25 @@
   </div>
 </div>
 
+<section class="card stack-sm" id="cover-quality" aria-labelledby="cover-quality-h" style="margin-bottom: 20px;">
+  <h2 class="card-title" id="cover-quality-h">{{ _('Cover quality') }}</h2>
+  <p class="muted">{{ _('Choose the image quality for your library. Book detail pages always use the original cover.') }}</p>
+  <form method="post" action="{{ url_for('appearance.customize') }}" class="stack-sm">
+    {{ ui.csrf_field() }}
+    <input type="hidden" name="action" value="cover-quality">
+    <div class="field">
+      <label for="cover-quality-mode">{{ _('Image quality') }}</label>
+      <select id="cover-quality-mode" name="cover_quality" class="select">
+        <option value="optimized"{% if cover_quality == 'optimized' %} selected{% endif %}>{{ _('Optimized — smaller downloads') }}</option>
+        <option value="high"{% if cover_quality == 'high' %} selected{% endif %}>{{ _('High quality — sharp thumbnails (default)') }}</option>
+        <option value="original"{% if cover_quality == 'original' %} selected{% endif %}>{{ _('Original — full cover artwork') }}</option>
+      </select>
+      <p class="hint">{{ _('Original uses more bandwidth and memory. This preference does not change your books or device synchronization.') }}</p>
+    </div>
+    <div><button type="submit" class="btn btn-primary">{{ _('Save cover quality') }}</button></div>
+  </form>
+</section>
+
 <form method="post" action="{{ url_for('appearance.customize') }}" id="ap-form" class="ap-layout"
       data-stock="{{ 'true' if is_stock else 'false' }}">
   {{ ui.csrf_field() }}

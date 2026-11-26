@@ -29,7 +29,7 @@ def test_permission_switches_submit_to_main_form(checked):
     source = (TEMPLATES / "user_edit.html").read_text(encoding="utf-8")
     section = source.split('{#- Permissions (admin) -#}', 1)[1].split('<div class="form-actions', 1)[0]
     env = Environment(loader=FileSystemLoader(TEMPLATES))
-    env.filters.update(get_cover_srcset=lambda _: "", last_modified=lambda _: "",
+    env.filters.update(get_cover_srcset=lambda *args: "", cover_quality=lambda _: "high", last_modified=lambda _: "",
                        music=lambda _: False, formatfloat=lambda value, *args: str(value),
                        url_for_other_page=lambda _: "")
     env.globals["_"] = lambda value: value
@@ -53,7 +53,7 @@ def test_permission_switches_submit_to_main_form(checked):
 
 def test_shared_switch_still_works_inside_normal_form():
     env = Environment(loader=FileSystemLoader(TEMPLATES))
-    env.filters.update(get_cover_srcset=lambda _: "", last_modified=lambda _: "",
+    env.filters.update(get_cover_srcset=lambda *args: "", cover_quality=lambda _: "high", last_modified=lambda _: "",
                        music=lambda _: False, formatfloat=lambda value, *args: str(value),
                        url_for_other_page=lambda _: "")
     html = env.from_string('{% import "_macros.html" as ui %}{{ ui.switch("test", "Test", true) }}').render()

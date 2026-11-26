@@ -18,6 +18,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from . import calibre_db, db, logger, ub
 from .appearance_styles import HUE_KEYS, OPTIONS, PRESETS, SETTINGS_KEY, html_attrs, sanitize
 from .cw_login import current_user
+from .cover_quality import cover_quality_for, COVER_QUALITY_MODES, with_cover_quality
 from .render_template import render_title_template
 from .usermanagement import user_login_required
 
@@ -64,6 +65,16 @@ def customize():
     if current_user.is_anonymous:
         return redirect(url_for('web.index'))
     if request.method == "POST":
+        if request.form.get("action") == "cover-quality":
+            mode = request.form.get("cover_quality")
+            if mode not in COVER_QUALITY_MODES:
+                flash(_("Invalid cover quality."), category="error")
+            else:
+                current_user.view_settings = with_cover_quality(current_user.view_settings, mode)
+                flag_modified(current_user, "view_settings")
+                ub.session_commit("Cover quality updated for user {}".format(current_user.name))
+                flash(_("Cover quality saved."), category="success")
+            return redirect(url_for('appearance.customize', _anchor='cover-quality'))
         preset = request.form.get("preset")
         if preset == "stock" or request.form.get("action") == "reset":
             _save(current_user, {})
@@ -90,4 +101,5 @@ def customize():
                for key, values in PRESETS.items()]
     return render_title_template("appearance.html", title=_("Customize"), page="appearance",
                                  current=current or sanitize(PRESETS["aurora"]), is_stock=not current,
-                                 presets=presets, options=OPTIONS, sample_books=sample_books)
+                                 presets=presets, options=OPTIONS, sample_books=sample_books,
+                                 cover_quality=cover_quality_for(current_user))

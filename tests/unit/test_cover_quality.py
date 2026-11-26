@@ -50,3 +50,53 @@ def test_real_webp_generation(tmp_path):
         assert (result.width, result.height) == (480, 720)
         assert result.format.lower() == "webp"
     assert list(tmp_path.iterdir()) == [dest]
+
+
+@pytest.mark.parametrize("value,expected", [(None,"high"),("high","high"),("original","original"),
+                                             ("optimized","optimized"),("invalid","high")])
+def test_cover_quality_preference(value, expected):
+    from cps.cover_quality import cover_quality_for
+    assert cover_quality_for(SimpleNamespace(view_settings={"cover_quality": value})) == expected
+
+
+def test_cover_quality_preserves_other_preferences():
+    from cps.cover_quality import with_cover_quality
+    settings = {"appearance": {"hue": 22}, "devices": {"kobo": True}}
+    result = with_cover_quality(settings, "original")
+    assert result == {**settings, "cover_quality": "original"}
+    assert "cover_quality" not in settings
+    with pytest.raises(ValueError):
+        with_cover_quality(settings, "bad")
+
+
+def test_optimized_and_original_srcsets():
+    app = Flask(__name__)
+    app.add_url_rule("/cover/<int:book_id>/<resolution>", endpoint="web.get_cover",
+                     view_func=lambda **kwargs: "")
+    with app.test_request_context():
+        book = SimpleNamespace(id=7, last_modified=datetime.now(timezone.utc))
+        candidates = jinjia.get_cover_srcset(book, "optimized").split(", ")
+        assert [item.rsplit(" ", 1)[1] for item in candidates] == ["160w", "320w", "640w"]
+        assert all("opt-" in item for item in candidates)
+        assert jinjia.get_cover_srcset(book, "original") == ""
+
+
+def test_cover_markup_original_does_not_offer_thumbnails():
+    from jinja2 import Environment, FileSystemLoader
+    env = Environment(loader=FileSystemLoader(str(Path(__file__).resolve().parents[2] / "cps/templates")))
+    env.filters.update(cover_quality=lambda u: u, get_cover_srcset=jinjia.get_cover_srcset,
+                       last_modified=jinjia.book_last_modified, music=lambda _: False,
+                       formatfloat=lambda v, *a: str(v), url_for_other_page=lambda p: str(p))
+    app = Flask(__name__)
+    app.add_url_rule("/cover/<int:book_id>/<resolution>", endpoint="web.get_cover",
+                     view_func=lambda **kwargs: "")
+    env.globals["url_for"] = __import__("flask").url_for
+    template = env.from_string('{% import "_macros.html" as ui with context %}{{ ui.cover_img(book, original=force) }}')
+    book = SimpleNamespace(id=7, title="Demo", last_modified=datetime.now(timezone.utc))
+    with app.test_request_context():
+        for mode, force in [("original", False), ("optimized", True), ("high", True)]:
+            html = template.render(current_user=mode, book=book, force=force)
+            assert 'srcset=' not in html
+            assert '/cover/7/og' in html and 'loading="lazy"' in html
+        html = template.render(current_user="high", book=book, force=False)
+        assert 'srcset=' in html and '960w' in html

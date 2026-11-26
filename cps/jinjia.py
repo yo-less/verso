@@ -18,6 +18,7 @@ from flask_babel import format_date
 from .cw_login import current_user
 
 from . import constants, logger
+from .cover_quality import cover_quality_for
 
 jinjia = Blueprint('jinjia', __name__)
 log = logger.create()
@@ -158,14 +159,21 @@ def book_last_modified(book):
     return str(int(book.last_modified.timestamp()))
 
 
+@jinjia.app_template_filter('cover_quality')
+def cover_quality_filter(user):
+    return cover_quality_for(user)
+
+
 @jinjia.app_template_filter('get_cover_srcset')
-def get_cover_srcset(book):
+def get_cover_srcset(book, mode='high'):
+    if mode == 'original':
+        return ''
     srcset = list()
-    resolutions = {
+    resolutions = ({11: 'opt-sm', 12: 'opt-md', 14: 'opt-lg'} if mode == 'optimized' else {
         constants.COVER_THUMBNAIL_SMALL: 'sm',
         constants.COVER_THUMBNAIL_MEDIUM: 'md',
         constants.COVER_THUMBNAIL_LARGE: 'lg'
-    }
+    })
     for resolution, shortname in resolutions.items():
         url = url_for('web.get_cover', book_id=book.id, resolution=shortname,
                       c=book_last_modified(book), v=constants.WEB_COVER_CACHE_VERSION)
