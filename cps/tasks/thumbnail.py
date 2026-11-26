@@ -6,6 +6,7 @@
 # See CONTRIBUTORS for full list of authors.
 
 import os
+import tempfile
 from shutil import copyfile, copyfileobj
 from urllib.request import urlopen
 from io import BytesIO
@@ -40,6 +41,34 @@ def get_resize_width(resolution, original_width, original_height):
     percent = (height / float(original_height))
     width = int((float(original_width) * float(percent)))
     return width if width % 2 == 0 else width + 1
+
+
+def book_thumbnail_dimensions(resolution, width, height, fmt):
+    """Keep the original aspect ratio, and never enlarge a small cover."""
+    if fmt.lower() == "webp" and resolution in constants.WEB_COVER_WIDTHS:
+        target = min(width, constants.WEB_COVER_WIDTHS[resolution])
+        return target, max(1, round(height * target / width))
+    target = min(height, get_resize_height(resolution))
+    if target == height:
+        return width, height
+    return get_resize_width(resolution, width, height), target
+
+
+def write_book_thumbnail(img, filename, resolution, fmt):
+    width, height = book_thumbnail_dimensions(resolution, img.width, img.height, fmt)
+    if (width, height) != (img.width, img.height):
+        img.resize(width=width, height=height, filter='lanczos')
+    img.format = fmt
+    img.compression_quality = constants.WEB_COVER_QUALITY if fmt.lower() == "webp" else 82
+    # Requests must never observe an incomplete image during regeneration.
+    fd, temp = tempfile.mkstemp(dir=os.path.dirname(filename), suffix="." + fmt)
+    os.close(fd)
+    try:
+        img.save(filename=temp)
+        os.replace(temp, filename)
+    finally:
+        if os.path.exists(temp):
+            os.unlink(temp)
 
 
 def get_best_fit(width, height, image_width, image_height):
@@ -152,25 +181,47 @@ class TaskGenerateCoverThumbnails(CalibreTask):
         generated = 0
         book_cover_thumbnails = self.get_book_cover_thumbnails(book.id)
 
-        # Build a map: (resolution, format) -> thumbnail
+        # Prefer current WebP cache entries if an earlier version left duplicates.
         thumb_map = {}
         for t in book_cover_thumbnails:
-            thumb_map[(t.resolution, t.format.lower())] = t
+            key = (t.resolution, t.format.lower())
+            existing = thumb_map.get(key)
+            if existing is None or (key[1] == 'webp' and
+                    t.filename == constants.web_cover_filename(book.id, t.resolution)):
+                thumb_map[key] = t
 
-        # For each resolution and format, check if thumbnail exists and file is present
         formats = ['webp', 'jpg']
+        handled = set()
         for resolution in self.resolutions:
             for fmt in formats:
                 thumb = thumb_map.get((resolution, fmt))
-                file_missing = True
-                if thumb:
-                    file_missing = not self.cache.get_cache_file_exists(thumb.filename, constants.CACHE_TYPE_THUMBNAILS)
-                if not thumb or file_missing:
+                if thumb is None:
                     generated += 1
                     self.create_book_cover_single_thumbnail_format(book, resolution, fmt)
+                    continue
+                handled.add(thumb.id)
+                expected = (constants.web_cover_filename(book.id, resolution) if fmt == 'webp'
+                            else f'book_{book.id}_r{resolution}.jpg')
+                source_newer = book.last_modified.replace(tzinfo=None) > thumb.generated_at.replace(tzinfo=None)
+                if (thumb.filename != expected or source_newer or
+                        not self.cache.get_cache_file_exists(thumb.filename, constants.CACHE_TYPE_THUMBNAILS)):
+                    generated += 1
+                    self.update_book_cover_thumbnail(book, thumb, expected)
 
-        # Replace outdated, legacy, or format-mismatch thumbnails
+        # Keep the legacy migration for nonstandard formats/resolutions. Do not
+        # regenerate a selected entry twice or delete a current shared filename.
         for thumbnail in book_cover_thumbnails:
+            if thumbnail.id in handled:
+                continue
+            if (thumbnail.resolution, thumbnail.format.lower()) in thumb_map and thumbnail.resolution in self.resolutions and thumbnail.format.lower() in formats:
+                selected = thumb_map[(thumbnail.resolution, thumbnail.format.lower())]
+                if selected.id != thumbnail.id:
+                    old_filename = thumbnail.filename
+                    self.app_db_session.delete(thumbnail)
+                    self.app_db_session.commit()
+                    if old_filename != selected.filename:
+                        self.cache.delete_cache_file(old_filename, constants.CACHE_TYPE_THUMBNAILS)
+                continue
             try:
                 legacy_naming = not (thumbnail.filename.startswith('book_') or thumbnail.filename.startswith('series_'))
                 wrong_format = thumbnail.format.lower() not in formats
@@ -249,17 +300,24 @@ class TaskGenerateCoverThumbnails(CalibreTask):
             self._handleError('Error creating JPEG book thumbnail: ' + str(ex))
             self.app_db_session.rollback()
 
-    def update_book_cover_thumbnail(self, book, thumbnail):
-        thumbnail.generated_at = datetime.now(timezone.utc)
-
+    def update_book_cover_thumbnail(self, book, thumbnail, filename=None):
+        old_filename = thumbnail.filename
         try:
-            self.app_db_session.commit()
-            self.cache.delete_cache_file(thumbnail.filename, constants.CACHE_TYPE_THUMBNAILS)
+            if filename:
+                thumbnail.filename = filename
             self.generate_book_thumbnail(book, thumbnail)
+            thumbnail.generated_at = datetime.now(timezone.utc)
+            self.app_db_session.commit()
         except Exception as ex:
             self.log.debug('Error updating book thumbnail: ' + str(ex))
             self._handleError('Error updating book thumbnail: ' + str(ex))
             self.app_db_session.rollback()
+            return
+        if old_filename != thumbnail.filename:
+            try:
+                self.cache.delete_cache_file(old_filename, constants.CACHE_TYPE_THUMBNAILS)
+            except Exception as ex:
+                self.log.debug('Error deleting superseded thumbnail: ' + str(ex))
 
     def generate_book_thumbnail(self, book, thumbnail):
         if book and thumbnail:
@@ -275,17 +333,7 @@ class TaskGenerateCoverThumbnails(CalibreTask):
                     with Image(file=stream) as img:
                         filename = self.cache.get_cache_file_path(thumbnail.filename,
                                                                   constants.CACHE_TYPE_THUMBNAILS)
-                        height = get_resize_height(thumbnail.resolution)
-                        if img.height > height:
-                            width = get_resize_width(thumbnail.resolution, img.width, img.height)
-                            img.resize(width=width, height=height, filter='lanczos')
-                        # Set format for thumbnail
-                        img.format = thumbnail.format
-                        try:
-                            img.compression_quality = 82
-                        except Exception:
-                            pass
-                        img.save(filename=filename)
+                        write_book_thumbnail(img, filename, thumbnail.resolution, thumbnail.format)
                 except Exception as ex:
                     self.log.debug('Error generating thumbnail file: ' + str(ex))
                     raise ex
@@ -298,18 +346,8 @@ class TaskGenerateCoverThumbnails(CalibreTask):
                     raise Exception('Book cover file not found')
 
                 with Image(filename=book_cover_filepath) as img:
-                    height = get_resize_height(thumbnail.resolution)
                     filename = self.cache.get_cache_file_path(thumbnail.filename, constants.CACHE_TYPE_THUMBNAILS)
-                    if img.height > height:
-                        width = get_resize_width(thumbnail.resolution, img.width, img.height)
-                        img.resize(width=width, height=height, filter='lanczos')
-                    # Set format for thumbnail
-                    img.format = thumbnail.format
-                    try:
-                        img.compression_quality = 82
-                    except Exception:
-                        pass
-                    img.save(filename=filename)
+                    write_book_thumbnail(img, filename, thumbnail.resolution, thumbnail.format)
 
     @property
     def name(self):

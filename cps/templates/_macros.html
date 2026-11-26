@@ -7,7 +7,7 @@
 
 {% macro cover_img(book, sizes='(max-width: 860px) 34vw, 180px', alt=None) -%}
 {%- set srcset = book|get_cover_srcset -%}
-<img srcset="{{ srcset }}" sizes="{{ sizes }}"
+<img srcset="{{ srcset }}" sizes="auto, {{ sizes }}"
      src="{{ url_for('web.get_cover', book_id=book.id, resolution='og', c=book|last_modified) }}"
      alt="{{ alt if alt is not none else book.title }}" loading="lazy" decoding="async">
 {%- endmacro %}

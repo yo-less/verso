@@ -167,13 +167,14 @@ def get_cover_srcset(book):
         constants.COVER_THUMBNAIL_LARGE: 'lg'
     }
     for resolution, shortname in resolutions.items():
-        url = url_for('web.get_cover', book_id=book.id, resolution=shortname, c=book_last_modified(book))
-        srcset.append(f'{url} {resolution}x')
+        url = url_for('web.get_cover', book_id=book.id, resolution=shortname,
+                      c=book_last_modified(book), v=constants.WEB_COVER_CACHE_VERSION)
+        srcset.append(f'{url} {constants.WEB_COVER_WIDTHS[resolution]}w')
     return ', '.join(srcset)
 
 
 @jinjia.app_template_filter('get_series_srcset')
-def get_cover_srcset(series):
+def get_series_srcset(series):
     srcset = list()
     resolutions = {
         constants.COVER_THUMBNAIL_SMALL: 'sm',

@@ -839,6 +839,8 @@ def filename(context):
     try:
         if entity_id is not None and resolution is not None and thumb_type is not None:
             if thumb_type == constants.THUMBNAIL_TYPE_COVER:
+                if ext == "webp":
+                    return constants.web_cover_filename(entity_id, resolution)
                 return f"book_{entity_id}_r{resolution}.{ext}"
             elif thumb_type == constants.THUMBNAIL_TYPE_SERIES:
                 return f"series_{entity_id}_r{resolution}.{ext}"

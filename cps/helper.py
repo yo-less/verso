@@ -46,7 +46,7 @@ except ImportError as e:
 from . import calibre_db, cli_param
 from .string_helper import strip_whitespaces
 from .tasks.convert import TaskConvert
-from . import logger, config, db, ub, fs
+from . import logger, config, db, ub, fs, constants
 from . import gdriveutils as gd
 from .constants import (STATIC_DIR as _STATIC_DIR, CACHE_TYPE_THUMBNAILS, THUMBNAIL_TYPE_COVER, THUMBNAIL_TYPE_SERIES,
                         SUPPORTED_CALIBRE_BINARIES)
@@ -887,8 +887,8 @@ def get_book_cover_with_uuid(book_uuid, resolution=None):
 def get_book_cover_internal(book, resolution=None):
     """Serve book cover with improved thumbnail generation fallback.
 
-    When a thumbnail is requested but missing, generate it synchronously
-    instead of falling back to the original cover.jpg.
+    Missing or old WebP thumbnails are queued for background regeneration.
+    Serve the original in the meantime rather than a low-resolution device JPEG.
     """
     if book and book.has_cover:
 
@@ -943,10 +943,10 @@ def get_book_cover_internal(book, resolution=None):
                 if is_kobo_request:
                     thumbnail_to_serve = jpg_thumb if jpg_exists else (webp_thumb if webp_exists else None)
                 else:
-                    thumbnail_to_serve = webp_thumb if webp_exists else (jpg_thumb if jpg_exists else None)
+                    thumbnail_to_serve = webp_thumb if webp_exists else None
             except:
                 # Fallback if we can't determine request context
-                thumbnail_to_serve = webp_thumb if webp_exists else (jpg_thumb if jpg_exists else None)
+                thumbnail_to_serve = webp_thumb if webp_exists else None
             if thumbnail_to_serve:
                 return send_from_directory(cache.get_cache_file_dir(thumbnail_to_serve.filename, CACHE_TYPE_THUMBNAILS),
                                            thumbnail_to_serve.filename)
@@ -989,16 +989,17 @@ def get_book_cover_thumbnail(book, resolution):
 
 
 def get_book_cover_thumbnail_by_format(book, resolution, format):
-    """Get thumbnail for specific book, resolution, and format (webp/jpg)"""
+    """Return a current thumbnail for this book and format."""
     if book and book.has_cover:
-        return (ub.session
-                .query(ub.Thumbnail)
-                .filter(ub.Thumbnail.type == THUMBNAIL_TYPE_COVER)
-                .filter(ub.Thumbnail.entity_id == book.id)
-                .filter(ub.Thumbnail.resolution == resolution)
-                .filter(ub.Thumbnail.format == format)
-                .filter(or_(ub.Thumbnail.expiration.is_(None), ub.Thumbnail.expiration > datetime.now(timezone.utc)))
-                .first())
+        query = (ub.session.query(ub.Thumbnail)
+                 .filter(ub.Thumbnail.type == THUMBNAIL_TYPE_COVER)
+                 .filter(ub.Thumbnail.entity_id == book.id)
+                 .filter(ub.Thumbnail.resolution == resolution)
+                 .filter(ub.Thumbnail.format == format)
+                 .filter(or_(ub.Thumbnail.expiration.is_(None), ub.Thumbnail.expiration > datetime.now(timezone.utc))))
+        if format == 'webp':
+            query = query.filter(ub.Thumbnail.filename == constants.web_cover_filename(book.id, resolution))
+        return query.order_by(ub.Thumbnail.generated_at.desc()).first()
 
 
 def get_series_thumbnail_on_failure(series_id, resolution):

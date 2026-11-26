@@ -209,6 +209,18 @@ COVER_THUMBNAIL_SMALL    = 1
 COVER_THUMBNAIL_MEDIUM   = 2
 COVER_THUMBNAIL_LARGE    = 4
 
+# Web cover sizes are CSS-width candidates; keep the existing device/JPEG
+# resolution multipliers unchanged. Changing the encoder bumps this version.
+WEB_COVER_WIDTHS = {COVER_THUMBNAIL_SMALL: 240, COVER_THUMBNAIL_MEDIUM: 480,
+                    COVER_THUMBNAIL_LARGE: 960}
+WEB_COVER_CACHE_VERSION = 2
+WEB_COVER_QUALITY = 92
+
+
+def web_cover_filename(book_id, resolution):
+    return f'book_{book_id}_r{resolution}_v{WEB_COVER_CACHE_VERSION}.webp'
+
+
 # clean-up the module namespace
 del sys, os, namedtuple
 
