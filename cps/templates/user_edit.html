@@ -502,15 +502,15 @@
   <section class="card" id="permissions" aria-labelledby="perm-h">
     <div class="card-header"><div><h2 class="card-title" id="perm-h">{{ _('Permissions') }}</h2></div></div>
     <div>
-      {%- if not is_anon %}{{ ui.switch('admin_role', _('Admin User'), content.role_admin(), _('Full access to settings and users.')) }}{% endif %}
-      {{ ui.switch('download_role', _('Allow Downloads'), content.role_download()) }}
-      {{ ui.switch('viewer_role', _('Allow eBook Viewer'), content.role_viewer()) }}
-      {%- if config.config_uploading %}{{ ui.switch('upload_role', _('Allow Uploads'), content.role_upload()) }}{% endif %}
-      {{ ui.switch('edit_role', _('Allow Edit'), content.role_edit()) }}
-      {{ ui.switch('delete_role', _('Allow Delete Books'), content.role_delete_books()) }}
+      {%- if not is_anon %}{{ ui.switch('admin_role', _('Admin User'), content.role_admin(), _('Full access to settings and users.'), form="user-form") }}{% endif %}
+      {{ ui.switch('download_role', _('Allow Downloads'), content.role_download(), form="user-form") }}
+      {{ ui.switch('viewer_role', _('Allow eBook Viewer'), content.role_viewer(), form="user-form") }}
+      {%- if config.config_uploading %}{{ ui.switch('upload_role', _('Allow Uploads'), content.role_upload(), form="user-form") }}{% endif %}
+      {{ ui.switch('edit_role', _('Allow Edit'), content.role_edit(), form="user-form") }}
+      {{ ui.switch('delete_role', _('Allow Delete Books'), content.role_delete_books(), form="user-form") }}
       {%- if not is_anon %}
-      {{ ui.switch('passwd_role', _('Allow Changing Password'), content.role_passwd()) }}
-      {{ ui.switch('edit_shelf_role', _('Allow Editing Public Shelves'), content.role_edit_shelfs()) }}
+      {{ ui.switch('passwd_role', _('Allow Changing Password'), content.role_passwd(), form="user-form") }}
+      {{ ui.switch('edit_shelf_role', _('Allow Editing Public Shelves'), content.role_edit_shelfs(), form="user-form") }}
       {%- endif %}
     </div>
   </section>

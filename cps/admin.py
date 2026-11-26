@@ -2775,7 +2775,12 @@ def _handle_edit_user(to_save, content, languages, translations, kobo_support):
         content.locale = to_save["locale"]
     try:
         anonymous = content.is_anonymous
+        previous_role = content.role
         content.role = constants.selected_roles(to_save)
+        # The upload switch is hidden while global uploading is disabled. Keep its
+        # stored permission instead of treating an absent control as a revocation.
+        if not config.config_uploading:
+            content.role = (content.role & ~constants.ROLE_UPLOAD) | (previous_role & constants.ROLE_UPLOAD)
         if anonymous:
             content.role |= constants.ROLE_ANONYMOUS
         else:

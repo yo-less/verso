@@ -25,7 +25,7 @@ end
 local CWASync = WidgetContainer:extend{
     name = "cwasync",
     title = _("Login to Verso Server"),
-    version = "1.3.1",  -- Plugin version
+    version = "1.3.2",  -- Plugin version
 
     push_timestamp = nil,
     pull_timestamp = nil,
@@ -47,9 +47,10 @@ local SYNC_STRATEGY = {
 
 
 -- Debounce push/pull attempts
-local API_CALL_DEBOUNCE_DELAY = time.s(25)
--- Reading statistics are synced at most this often while reading (always when a book is closed)
-local STATS_SYNC_INTERVAL = time.s(600)
+local API_CALL_DEBOUNCE_DELAY = time.s(60)
+local PERIODIC_PUSH_DELAY = 60 -- seconds; one coalesced attempt per page-turn batch
+-- Reading statistics are synced at most this often automatically
+local STATS_SYNC_INTERVAL = 600 -- wall-clock seconds, across reader instances
 
 -- NOTE: This is used in a migration script by ui/data/onetime_migration,
 --       which is why it's public.
@@ -57,39 +58,38 @@ CWASync.default_settings = {
     server = nil,
     username = nil,
     password = nil,
-    -- Do *not* default to auto-sync, as wifi may not be on at all times, and the nagging enabling this may cause requires careful consideration.
+    -- Auto-sync is opt-in and never wakes Wi-Fi.
     auto_sync = false,
     pages_before_update = nil,
-    sync_forward = SYNC_STRATEGY.PROMPT,
+    sync_forward = SYNC_STRATEGY.SILENT,
     sync_backward = SYNC_STRATEGY.DISABLE,
     sync_stats = false,  -- Scriptorium extension: share KOReader's reading statistics through the server
 }
 
 function CWASync:init()
-    self.push_timestamp = 0
-    self.pull_timestamp = 0
+    self.push_timestamp = nil
+    self.pull_timestamp = nil
+    self.push_generation = 0
+    self.push_inflight = false
     self.page_update_counter = 0
     self.last_page = -1
     self.last_page_turn_timestamp = 0
     self.periodic_push_scheduled = false
     self.annotations_sent = {}
+    self.annotations_inflight = {}
 
     -- Like AutoSuspend, we need an instance-specific task for scheduling/resource management reasons.
     self.periodic_push_task = function()
         self.periodic_push_scheduled = false
         self.page_update_counter = 0
         -- We do *NOT* want to make sure networking is up here, as the nagging would be extremely annoying; we're leaving that to the network activity check...
-        self:updateProgress(false, false)
+        if self.settings.auto_sync and self:hasActiveDocument() then
+            self:updateProgress(false, false)
+        end
     end
 
     self.settings = G_reader_settings:readSetting("cwasync", self.default_settings)
     self.device_id = G_reader_settings:readSetting("device_id")
-
-    -- Disable auto-sync if beforeWifiAction was reset to "prompt" behind our back...
-    if self.settings.auto_sync and Device:hasSeamlessWifiToggle() and G_reader_settings:readSetting("wifi_enable_action") ~= "turn_on" then
-        self.settings.auto_sync = false
-        logger.warn("CWASync: Automatic sync has been disabled because wifi_enable_action is *not* turn_on")
-    end
 
     self.ui.menu:registerToMainMenu(self)
 end
@@ -148,14 +148,16 @@ local function getBodyMessage(body, fallback)
     return fallback
 end
 
-local function ensureServerConfigured(server)
+local function ensureServerConfigured(server, interactive)
     if server and server ~= "" then
         return true
     end
-    UIManager:show(InfoMessage:new{
-        text = _("Please set the Verso Server address first."),
-        timeout = 3,
-    })
+    if interactive ~= false then
+        UIManager:show(InfoMessage:new{
+            text = _("Please set the Verso Server address first."),
+            timeout = 3,
+        })
+    end
     return false
 end
 
@@ -194,12 +196,9 @@ end
 function CWASync:onReaderReady()
     if self.settings.auto_sync then
         UIManager:nextTick(function()
-            self:getProgress(true, false)
+            self:getProgress(false, false)
         end)
     end
-    -- NOTE: Keep in mind that, on Android, turning on WiFi requires a focus switch, which will trip a Suspend/Resume pair.
-    --       NetworkMgr will attempt to hide the damage to avoid a useless pull -> push -> pull dance instead of the single pull requested.
-    --       Plus, if wifi_enable_action is set to prompt, that also avoids stacking three prompts on top of each other...
     self:registerEvents()
     self:onDispatcherRegisterActions()
     -- Bring in the time read on other devices, if the network is already up.
@@ -261,14 +260,8 @@ This sets the cloud sync of the Reading statistics plugin to your Verso server.]
             {
                 text = _("Automatically keep documents in sync"),
                 checked_func = function() return self.settings.auto_sync end,
-                help_text = _([[This may lead to nagging about toggling WiFi on document close and suspend/resume, depending on the device's connectivity.]]),
+                help_text = _([[Synchronizes quietly when Wi-Fi is already connected. Automatic sync never turns Wi-Fi on.]]),
                 callback = function()
-                    -- Actively recommend switching the before wifi action to "turn_on" instead of prompt, as prompt will just not be practical (or even plain usable) here.
-                    if Device:hasSeamlessWifiToggle() and G_reader_settings:readSetting("wifi_enable_action") ~= "turn_on" and not self.settings.auto_sync then
-                        UIManager:show(InfoMessage:new{ text = _("You will have to switch the 'Action when Wi-Fi is off' Network setting to 'turn on' to be able to enable this feature!") })
-                        return
-                    end
-
                     self.settings.auto_sync = not self.settings.auto_sync
                     self:registerEvents()
                     if not(self:hasActiveDocument()) then
@@ -277,11 +270,10 @@ This sets the cloud sync of the Reading statistics plugin to your Verso server.]
                     if self.settings.auto_sync then
                         -- Since we will update the progress when closing the document,
                         -- pull the current progress now so as not to silently overwrite it.
-                        self:getProgress(true, true)
+                        self:getProgress(false, false)
                     else
-                        -- Since we won't update the progress when closing the document,
-                        -- push the current progress now so as not to lose it.
-                        self:updateProgress(true, true)
+                        -- Send the last changed position if still connected.
+                        self:updateProgress(false, false, true)
                     end
                 end,
             },
@@ -291,7 +283,7 @@ This sets the cloud sync of the Reading statistics plugin to your Verso server.]
                 end,
                 enabled_func = function() return self.settings.auto_sync end,
                 -- This is the condition that allows enabling auto_disable_wifi in NetworkManager ;).
-                help_text = NetworkMgr:getNetworkInterfaceName() and _([[Unlike the automatic sync above, this will *not* attempt to setup a network connection, but instead relies on it being already up, and may trigger enough network activity to passively keep WiFi enabled!]]),
+                help_text = _([[Page turns are grouped into a single quiet update at most once per minute, while Wi-Fi is already connected. Set the page count to 0 to disable periodic updates.]]),
                 keep_menu_open = true,
                 callback = function(touchmenu_instance)
                     local SpinWidget = require("ui/widget/spinwidget")
@@ -433,6 +425,7 @@ function CWASync:statusTextIfActionUnavailable()
 end
 
 function CWASync:setPagesBeforeUpdate(pages_before_update)
+    self:cancelPeriodicPush()
     self.settings.pages_before_update = pages_before_update > 0 and pages_before_update or nil
 end
 
@@ -695,20 +688,20 @@ function CWASync:updateProgress(ensure_networking, interactive, flush)
         return
     end
 
-    if flush and (not self.settings.server or not NetworkMgr:isConnected()) then
+    if not self:hasActiveDocument() or not ensureServerConfigured(self.settings.server, interactive) then
         return
     end
-    if not ensureServerConfigured(self.settings.server) then
+    if (flush or not interactive) and not NetworkMgr:isConnected() then
         return
     end
 
     local now = UIManager:getElapsedTimeSinceBoot()
-    if not flush and not interactive and now - self.push_timestamp <= API_CALL_DEBOUNCE_DELAY then
-        logger.dbg("CWASync: We've already pushed progress less than 25s ago!")
+    if not flush and not interactive and (self.push_inflight
+            or (self.push_timestamp and now - self.push_timestamp < API_CALL_DEBOUNCE_DELAY)) then
         return
     end
 
-    if ensure_networking and NetworkMgr:willRerunWhenOnline(function() self:updateProgress(ensure_networking, interactive, flush) end) then
+    if interactive and ensure_networking and NetworkMgr:willRerunWhenOnline(function() self:updateProgress(ensure_networking, interactive, flush) end) then
         return
     end
 
@@ -732,10 +725,20 @@ function CWASync:updateProgress(ensure_networking, interactive, flush)
     local progress = self:getLastProgress()
     local percentage = self:getLastPercent()
     local position = table.concat({self.settings.server, doc_digest, tostring(progress), tostring(percentage)}, "|")
-    if flush and self.last_sent_position == position then
+    if not interactive and self.last_sent_position == position and not self.push_inflight then
+        -- A highlight can change without a page turn. Its own signature check
+        -- prevents redundant uploads.
+        if flush then
+            local ann_ok, ann_err = pcall(self.pushAnnotations, self, doc_digest)
+            if not ann_ok then logger.warn("CWASync: could not send highlights:", ann_err) end
+        end
         return
     end
     local file = self.ui.document.file
+    self.push_timestamp = now
+    self.push_generation = (self.push_generation or 0) + 1
+    local generation = self.push_generation
+    self.push_inflight = true
     local ok, err = pcall(client.update_progress,
         client,
         self.settings.username,
@@ -746,8 +749,9 @@ function CWASync:updateProgress(ensure_networking, interactive, flush)
         Device.model,
         self.device_id,
         function(ok, body)
-            if ok then
-                self.last_sent_position = position
+            if self.push_generation == generation then
+                self.push_inflight = false
+                if ok then self.last_sent_position = position end
             end
             logger.dbg("CWASync: [Push] progress to", percentage * 100, "% =>", progress, "for", file)
             logger.dbg("CWASync: ok:", ok, "body:", body)
@@ -763,6 +767,7 @@ function CWASync:updateProgress(ensure_networking, interactive, flush)
             end
         end, flush)
     if not ok then
+        if self.push_generation == generation then self.push_inflight = false end
         if interactive then showSyncError() end
         if err then logger.dbg("err:", err) end
     else
@@ -774,7 +779,6 @@ function CWASync:updateProgress(ensure_networking, interactive, flush)
             self:syncStatistics(false)
         end
     end
-    self.push_timestamp = now
 end
 
 -- Scriptorium extension: highlights and notes of the open book, as plain tables.
@@ -844,7 +848,9 @@ end
 function CWASync:pushAnnotations(doc_digest)
     local annotations, signature = self:getAnnotationsForSync()
     local removed_web = self:removedWebHighlights(annotations)
-    if self.annotations_sent[doc_digest] == signature and #removed_web == 0 then
+    self.annotations_inflight = self.annotations_inflight or {}
+    if self.annotations_inflight[doc_digest]
+            or (self.annotations_sent[doc_digest] == signature and #removed_web == 0) then
         return
     end
     local CWASyncClient = require("CWASyncClient")
@@ -853,7 +859,8 @@ function CWASync:pushAnnotations(doc_digest)
         service_spec = self.path .. "/api.json",
         plugin_version = self.version,
     }
-    client:update_annotations(
+    self.annotations_inflight[doc_digest] = true
+    local ok, err = pcall(client.update_annotations, client,
         self.settings.username,
         self.settings.password,
         doc_digest,
@@ -862,12 +869,17 @@ function CWASync:pushAnnotations(doc_digest)
         self.device_id,
         removed_web,
         function(ok, body)
+            self.annotations_inflight[doc_digest] = nil
             logger.dbg("CWASync: [Push] highlights:", #annotations, "ok:", ok, "body:", body)
             if ok then
                 self.annotations_sent[doc_digest] = signature
                 self:forgetWebHighlights(removed_web)
             end
         end)
+    if not ok then
+        self.annotations_inflight[doc_digest] = nil
+        error(err)
+    end
 end
 
 -- Scriptorium extension (plugin 1.3): highlights made in the built-in reader.
@@ -1170,8 +1182,13 @@ local function runStatisticsSync(statistics, interactive)
         return
     end
     local has_service, SyncService = pcall(require, "frontend/apps/cloudstorage/syncservice")
-    if interactive or not has_service or type(statistics.onSync) ~= "function" then
+    if interactive then
         statistics:onSyncBookStats()
+        return
+    end
+    if not has_service or type(statistics.onSync) ~= "function" then
+        -- Do not fall back to a noisy legacy API during automatic sync.
+        logger.dbg("CWASync: silent statistics sync unavailable; use manual sync")
         return
     end
     UIManager:nextTick(function()
@@ -1252,15 +1269,18 @@ function CWASync:toggleStatsSync(touchmenu_instance)
     end
 end
 
--- interactive: the user asked, so show the result. force: skip the interval (book closing).
-function CWASync:syncStatistics(interactive, force)
+-- Automatic statistics sync is throttled even when books are closed frequently.
+function CWASync:syncStatistics(interactive)
     if not self.settings.sync_stats then return end
     local statistics = self:applyStatsServer()
     if not statistics or not statistics.settings.is_enabled or not statistics.settings.sync_server then
         return
     end
-    local now = UIManager:getElapsedTimeSinceBoot()
-    if not interactive and not force and self.stats_timestamp and now - self.stats_timestamp < STATS_SYNC_INTERVAL then
+    local now = os.time()
+    -- A reader widget may be recreated for every opened book; keep this
+    -- timestamp in device settings rather than on the widget itself.
+    local previous = tonumber(G_reader_settings:readSetting("cwasync_last_stats_attempt"))
+    if not interactive and previous and now >= previous and now - previous < STATS_SYNC_INTERVAL then
         return
     end
     if not interactive then
@@ -1268,7 +1288,7 @@ function CWASync:syncStatistics(interactive, force)
         local connected_ok, connected = pcall(NetworkMgr.isConnected, NetworkMgr)
         if not connected_ok or not connected then return end
     end
-    self.stats_timestamp = now
+    G_reader_settings:saveSetting("cwasync_last_stats_attempt", now)
     local ok, err = pcall(runStatisticsSync, statistics, interactive)
     if not ok then logger.warn("CWASync: could not sync reading statistics:", err) end
 end
@@ -1281,17 +1301,19 @@ function CWASync:getProgress(ensure_networking, interactive)
         return
     end
 
-    if not ensureServerConfigured(self.settings.server) then
+    if not self:hasActiveDocument() or not ensureServerConfigured(self.settings.server, interactive) then
+        return
+    end
+    if not interactive and not NetworkMgr:isConnected() then
         return
     end
 
     local now = UIManager:getElapsedTimeSinceBoot()
-    if not interactive and now - self.pull_timestamp <= API_CALL_DEBOUNCE_DELAY then
-        logger.dbg("CWASync: We've already pulled progress less than 25s ago!")
+    if not interactive and self.pull_timestamp and now - self.pull_timestamp < API_CALL_DEBOUNCE_DELAY then
         return
     end
 
-    if ensure_networking and NetworkMgr:willRerunWhenOnline(function() self:getProgress(ensure_networking, interactive) end) then
+    if interactive and ensure_networking and NetworkMgr:willRerunWhenOnline(function() self:getProgress(ensure_networking, interactive) end) then
         return
     end
 
@@ -1312,17 +1334,21 @@ function CWASync:getProgress(ensure_networking, interactive)
         end
         return
     end
+    self.pull_timestamp = now
+    local document = self.ui.document
     local ok, err = pcall(client.get_progress,
         client,
         self.settings.username,
         self.settings.password,
         doc_digest,
         function(ok, body)
-            logger.dbg("CWASync: [Pull] progress for", self.view.document.file)
+            if not self:hasActiveDocument() or self.ui.document ~= document then return end
+            logger.dbg("CWASync: [Pull] progress for", document.file)
             logger.dbg("CWASync: ok:", ok, "body:", body)
             -- Scriptorium extension: then the highlights made in the browser. Guarded so a problem
             -- here can never stop progress sync.
             UIManager:nextTick(function()
+                if not self:hasActiveDocument() or self.ui.document ~= document then return end
                 local ann_ok, ann_err = pcall(self.pullAnnotations, self, doc_digest)
                 if not ann_ok then logger.warn("CWASync: could not fetch highlights:", ann_err) end
             end)
@@ -1421,7 +1447,6 @@ function CWASync:getProgress(ensure_networking, interactive)
             if self_older then
                 if self.settings.sync_forward == SYNC_STRATEGY.SILENT then
                     self:syncToProgress(body.progress, body.percentage)
-                    showSyncedMessage()
                 elseif self.settings.sync_forward == SYNC_STRATEGY.PROMPT then
                     UIManager:show(ConfirmBox:new{
                         text = T(_("Sync to latest location %1% from device '%2'?"),
@@ -1435,7 +1460,6 @@ function CWASync:getProgress(ensure_networking, interactive)
             else -- if not self_older then
                 if self.settings.sync_backward == SYNC_STRATEGY.SILENT then
                     self:syncToProgress(body.progress, body.percentage)
-                    showSyncedMessage()
                 elseif self.settings.sync_backward == SYNC_STRATEGY.PROMPT then
                     UIManager:show(ConfirmBox:new{
                         text = T(_("Sync to previous location %1% from device '%2'?"),
@@ -1453,7 +1477,6 @@ function CWASync:getProgress(ensure_networking, interactive)
         if err then logger.dbg("err:", err) end
     end
 
-    self.pull_timestamp = now
 end
 
 function CWASync:_onCloseDocument()
@@ -1461,26 +1484,27 @@ function CWASync:_onCloseDocument()
     if self.powering_off then
         return
     end
-    -- NOTE: Because everything is terrible, on Android, opening the system settings to enable WiFi means we lose focus,
-    --       and we handle those system focus events via... Suspend & Resume events, so we need to neuter those handlers early.
     self.onResume = nil
     self.onSuspend = nil
-    -- NOTE: Because we'll lose the document instance on return, we need to *block* until the connection is actually up here,
-    --       we cannot rely on willRerunWhenOnline, because if we're not currently online,
-    --       it *will* return early, and that means the actual callback *will* run *after* teardown of the document instance
-    --       (and quite likely ours, too).
-    NetworkMgr:goOnlineToRun(function()
-        -- Drop the inner willRerunWhenOnline ;).
-        self:updateProgress(false, false, true)
-        self:syncStatistics(false, true)
-    end)
+    self:cancelPeriodicPush()
+    -- Do not wake Wi-Fi or display network prompts during automatic sync.
+    -- A connected device gets a bounded blocking final progress upload.
+    self:updateProgress(false, false, true)
+    self:syncStatistics(false)
+end
+
+function CWASync:cancelPeriodicPush()
+    if self.periodic_push_task then UIManager:unschedule(self.periodic_push_task) end
+    self.periodic_push_scheduled = false
+    self.page_update_counter = 0
 end
 
 function CWASync:schedulePeriodicPush()
-    UIManager:unschedule(self.periodic_push_task)
-    -- Use a sizable delay to make debouncing this on skim feasible...
-    UIManager:scheduleIn(10, self.periodic_push_task)
+    if self.periodic_push_scheduled or not self.periodic_push_task then return end
+    -- Coalesce all page turns into a single scheduled update. Do not move
+    -- the deadline on each page, so continuous reading still syncs.
     self.periodic_push_scheduled = true
+    UIManager:scheduleIn(PERIODIC_PUSH_DELAY, self.periodic_push_task)
 end
 
 function CWASync:_onPageUpdate(page)
@@ -1492,8 +1516,8 @@ function CWASync:_onPageUpdate(page)
         self.last_page = page
         self.last_page_turn_timestamp = os.time()
         self.page_update_counter = self.page_update_counter + 1
-        -- If we've already scheduled a push, regardless of the counter's state, delay it until we're *actually* idle
-        if self.periodic_push_scheduled or self.settings.pages_before_update and self.page_update_counter >= self.settings.pages_before_update then
+        local threshold = self.settings.pages_before_update
+        if threshold and threshold > 0 and self.page_update_counter >= threshold then
             self:schedulePeriodicPush()
         end
     end
@@ -1501,40 +1525,36 @@ end
 
 function CWASync:_onResume()
     logger.dbg("CWASync: onResume")
-    -- If we have auto_restore_wifi enabled, skip this to prevent both the "Connecting..." UI to pop-up,
-    -- *and* a duplicate NetworkConnected event from firing...
-    if Device:hasWifiRestore() and NetworkMgr.wifi_was_on and G_reader_settings:isTrue("auto_restore_wifi") then
-        return
-    end
-
-    -- And if we don't, this *will* (attempt to) trigger a connection and as such a NetworkConnected event,
-    -- but only a single pull will happen, since getProgress debounces itself.
+    -- If Wi-Fi is restored later, NetworkConnected will perform the pull.
+    -- The shared debounce also coalesces a simultaneous resume/connect event.
     UIManager:scheduleIn(1, function()
-        self:getProgress(true, false)
+        if self.settings.auto_sync then self:getProgress(false, false) end
     end)
 end
 
 function CWASync:_onSuspend()
     logger.dbg("CWASync: onSuspend")
+    self:cancelPeriodicPush()
     self:updateProgress(false, false, true)
 end
 
 function CWASync:_onPowerOff()
     self.powering_off = true
+    self:cancelPeriodicPush()
     self:updateProgress(false, false, true)
 end
 
 function CWASync:_onNetworkConnected()
     logger.dbg("CWASync: onNetworkConnected")
     UIManager:scheduleIn(0.5, function()
-        -- Network is supposed to be on already, don't wrap this in willRerunWhenOnline
-        self:getProgress(false, false)
+        if self.settings.auto_sync then self:getProgress(false, false) end
     end)
 end
 
 function CWASync:_onNetworkDisconnecting()
     logger.dbg("CWASync: onNetworkDisconnecting")
     -- Some devices disconnect Wi-Fi before broadcasting Suspend.
+    self:cancelPeriodicPush()
     self:updateProgress(false, false, true)
 end
 
@@ -1556,6 +1576,7 @@ function CWASync:registerEvents()
         self.onNetworkConnected = self._onNetworkConnected
         self.onNetworkDisconnecting = self._onNetworkDisconnecting
     else
+        self:cancelPeriodicPush()
         self.onCloseDocument = nil
         self.onPageUpdate = nil
         self.onResume = nil
@@ -1567,7 +1588,7 @@ function CWASync:registerEvents()
 end
 
 function CWASync:onCloseWidget()
-    UIManager:unschedule(self.periodic_push_task)
+    self:cancelPeriodicPush()
     self.periodic_push_task = nil
 end
 

@@ -55,7 +55,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libldap2-dev libsasl2-dev libssl-dev
+          sudo apt-get install -y libldap2-dev libsasl2-dev libssl-dev lua5.1
       
       - name: Install dependencies
         run: |
@@ -71,6 +71,11 @@ jobs:
           touch /config/converter.log
           touch /config/cwa.db
       
+      - name: Check KOReader plugin syntax and sync behavior
+        run: |
+          luac5.1 -p koreader/plugins/cwasync.koplugin/main.lua
+          lua5.1 tests/koreader/test_quiet_sync.lua
+
       - name: Run smoke and unit tests
         env:
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/scripts

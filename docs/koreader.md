@@ -33,7 +33,11 @@ Enter:
 - **Username** and **password**: the same ones you use for the web interface.
 
 Enable **Automatically keep documents in sync** in the same menu to sync progress when the
-reader sleeps or powers off while connected.
+reader sleeps or powers off while connected. Version 1.3.2 keeps automatic synchronization
+quiet: it never turns Wi-Fi on, coalesces optional page-turn uploads into one attempt at most
+per minute, and skips unchanged progress. Reading statistics sync at most once every ten
+minutes automatically across book changes. Manual sync still reports its result; an explicitly selected
+confirmation strategy still asks before moving to another device's position.
 
 ## Keeping the plugin up to date
 
@@ -57,10 +61,11 @@ from the library:
 
 ## How it works
 
-- Progress is saved when you turn pages, close or switch books, or leave KOReader, and uploaded
-  in the background. With automatic sync enabled and Wi-Fi connected, Verso Sync also sends
-  the latest position before sleep or a power-off initiated in KOReader. A disconnected or
-  abruptly powered-off device cannot upload until it is active and connected again.
+- With automatic sync enabled and Wi-Fi connected, Verso Sync uploads changed progress
+  when closing or switching books, before sleep, Wi-Fi disconnection or a KOReader power-off.
+  Optional periodic uploads use the configured page count and a one-minute cooldown.
+  Automatic sync does not wake Wi-Fi or show routine progress messages. Offline or abruptly
+  powered-off devices cannot upload until they are active and connected again.
 - Books are matched by a checksum of the file, so the copy on the device must be one downloaded
   from the library. A file converted or edited elsewhere will not match.
 - Progress updates the read status in the library: 0% is *unread*, anything in between is

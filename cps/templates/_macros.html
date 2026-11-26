@@ -134,11 +134,11 @@
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 {%- endmacro %}
 
-{% macro switch(name, label, checked=False, hint='', id=None, value='on', disabled=False) -%}
+{% macro switch(name, label, checked=False, hint='', id=None, value='on', disabled=False, form=None) -%}
 {%- set fid = id or name -%}
 <label class="setting" for="{{ fid }}">
   <span class="setting-text"><span class="setting-title">{{ label }}</span>{% if hint %}<span class="hint">{{ hint }}</span>{% endif %}</span>
-  <span class="setting-control"><input type="checkbox" class="switch" id="{{ fid }}" name="{{ name }}" value="{{ value }}"{% if checked %} checked{% endif %}{% if disabled %} disabled{% endif %}></span>
+  <span class="setting-control"><input type="checkbox" class="switch" id="{{ fid }}" name="{{ name }}" value="{{ value }}"{% if form %} form="{{ form }}"{% endif %}{% if checked %} checked{% endif %}{% if disabled %} disabled{% endif %}></span>
 </label>
 {%- endmacro %}
 
