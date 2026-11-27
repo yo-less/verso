@@ -1,4 +1,4 @@
-/* Verso demo V6: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V7: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home"];
@@ -42,41 +42,56 @@ function brand(t,opening){
 function automation(t){
  bg(false,t);title("From file to bookshelf",90,110,false,76,"left");
  text("Automatic import",94,225,35,C.rust,"Geist",600);
- const box=browser("import-empty",770,220,1050),b=window.data.importCover,s=box.w/1440;
+ // Draw exactly one browser shell; restore only the hidden card when the cover lands.
+ const box=browser("import-empty",770,220,1050),b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
- // Keep the actual library empty until the illustration lands, then reveal the actual card in place.
- fade(step(t,3.18,3.52),()=>browser("import-library",770,220,1050));
+ const flight=step(t,2.05,3.95),morph=step(t,1.12,1.9),lift=step(t,.2,.8),land=step(t,3.95,4.25);
+ const im=assets["import-library"],ratio=im.width/1440;
+ fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
  tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,36,C.forest,"Geist",500)});
- const flight=step(t,1.75,3.18),morph=step(t,.88,1.7),lift=step(t,.12,.65);
- const x=mix(560,target.x,flight),y=mix(865-40*lift,target.y,flight)-90*Math.sin(Math.PI*flight);
- const w=mix(132,target.w,flight),h=mix(194,target.h,flight);
- fade(step(t,0,.22)*(1-step(t,3.18,3.52)),()=>{
-  ctx.save();ctx.translate(x,y);ctx.rotate(-.09*(1-flight));
-  fade(1-morph,()=>{shadow(-w/2,-h/2,w,h,8,C.paper,18);text("EPUB",0,-7,w*.24,C.rust,"Geist",700,"center");line(-w*.28,h*.22,w*.28,h*.22,C.gold,3)});
+ const x=mix(540,target.x,flight),y=mix(820-32*lift,target.y,flight)-85*Math.sin(Math.PI*flight);
+ const w=mix(140,target.w,flight),h=mix(202,target.h,flight);
+ fade(step(t,.05,.35)*(1-land),()=>{
+  ctx.save();ctx.translate(x,y);ctx.rotate(-.06*(1-flight));
+  // The opaque file/cover is always in the foreground, not under the browser.
+  shadow(-w/2,-h/2,w,h,8,C.paper,14);
+  text("EPUB",0,-7,w*.24,C.rust,"Geist",700,"center");
+  line(-w*.28,h*.22,w*.28,h*.22,C.gold,3);
   fade(morph,()=>img("moby-cover",-w/2,-h/2,w,h,"cover"));
   ctx.restore();
  });
- text("Illustrated import sequence",95,1019,21,"#6b6f60");
+ text("Illustrated import sequence",95,973,23,"#6b6f60");
+}
+function footer(s,dark=true){
+ // Captions have a dedicated safe area above player controls.
+ text(s,960,970,32,dark?C.ivory:C.forest,"Geist",500,"center");
 }
 function library(t){
  bg(true,t);title("Browse your library",960,84,true,76);
- const w=1320,x=(W-w)/2,y=155;
+ const w=1160,x=(W-w)/2,y=150;
+ let index;
  if(t<1.8){
-  const i=Math.min(24,Math.floor(clamp((t-.25)/1.45)*24+.5));
-  browser("browse-scroll-"+i,x,y,w);
- }else if(t<2.65){
+  index=Math.round(clamp((t-.28)/1.42)*24);
+  browser("browse-scroll-"+index,x,y,w);
+ }else if(t<2.85){
+  index=Math.round((1-step(t,1.92,2.83))*24);
+  browser("browse-scroll-"+index,x,y,w);
+ }else if(t<3.7){
   browser("browse-scroll-0",x,y,w);
-  fade(step(t,1.8,2.05),()=>browser("browse-typed",x,y,w));
+  // Only replace the search field, rather than dissolve entire browser shells.
+  const p=step(t,2.85,3.22);
+  ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,w*.65,19);ctx.clip();
+  fade(p,()=>{const im=assets["browse-typed"];ctx.drawImage(im,x,y+w*.025,w,w*im.height/im.width);});ctx.restore();
  }else{
   browser("browse-results",x,y,w);
+  if(t<4.03)fade(1-step(t,3.7,4.03),()=>browser("browse-typed",x,y,w));
  }
- const caption=t<1.8?"Explore the shelves":t<2.65?"Search by author":"Jane Austen · matching books";
- text(caption,960,1020,30,C.ivory,"Geist",500,"center");
+ footer(t<2.85?"Explore the shelves":t<3.7?"Search by author":"Jane Austen · matching books");
 }
 function details(t){
  bg(false,t);title(t<1.65?"Explore a book":"Discover related titles",960,84,false,76);
  const i=Math.min(24,Math.floor(clamp((t-1.4)/1.65)*24+.5));
- browser("detail-scroll-"+i,300,155,1320);
+ browser("detail-scroll-"+i,350,155,1220);
 }
 function devices(t){
  bg(true,t);title("Pick up where you left off",960,85,true,76);
@@ -93,14 +108,14 @@ function devices(t){
  const spin=step(t,1.3,2.0),x=1290,y=520;
  rect(x-42,y-42,84,84,42,C.gold);ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI*2*spin);ctx.strokeStyle=C.forest;ctx.lineWidth=5;ctx.beginPath();ctx.arc(0,0,22,-2.7,.1);ctx.stroke();ctx.beginPath();ctx.arc(0,0,22,.45,3.25);ctx.stroke();line(22,2,14,-7,C.forest,5);line(22,2,29,-8,C.forest,5);line(-22,-2,-14,7,C.forest,5);line(-22,-2,-29,8,C.forest,5);ctx.restore();
  // Conceptual progress indicator, explicitly distinct from the captured UI.
- rect(96,900,1090,92,14,"#274739");text("Moby-Dick  ·  Reading progress",125,930,26,C.ivory,"Geist",550);line(125,965,950,965,"#637a6c",6);line(125,965,125+825*synced/100,965,C.gold,6);text(Math.round(synced)+"%",1100,965,32,C.ivory,"Geist",600,"right");
- text(b>.99?"Progress synchronized":"Verso  ·  Illustrated sync",640,1027,25,C.muted,"Geist",500,"center");
- text("Kobo  ·  KOReader",1585,946,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,986,21,C.muted,"Geist",450,"center");
+ rect(96,875,1090,86,14,"#274739");text("Moby-Dick  ·  Reading progress",125,901,26,C.ivory,"Geist",550);line(125,936,950,936,"#637a6c",6);line(125,936,125+825*synced/100,936,C.gold,6);text(Math.round(synced)+"%",1100,936,32,C.ivory,"Geist",600,"right");
+ text(b>.99?"Progress synchronized":"Verso  ·  Illustrated sync",640,990,25,C.muted,"Geist",500,"center");
+ text("Kobo  ·  KOReader",1585,932,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
 }
 function statistics(t){
  bg(false,t);title("Your reading, in perspective",960,85,false,74);
- browser("stats",300,155,1320);
- fade(step(t,1.65,2.15),()=>browser("stats-detail",300,155,1320));
+ browser("stats",350,155,1220);
+ fade(step(t,1.65,2.15),()=>browser("stats-detail",350,155,1220));
 }
 function highlights(t){
  bg(true,t);title("Keep the words that matter",960,85,true,76);
@@ -123,28 +138,28 @@ function year(t){
  // A moving story carousel, not three independent stationary devices.
  const seq=["story-intro","story-finished","story-authors","story-rhythm","story-summary"];
  let pos=0;
- for(let i=1;i<seq.length;i++)pos+=step(t,i*1.03-.32,i*1.03+.22);
+ for(let i=1;i<seq.length;i++)pos+=step(t,i*1.22-.42,i*1.22+.28);
  const cards=seq.map((k,i)=>({k,i,delta:i-pos})).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
  for(const {k,delta} of cards){
   if(Math.abs(delta)>2.5)continue;
-  const strength=1-clamp(Math.abs(delta)/1.6),w=mix(320,434,strength),x=960+delta*475,y=610+(1-strength)*35;
+  const strength=1-clamp(Math.abs(delta)/1.6),w=mix(300,398,strength),x=960+delta*450,y=570+(1-strength)*30;
   fade(mix(.46,1,strength),()=>phone(k,x,y,w,0));
  }
- seq.forEach((_,i)=>rect(960-64+i*32,1030,22,5,2,Math.abs(i-pos)<.5?C.gold:"#718579"));
+ seq.forEach((_,i)=>rect(960-64+i*32,980,22,5,2,Math.abs(i-pos)<.5?C.gold:"#718579"));
 }
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
  const seq=["theme-light","theme-dark","theme-sunset","theme-ocean","branding-viewport"];
  const labels=["Light","Dark","Sunset","Ocean","Custom logos & instance branding"];
- const starts=[0,1.12,2.24,3.36,4.48];
- const i=Math.max(0,starts.filter(s=>t>=s).length-1),q=t-starts[i],x=330,y=150,w=1260;
+ const starts=[0,1.35,2.70,4.05,5.40];
+ const i=Math.max(0,starts.filter(s=>t>=s).length-1),q=t-starts[i],x=380,y=150,w=1160;
  // Sliding separate windows in an opaque clipped viewport avoids double-image sidebars.
- ctx.save();ctx.beginPath();ctx.rect(300,130,1320,830);ctx.clip();
- const p=i===0?1:step(q,0,.38);
- if(i>0&&p<1)browser(seq[i-1],x-1320*p,y,w);
- browser(seq[i],x+1320*(1-p),y,w);
+ ctx.save();ctx.beginPath();ctx.rect(350,130,1220,790);ctx.clip();
+ const p=i===0?1:step(q,0,.65);
+ if(i>0&&p<1)browser(seq[i-1],x-1220*p,y,w);
+ browser(seq[i],x+1220*(1-p),y,w);
  ctx.restore();
- rect(630,967,660,61,30,C.forest);text(labels[i],960,998,29,C.ivory,"Geist",550,"center");
+ rect(630,936,660,58,29,C.forest);text(labels[i],960,965,29,C.ivory,"Geist",550,"center");
 }
 function install(t){
  bg(true,t);title("Run Verso yourself",960,105,true,76);
@@ -155,14 +170,14 @@ function install(t){
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
- {id:"automation",len:4,draw:automation},
- {id:"library",len:4,draw:library},
+ {id:"automation",len:5,draw:automation},
+ {id:"library",len:5,draw:library},
  {id:"details",len:4,draw:details},
  {id:"devices",len:4,draw:devices},
  {id:"statistics",len:3.5,draw:statistics},
  {id:"highlights",len:3,draw:highlights},
- {id:"year",len:5.5,draw:year},
- {id:"personalize",len:6,draw:personalize},
+ {id:"year",len:6,draw:year},
+ {id:"personalize",len:7,draw:personalize},
  {id:"install",len:3.5,draw:install},
  {id:"close",len:3,draw:t=>brand(t,false)}
 ];
@@ -171,7 +186,9 @@ function drawScene(i,t){ctx.save();scenes[i].draw(Math.max(0,t));ctx.restore()}
 window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);if(i>0&&scenes[i].id==="close"&&t<.85){
  const p=step(t,0,.85),edge=H*(1-p);ctx.save();ctx.translate(0,-H*p);drawScene(i-1,scenes[i-1].len-.001);ctx.restore();
  if(edge>0){const g=ctx.createLinearGradient(0,edge,0,edge+25);g.addColorStop(0,"#00000044");g.addColorStop(1,"#00000000");ctx.fillStyle=g;ctx.fillRect(0,edge,W,25);}
- }else if(i>0&&scenes[i].id!=="close"&&t<.35)fade(1-step(t,0,.35),()=>drawScene(i-1,scenes[i-1].len-.001))};
+ }else if(i>0&&scenes[i].id==="automation"&&t<.65){
+ const p=step(t,0,.65);ctx.save();ctx.beginPath();ctx.rect(0,0,W*(1-p),H);ctx.clip();drawScene(i-1,scenes[i-1].len-.001);ctx.restore();
+ }else if(i>0&&scenes[i].id!=="close"&&scenes[i].id!=="automation"&&t<.52)fade(1-step(t,0,.52),()=>drawScene(i-1,scenes[i-1].len-.001))};
 // Test the actual rendered pixels at each circle, before and after its own reveal.
 // The check is dark forest against a solid gold circle; test only its inner square.
 window.verifyChecks=function(){function darkPixels(x,y){let d=ctx.getImageData(x-13,y-13,28,28).data,n=0;for(let i=0;i<d.length;i+=4)if(d[i]<45&&d[i+1]<95&&d[i+2]<65)n++;return n}

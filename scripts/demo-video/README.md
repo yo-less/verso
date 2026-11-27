@@ -1,6 +1,6 @@
-# Verso demo video V6
+# Verso demo video V7
 
-Run **Generate Verso demo video** on the preview branch. It uses a disposable fictional library, real browser captures and explicitly illustrated import and device synchronization. V3 is exactly 44 seconds, 1920×1080, 30 fps. It restores the deployment-code scene, introduces an illustrated landscape reveal, slows theme transitions, and uses distinct year-review slides, single-window theme changes, original varied cover designs and a consistent safe framing. The final soundtrack is music alone; synthetic sound effects are removed. Scene transitions use longer eased dissolves.
+Run **Generate Verso demo video** on the preview branch. It uses a disposable fictional library, real browser captures and explicitly illustrated import and device synchronization. V3 is exactly 47.5 seconds, 1920×1080, 30 fps. It restores the deployment-code scene, introduces an illustrated landscape reveal, slows theme transitions, and uses distinct year-review slides, single-window theme changes, original varied cover designs and a consistent safe framing. The final soundtrack is music alone; synthetic sound effects are removed. Scene transitions use longer eased dissolves.
 
 ## Music
 
@@ -10,3 +10,5 @@ Review the exported MP4, poster, scene images, checkmark checks and manifest bef
 
 
 The CI artifact is explicitly named `verso-demo-SILENT-RENDER.mp4` when no licensed music file is supplied. It is an intermediate, not the finished demo. The final review/export must contain an AAC audio stream. Do not publish a silent render. Music excerpt starts at 28.5 seconds; no foley.
+
+V7 draws a single import browser shell and restores only the target card, uses a dedicated footer safe area, animates the return scroll before search, and slows the theme and annual-review transitions.
