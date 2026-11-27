@@ -1,6 +1,6 @@
 # First steps
 
-Scriptorium works out of the box, but ten minutes of setup make it feel like yours. Do these in
+Verso works out of the box, but ten minutes of setup make it feel like yours. Do these in
 order and skip whatever does not apply to you.
 
 Administrators find everything below under **Settings** in the sidebar.
@@ -66,7 +66,7 @@ those you turn on.
 
 ## Install the app
 
-On a phone, Scriptorium can live on your home screen like any other app. This needs HTTPS, so set
+On a phone, Verso can live on your home screen like any other app. This needs HTTPS, so set
 up [remote access](remote-access.md) first. See [Install it as an app](using-scriptorium.md#install-it-as-an-app).
 
 ## Invite your household

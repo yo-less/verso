@@ -1,6 +1,6 @@
-# Scriptorium documentation
+# Verso documentation
 
-Everything you need to run Scriptorium and get the most out of it. Pick the path that sounds like
+Everything you need to run Verso and get the most out of it. Pick the path that sounds like
 you.
 
 ## 🌱 I am new to self-hosting
@@ -25,7 +25,7 @@ Coming from Calibre-Web-Automated? [Swap the image and keep your data](../README
 
 ## 📖 I just want to read
 
-Someone set this up for you? Have a look at **[Using Scriptorium](using-scriptorium.md)**, then
+Someone set this up for you? Have a look at **[Using Verso](using-scriptorium.md)**, then
 connect your [Kobo](kobo.md) or [KOReader](koreader.md).
 
 ## All guides
@@ -38,14 +38,14 @@ connect your [Kobo](kobo.md) or [KOReader](koreader.md).
 | [First steps](first-steps.md) | What to set up right after installing. |
 | [Glossary](glossary.md) | Self-hosting and ebook words, explained. |
 
-### Using Scriptorium
+### Using Verso
 
 | Guide | What is in it |
 | --- | --- |
-| [Using Scriptorium](using-scriptorium.md) | A tour: search, shelves, smart shelves, readers, highlights, your year in books, import, styles, the app. |
+| [Using Verso](using-scriptorium.md) | A tour: search, shelves, smart shelves, readers, highlights, your year in books, import, styles, the app. |
 | [Getting books onto your devices](ereaders.md) | Which method suits your device. Email, Kindle and OPDS. |
 | [Kobo](kobo.md) | Wireless sync of books, shelves, progress and highlights. |
-| [KOReader](koreader.md) | Progress, highlights and reading statistics with the Scriptorium plugin. |
+| [KOReader](koreader.md) | Progress, highlights and reading statistics with the Verso plugin. |
 
 ### Running a server
 
@@ -70,4 +70,4 @@ connect your [Kobo](kobo.md) or [KOReader](koreader.md).
 ## Found a mistake?
 
 These guides live in the repository, so a small correction is a welcome first contribution. Open an
-[issue](https://github.com/MrColoo/scriptorium-library/issues) or a pull request.
+[issue](https://github.com/yo-less/verso/issues) or a pull request.

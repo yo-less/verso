@@ -15,7 +15,7 @@ Set these under `environment:` in `docker-compose.yml`, then run `docker compose
 | `TZ` | `UTC` | Time zone, e.g. `Europe/Rome`. |
 | `HARDCOVER_TOKEN` | – | API key for [Hardcover](https://docs.hardcover.app/api/getting-started/) as a metadata provider. A user's own token or the one in the settings wins over this. |
 | `NETWORK_SHARE_MODE` | `false` | `true` when the library or config live on NFS or SMB. See [Network shares](installation.md#network-shares-nfs-smb). |
-| `TRUSTED_PROXY_COUNT` | `1` | Number of reverse proxies in front of Scriptorium. See [More than one proxy](remote-access.md#more-than-one-proxy). |
+| `TRUSTED_PROXY_COUNT` | `1` | Number of reverse proxies in front of Verso. See [More than one proxy](remote-access.md#more-than-one-proxy). |
 
 ### Advanced
 
@@ -34,7 +34,7 @@ Set these under `environment:` in `docker-compose.yml`, then run `docker compose
 
 > [!NOTE]
 > Names starting with `CWA_` come from Calibre-Web-Automated, and are kept so that existing setups
-> keep working. The same goes for the `/cwa-book-ingest` path and `cwa.db`.
+> keep working. The same goes for `SCRIPTORIUM_DEFAULT_ADMIN`, the `/cwa-book-ingest` path and `cwa.db`.
 
 ## Where things are stored
 
@@ -123,3 +123,7 @@ DRM-protected books cannot be converted. ACSM files need a Calibre plugin that c
 Amazon, Amazon Japan, ComicVine, DNB, Douban, Google Books, Hardcover, IBDB, Kobo, LitRes,
 Lubimyczytac and Google Scholar. The default automatic order is IBDB, Google, DNB; change it under
 *Automation → Metadata*.
+
+## Cover artwork API
+
+The OPDS XML and JSON catalogues advertise separate original and thumbnail links. `/opds/cover/<id>` returns the original artwork. `/opds/thumb_240_240/<id>` returns an optimized 320-pixel-wide thumbnail (or the original while generation completes). Legacy thumbnail aliases remain available. The HTTP response specifies the actual image type. Browser cover-quality preferences do not affect these endpoints.

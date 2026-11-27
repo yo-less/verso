@@ -62,7 +62,7 @@ Choose the login type in *Settings → Server & features → Login*.
 
 ### Standard
 
-Usernames and passwords stored in Scriptorium. The password policy is under *Security*: by default at
+Usernames and passwords stored in Verso. The password policy is under *Security*: by default at
 least 8 characters, with a number, a lowercase and an uppercase letter, and a special character.
 
 ### LDAP
@@ -76,7 +76,7 @@ the group filter and group name.
 
 GitHub, Google and any generic OIDC provider, such as Authelia, Authentik, Keycloak or PocketID.
 
-1. Scriptorium must be on HTTPS.
+1. Verso must be on HTTPS.
 2. In your provider, create an application with this redirect URL:
 
    ```text
@@ -103,7 +103,7 @@ Use this when a proxy such as Authelia or Authentik has already signed the user 
 Reverse Proxy Authentication** and set the header name, usually `Remote-User`.
 
 > [!CAUTION]
-> Scriptorium trusts that header completely. Anyone who can reach Scriptorium without passing through
+> Verso trusts that header completely. Anyone who can reach Verso without passing through
 > the proxy can sign in as any user. Do not publish port 8083: use a private Docker network.
 
 Exclude these paths from your proxy's login, because devices cannot complete a browser sign-in:
@@ -122,7 +122,7 @@ See [Set up the mail server](ereaders.md#1-set-up-the-mail-server-administrator)
 | **Start Time** | 4:00 | When maintenance starts. |
 | **Maximum Duration** | 10 hours | When it must stop. |
 | **Scheduled Thumbnail Refresh** | On | Refreshes all thumbnails. They are also made on demand. |
-| **Reconnect Calibre Database** | Off | Picks up changes made outside Scriptorium. |
+| **Reconnect Calibre Database** | Off | Picks up changes made outside Verso. |
 | **Generate Metadata Backup Files** | Off | Writes a `metadata.opf` next to each book, so the catalogue can be rebuilt in Calibre if `metadata.db` is lost. |
 
 Time zones come from `TZ`. Running and finished jobs are listed under *Tasks* in the sidebar.
@@ -151,7 +151,7 @@ Under *System* on the Settings page:
 
 ## Hardcover
 
-[Hardcover](https://hardcover.app) is a free reading tracker, and Scriptorium connects to it in three
+[Hardcover](https://hardcover.app) is a free reading tracker, and Verso connects to it in three
 ways:
 
 | Use | Set up with |

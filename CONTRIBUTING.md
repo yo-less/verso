@@ -1,4 +1,4 @@
-# Contributing to Scriptorium
+# Contributing to Verso
 
 Thanks for helping. Bug reports, ideas, translations and code are all welcome.
 
@@ -32,7 +32,7 @@ as described in [docs/releasing.md](docs/releasing.md).
 
 ### Backend changes
 
-Scriptorium keeps its backend close to [Calibre-Web-Automated](https://github.com/crocodilestick/Calibre-Web-Automated).
+Verso keeps its backend close to [Calibre-Web-Automated](https://github.com/crocodilestick/Calibre-Web-Automated).
 Fixes that apply to both projects are best proposed upstream too. Don't rename internal
 identifiers (environment variables, container paths, `cwa.db`, routes): existing installs rely on
 them.

@@ -1,6 +1,6 @@
 # Installation reference
 
-Everything about deploying Scriptorium. New to Docker? Follow [Start here](start-here.md) instead.
+Everything about deploying Verso. New to Docker? Follow [Start here](start-here.md) instead.
 
 ## Requirements
 
@@ -13,10 +13,12 @@ start shows `starting` for a while.
 
 ## The compose file
 
+The supplied Compose file retains the service and container name `scriptorium` for compatibility. Existing installations do not need to rename either.
+
 ```yaml
 services:
   scriptorium:
-    image: ghcr.io/mrcoloo/scriptorium-library:latest
+    image: ghcr.io/yo-less/verso:latest
     container_name: scriptorium
     environment:
       - PUID=1000            # user and group that own the files on the host
@@ -24,10 +26,10 @@ services:
       - TZ=Europe/Rome       # used for schedules and timestamps
       # - HARDCOVER_TOKEN=…  # optional, see the configuration reference
     volumes:
-      - /srv/scriptorium/config:/config
-      - /srv/scriptorium/ingest:/cwa-book-ingest
+      - /srv/verso/config:/config
+      - /srv/verso/ingest:/cwa-book-ingest
       - /srv/books/library:/calibre-library
-      # - /srv/scriptorium/calibre-plugins:/config/.config/calibre/plugins
+      # - /srv/verso/calibre-plugins:/config/.config/calibre/plugins
     ports:
       - 8083:8083
     restart: unless-stopped
@@ -54,7 +56,7 @@ Keep the three folders separate. Do not put one inside another.
 | --- | --- |
 | `/config` | `app.db` (users and settings), `cwa.db` (automation settings and statistics), logs, backups in `processed_books/`. Back this folder up. |
 | `/cwa-book-ingest` | Drop zone. Every supported file placed here is imported and then **deleted** from the folder. Do not download into it directly: copy finished files in. |
-| `/calibre-library` | The Calibre library (`metadata.db` plus the book folders). If it is empty, Scriptorium creates a library. If it contains several, Scriptorium mounts the largest one and logs which. |
+| `/calibre-library` | The Calibre library (`metadata.db` plus the book folders). If it is empty, Verso creates a library. If it contains several, Verso mounts the largest one and logs which. |
 | `/config/.config/calibre/plugins` | Optional. Your Calibre plugins, used during conversion. |
 
 ### Permissions
@@ -78,27 +80,27 @@ can skip this.
 
 ## Using an existing Calibre library
 
-Point `/calibre-library` at the folder that contains `metadata.db`. Scriptorium uses it as it is,
+Point `/calibre-library` at the folder that contains `metadata.db`. Verso uses it as it is,
 without moving anything.
 
-Scriptorium looks for `metadata.db` when it starts. If it finds several, it mounts the largest and
+Verso looks for `metadata.db` when it starts. If it finds several, it mounts the largest and
 logs which, so keep one library per mount. To choose by hand in *Settings → Calibre library*, set
 `DISABLE_LIBRARY_AUTOMOUNT=true`.
 
-### Using Calibre desktop alongside Scriptorium
+### Using Calibre desktop alongside Verso
 
 Your library stays a standard Calibre library, so you can open it in Calibre desktop. Two programs
 must not write to `metadata.db` at once, though, and that risks corrupting it:
 
-- close Calibre desktop before Scriptorium imports or edits anything, or stop Scriptorium first;
-- never open the library over a network share in Calibre while Scriptorium is running.
+- close Calibre desktop before Verso imports or edits anything, or stop Verso first;
+- never open the library over a network share in Calibre while Verso is running.
 
 After changes in Calibre, press *Reconnect Calibre Database* on the Settings page so that
-Scriptorium notices them. *Settings → Scheduled tasks* can do this every night.
+Verso notices them. *Settings → Scheduled tasks* can do this every night.
 
 ## Docker Desktop on Windows and macOS
 
-Docker Desktop works and is detected automatically: Scriptorium watches folders by polling, because
+Docker Desktop works and is detected automatically: Verso watches folders by polling, because
 file events are not reliable across its Linux VM. New books in `ingest` take a few seconds longer to
 be picked up. Keep the three folders on the computer's own disk, not on a cloud-synced folder such as
 OneDrive or iCloud Drive.
@@ -111,13 +113,13 @@ card. Everything works, but large conversions are slow.
 
 ## NAS
 
-Scriptorium is a regular Docker container, so any NAS with Docker on an Intel, AMD or 64-bit ARM
+Verso is a regular Docker container, so any NAS with Docker on an Intel, AMD or 64-bit ARM
 processor can run it. These notes come from how each system works. The project has not been tested
 on every model, so please report what you find.
 
 **In every case:**
 
-- Use a real folder path from the NAS, such as `/volume1/docker/scriptorium/config`, on the left
+- Use a real folder path from the NAS, such as `/volume1/docker/verso/config`, on the left
   side of the volumes.
 - Set `PUID` and `PGID` to the user who owns those folders. They are often not `1000`.
 - If the disks are local to the NAS, you do **not** need `NETWORK_SHARE_MODE`.
@@ -126,13 +128,13 @@ on every model, so please report what you find.
 <summary><b>Synology (DSM)</b></summary>
 
 1. Install **Container Manager** from Package Center.
-2. In File Station, create `docker/scriptorium` with `config`, `ingest` and `library` inside.
+2. In File Station, create `docker/verso` with `config`, `ingest` and `library` inside.
 3. In Container Manager, open *Project → Create*, set the path to that folder, and paste the compose
    file.
 4. Find your IDs: connect over SSH and run `id`. On Synology, users often have a `uid` such as
    `1026` and the group `users` is `100`.
 
-Use `/volume1/docker/scriptorium/...` paths in the file, or relative paths such as `./config`,
+Use `/volume1/docker/verso/...` paths in the file, or relative paths such as `./config`,
 which work because the project folder is the working directory.
 </details>
 
@@ -140,7 +142,7 @@ which work because the project folder is the working directory.
 <summary><b>Unraid</b></summary>
 
 Use the *Compose Manager* plugin, or add a container by hand with the same image, port and paths.
-A common layout is `/mnt/user/appdata/scriptorium/config` for config and a share under
+A common layout is `/mnt/user/appdata/verso/config` for config and a share under
 `/mnt/user/` for the library. Unraid's usual user is `nobody:users`, so `PUID=99` and `PGID=100`.
 
 Keep `config` on a cache or pool drive. The `/mnt/user/` path goes through Unraid's share layer,
@@ -160,12 +162,12 @@ application user is `apps` (`568`).
 <summary><b>QNAP</b></summary>
 
 Install **Container Station** and create an application from the compose file. Use full paths such as
-`/share/Container/scriptorium/config`.
+`/share/Container/verso/config`.
 </details>
 
 ## Network shares (NFS, SMB)
 
-SQLite and inotify both struggle on network filesystems. With `NETWORK_SHARE_MODE=true`, Scriptorium:
+SQLite and inotify both struggle on network filesystems. With `NETWORK_SHARE_MODE=true`, Verso:
 
 - turns off SQLite write-ahead logging for `metadata.db` and `app.db`, which avoids
   "database is locked" errors and corruption on shares without proper locking;
@@ -205,12 +207,12 @@ Swap the image and keep the volumes. See
 2. Mount the same config folder (or a copy) as `/config`. It contains `app.db` with your users,
    settings, shelves and reading progress.
 3. Mount the folder you used as `/books` as `/calibre-library`.
-4. Start Scriptorium. If the interface does not load, try the port Calibre-Web used, then change it
+4. Start Verso. If the interface does not load, try the port Calibre-Web used, then change it
    once everything works.
 
 ## Running on another port
 
-To reach Scriptorium on host port 8080, change only the left side: `8080:8083`.
+To reach Verso on host port 8080, change only the left side: `8080:8083`.
 
 If something else uses 8083 inside the same network namespace, for example with `network_mode: host`,
 set `CWA_PORT_OVERRIDE` to change the port inside the container. Below 1024 this also needs

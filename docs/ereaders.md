@@ -9,7 +9,7 @@ There are four ways to get a book from your library onto a device. Pick the row 
 | A Kindle | [Email](#send-to-a-kindle-or-any-device-by-email) | No |
 | A PocketBook, or a device with an email address | [Email](#send-to-a-kindle-or-any-device-by-email) | No |
 | A reading app on a phone or tablet | [OPDS](#reading-apps-opds) | No |
-| Anything with a browser | [Read in the browser](using-scriptorium.md#reading-in-the-browser) | Yes, in Scriptorium |
+| Anything with a browser | [Read in the browser](using-scriptorium.md#reading-in-the-browser) | Yes, in Verso |
 
 You can also always download a file from a book's page and copy it across with a cable.
 
@@ -74,7 +74,7 @@ KyBook, Panels, Librera, Thorium and KOReader itself all speak it.
 In your app, add a catalogue with:
 
 - **URL**: your library address followed by `/opds`, for example `http://192.168.1.50:8083/opds`
-- **Username** and **password**: the ones you use for Scriptorium
+- **Username** and **password**: the ones you use for Verso
 
 You can choose the order books appear in under *Profile → Shelves & OPDS*.
 
@@ -86,4 +86,4 @@ You can choose the order books appear in under *Profile → Shelves & OPDS*.
 
 Every book page has a **Download** button. The whole library is also a regular folder on your
 server, but treat it as read-only: copying files out is fine, and changing them by hand is not. To
-edit, use the web interface or [Calibre desktop](installation.md#using-calibre-desktop-alongside-scriptorium).
+edit, use the web interface or [Calibre desktop](installation.md#using-calibre-desktop-alongside-verso).

@@ -35,14 +35,14 @@ library is reachable from the internet.
 **LAN.** Your local network: the devices connected to your home router.
 
 **Localhost.** "This same computer". `http://localhost:8083` only works in a browser on the machine
-that runs Scriptorium. From your phone, `localhost` would mean the phone itself.
+that runs Verso. From your phone, `localhost` would mean the phone itself.
 
 **NAS.** A small always-on computer built to store files.
 
-**Port.** A numbered door on a computer. Scriptorium listens on door 8083, which is why the address
+**Port.** A numbered door on a computer. Verso listens on door 8083, which is why the address
 ends in `:8083`.
 
-**PUID and PGID.** The numbers of the Linux user and group that own the files Scriptorium writes.
+**PUID and PGID.** The numbers of the Linux user and group that own the files Verso writes.
 
 **Reverse proxy.** A program that receives web traffic and passes it to the right app. It is also
 where HTTPS usually lives. See [Remote access](remote-access.md).
@@ -57,10 +57,10 @@ bind mounts described above.
 
 ## Ebooks
 
-**ACSM.** Not a book, but a small Adobe file used to download a DRM-protected book. Scriptorium
+**ACSM.** Not a book, but a small Adobe file used to download a DRM-protected book. Verso
 cannot open DRM-protected books.
 
-**Calibre.** The well-known desktop app for managing ebooks. Scriptorium uses a standard Calibre
+**Calibre.** The well-known desktop app for managing ebooks. Verso uses a standard Calibre
 library and Calibre's conversion tools, but you do not need Calibre installed.
 
 **Calibre library.** A folder holding `metadata.db` and one folder per author, with the book files
@@ -83,9 +83,9 @@ and faster page turns.
 **OPDS.** A standard way for reading apps to browse a library over the network, like an app store
 for your own books.
 
-## Scriptorium
+## Verso
 
-**Ingest.** Importing a book. The *ingest folder* is the inbox that Scriptorium watches.
+**Ingest.** Importing a book. The *ingest folder* is the inbox that Verso watches.
 
 **Provider.** An online source of metadata, such as Google Books or Hardcover.
 

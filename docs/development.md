@@ -20,7 +20,7 @@ Create a throwaway library with sample books, covers and EPUB files:
 Start the server against it:
 
 ```bash
-cd /path/to/scriptorium-library
+cd /path/to/verso
 CWA_DB_PATH=/tmp/cwa-dev/config CALIBRE_DBPATH=/tmp/cwa-dev/config DEVELOP_ON=true \
 PYTHONPATH=scripts:. CWA_PORT_OVERRIDE=8089 \
 .venv/bin/python cps.py -p /tmp/cwa-dev/config/app.db

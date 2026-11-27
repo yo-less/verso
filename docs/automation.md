@@ -1,6 +1,6 @@
 # Automation
 
-Everything Scriptorium does on its own is configured in *Settings → Automation*. The page is split
+Everything Verso does on its own is configured in *Settings → Automation*. The page is split
 into Services, Import, Conversion, Metadata, Hardcover, Duplicates and Backups, and each option has a
 short explanation next to it. This guide explains how the pieces fit together.
 
@@ -8,7 +8,7 @@ short explanation next to it. This guide explains how the pieces fit together.
 
 1. A file lands in `/cwa-book-ingest`: copied there, uploaded through the web interface, or dropped
    in by another tool such as Shelfmark.
-2. Scriptorium waits until the file stops changing, then picks it up.
+2. Verso waits until the file stops changing, then picks it up.
 3. If it is not already in the **target format**, it is converted.
 4. The book is added to the library.
 5. Follow-ups run: metadata lookup, duplicate check, EPUB fixing, and emailing it to your e-reader
