@@ -105,6 +105,7 @@ def run():
         assert len(probe["streams"])==(2 if music else 1) and video["codec_name"]=="h264"
         if music: assert probe["streams"][1]["codec_name"]=="aac"
         assert (video["width"],video["height"],video["avg_frame_rate"])==(1920,1080,"30/1")
+        assert video.get("field_order") == "progressive", video.get("field_order")
         assert abs(float(probe["format"]["duration"])-duration)<.1
         assert target.stat().st_size<10_000_000
         (OUT/"manifest.json").write_text(json.dumps({"commit":os.getenv("GITHUB_SHA"),"seconds":duration,"fps":FPS,"bytes":target.stat().st_size,"timeline":timeline,

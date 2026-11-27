@@ -48,9 +48,11 @@
 
     {#- 1 · Intro -#}
     <section class="yr-slide yr-s-intro" data-hold>
-      <div class="yr-shelf yr-shelf--intro" aria-hidden="true">
-        {%- for i in range(18) %}<span class="yr-spine" style="--i:{{ i }};--h:{{ 62 + (i * 37) % 34 }}%"></span>{% endfor %}
+      {% if s.books %}
+      <div class="yr-cover-row yr-cover-row--intro" aria-hidden="true">
+        {%- for book in s.books[-5:] %}<img src="{{ url_for('web.get_cover', book_id=book.id, resolution='md') }}" alt="">{% endfor %}
       </div>
+      {% endif %}
       <p class="yr-eyebrow">{{ branding.name }} · {{ s.year }}</p>
       <h1 class="yr-display">{{ _('%(name)s, this was your %(year)s in books.', name=user_name, year=s.year) }}</h1>
       <p class="yr-hint">{{ _('Tap to begin') }} →</p>
@@ -63,8 +65,8 @@
       <p class="yr-number" data-count="{{ s.finished }}">{{ s.finished }}</p>
       <p class="yr-lead">{{ ngettext('book. One whole story, cover to cover.', 'books. Every one of them, cover to cover.', s.finished) }}</p>
       {%- if s.started > s.finished %}<p class="yr-sub">{{ _('And you opened %(num)s more along the way.', num=s.started - s.finished) }}</p>{% endif %}
-      <div class="yr-shelf yr-shelf--titles" aria-hidden="true">
-        {%- for book in s.books %}<span class="yr-spine yr-spine--title" style="--i:{{ loop.index0 }};--h:{{ 70 + (book.id * 13) % 28 }}%"><span>{{ book.title }}</span></span>{% endfor %}
+      <div class="yr-cover-row" aria-hidden="true">
+        {%- for book in s.books[:5] %}<img src="{{ url_for('web.get_cover', book_id=book.id, resolution='md') }}" alt="">{% endfor %}
       </div>
     </section>
     {%- elif s.started %}
@@ -114,8 +116,6 @@
       <p class="yr-eyebrow">{{ _('The book you lived in') }}</p>
       {%- if tb.id %}
       <figure class="yr-cover yr-cover--hero"><img src="{{ url_for('web.get_cover', book_id=tb.id, resolution='md') }}" alt=""></figure>
-      {%- else %}
-      <div class="yr-shelf yr-shelf--one" aria-hidden="true"><span class="yr-spine yr-spine--title" style="--i:0;--h:92%"><span>{{ tb.title }}</span></span></div>
       {%- endif %}
       <h2 class="yr-title">{{ tb.title }}</h2>
       {%- if tb.authors %}<p class="yr-sub">{{ tb.authors|join(', ') }}</p>{% endif %}
@@ -264,8 +264,9 @@
     <section class="yr-slide yr-s-summary" data-hold>
       <article class="yr-poster">
         <header><img class="yr-poster-wordmark" src="{{ url_for('admin.branding_asset', kind='wordmark') }}" alt="{{ branding.name }}" width="108" height="36"><span>{{ _('%(name)s · %(year)s in books', name=user_name, year=s.year) }}</span></header>
+        <img class="yr-poster-landscape" src="{{ url_for('admin.branding_landscape') }}" alt="">
         {%- if s.books %}
-        <div class="yr-poster-covers">{% for book in s.books[-5:] %}<img src="{{ url_for('web.get_cover', book_id=book.id, resolution='md') }}" alt="" style="--i:{{ loop.index0 }}">{% endfor %}</div>
+        <div class="yr-poster-covers">{% for book in s.books[-5:] %}<img src="{{ url_for('web.get_cover', book_id=book.id, resolution='md') }}" alt="">{% endfor %}</div>
         {%- endif %}
         <dl class="yr-poster-stats">
           <div><dt>{{ _('Books') }}</dt><dd>{{ s.finished or s.started }}</dd></div>
@@ -290,9 +291,6 @@
 {%- else %}
   <main class="yr-slides">
     <section class="yr-slide yr-s-intro is-active">
-      <div class="yr-shelf yr-shelf--intro" aria-hidden="true">
-        {%- for i in range(10) %}<span class="yr-spine" style="--i:{{ i }};--h:{{ 62 + (i * 37) % 34 }}%"></span>{% endfor %}
-      </div>
       <p class="yr-eyebrow">{{ branding.name }} · {{ s.year }}</p>
       <h1 class="yr-display">{{ _('Your %(year)s story is still unwritten.', year=s.year) }}</h1>
       <p class="yr-lead">{{ _('Finish a book, sync your Kobo or KOReader, or highlight a passage: your year in books fills itself in as you read.') }}</p>

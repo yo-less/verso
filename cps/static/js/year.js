@@ -166,51 +166,41 @@
     canvas.width = W; canvas.height = H;
     var ctx = canvas.getContext("2d");
     var covers = (DATA.covers || []).map(function (id) { return (DATA.cover_url || "").replace("/0/", "/" + id + "/"); });
-    var logo = doc.querySelector(".yr-brand img");
-    Promise.all([doc.fonts ? doc.fonts.ready : Promise.resolve()].concat(covers.map(loadImage)).concat([loadImage(logo ? logo.src : "")]))
+    var logo = doc.querySelector(".yr-poster-wordmark");
+    var landscape = doc.querySelector(".yr-landscape img");
+    Promise.all([doc.fonts ? doc.fonts.ready : Promise.resolve()]
+      .concat(covers.map(loadImage), [loadImage(logo ? logo.src : ""), loadImage(landscape ? landscape.src : "")]))
       .then(function (loaded) {
         var images = loaded.slice(1, 1 + covers.length).filter(Boolean);
-        var wordmark = loaded[loaded.length - 1];
-        // Background
-        var g = ctx.createLinearGradient(0, 0, W, H);
-        g.addColorStop(0, "#1B1530"); g.addColorStop(.55, "#3B1E2B"); g.addColorStop(1, "#151022");
-        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-        [["#8E5572", 160, 220, 520], ["#E9B44C", 940, 1500, 560], ["#2E6F95", 900, 300, 380]].forEach(function (b) {
-          var r = ctx.createRadialGradient(b[1], b[2], 0, b[1], b[2], b[3]);
-          r.addColorStop(0, b[0] + "88"); r.addColorStop(1, b[0] + "00");
-          ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
-        });
-        // Shelf of spines
-        var palette = ["#C8553D", "#E9B44C", "#2E6F95", "#5B8E7D", "#8E5572", "#D98E73", "#3D5A80", "#B5838D", "#6D597A", "#81B29A"];
-        for (var i = 0; i < 22; i++) {
-          var h = 120 + (i * 37) % 70, x = 90 + i * 41;
-          ctx.fillStyle = palette[(i * 3) % palette.length];
-          roundRect(ctx, x, 360 - h, 36, h, 4); ctx.fill();
-          ctx.fillStyle = "rgba(255,255,255,.3)"; ctx.fillRect(x + 4, 360 - h + 18, 28, 3); ctx.fillRect(x + 4, 340, 28, 3);
+        var wordmark = loaded[loaded.length - 2], artwork = loaded[loaded.length - 1];
+        var ink = "#102e20", paper = "#f8f1e5", lineColor = "#ded0b8";
+        var accent = stage && getComputedStyle(stage).getPropertyValue("--yr-instance-accent").trim();
+        ctx.fillStyle = paper; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = accent || "#a23e2a"; ctx.fillRect(0, 0, W, 16);
+        ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.strokeRect(55, 53, W - 110, H - 106);
+        if (artwork) {
+          var artW = W - 180, artH = 210, scale = Math.max(artW / artwork.width, artH / artwork.height);
+          var sw = artW / scale, sh = artH / scale;
+          ctx.drawImage(artwork, (artwork.width - sw) / 2, (artwork.height - sh) * .76,
+            sw, sh, 90, 196, artW, artH);
         }
-        ctx.fillStyle = "#6B4426"; ctx.fillRect(70, 360, W - 140, 14);
-        // Header
         if (wordmark && wordmark.width && wordmark.height) {
           var logoScale = Math.min(260 / wordmark.width, 90 / wordmark.height);
-          var logoW = wordmark.width * logoScale, logoH = wordmark.height * logoScale;
-          if (doc.querySelector(".yr-brand--custom-light")) {
-            ctx.fillStyle = "#F8F1E5"; roundRect(ctx, 80, 88, logoW + 20, logoH + 20, 12); ctx.fill();
-          }
-          ctx.drawImage(wordmark, 90, 98, logoW, logoH);
+          ctx.drawImage(wordmark, 90, 92, wordmark.width * logoScale, wordmark.height * logoScale);
         } else {
-          ctx.fillStyle = "#F6EEDD"; ctx.font = "600 34px " + sans; ctx.textBaseline = "middle";
-          ctx.fillText(T.brand || "Verso", 90, 143, 780);
+          ctx.fillStyle = ink; ctx.font = "600 34px " + sans; ctx.textBaseline = "middle";
+          ctx.fillText(T.brand || "Verso", 90, 136, 780);
         }
-        ctx.fillStyle = "#F6EEDD"; ctx.textBaseline = "alphabetic";
+        ctx.fillStyle = ink; ctx.textBaseline = "alphabetic";
         fitText(ctx, T.title || "", W - 180, 92, "600", serif);
         ctx.fillText(T.title || "", 90, 500);
         ctx.font = "500 40px " + sans; ctx.globalAlpha = .75; ctx.fillText(DATA.name || "", 90, 560); ctx.globalAlpha = 1;
         // Covers
-        var cw = 220, chh = 330, total = images.length;
+        var cw = 162, chh = 243, total = images.length;
         images.forEach(function (img, k) {
-          var cx = W / 2 + (k - (total - 1) / 2) * 150;
-          ctx.save(); ctx.translate(cx, 880); ctx.rotate((k - (total - 1) / 2) * .09);
-          ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 20;
+          var cx = W / 2 + (k - (total - 1) / 2) * 181;
+          ctx.save(); ctx.translate(cx, 850);
+          ctx.shadowColor = "rgba(16,46,32,.19)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
           roundRect(ctx, -cw / 2, -chh / 2, cw, chh, 8); ctx.fillStyle = "#000"; ctx.fill();
           ctx.shadowColor = "transparent"; ctx.clip();
           var scale = Math.max(cw / img.width, chh / img.height);
@@ -219,16 +209,17 @@
         });
         // Stats card
         var top = 1140;
-        ctx.fillStyle = "#F6EEDD"; roundRect(ctx, 70, top, W - 140, 600, 40); ctx.fill();
+        ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.moveTo(90, top); ctx.lineTo(W - 90, top); ctx.stroke();
         var stats = [[DATA.finished, T.books], [DATA.hours, T.hours], [DATA.streak, T.streak], [DATA.highlights, T.highlights], [DATA.pages, T.pages]]
           .filter(function (s) { return s[0] > 0; }).slice(0, 4);
         stats.forEach(function (s, k) {
           var col = k % 2, row = Math.floor(k / 2), x = 130 + col * 440, y = top + 150 + row * 190;
-          ctx.fillStyle = "#120F1C"; ctx.font = "700 112px " + serif; ctx.fillText(String(s[0]), x, y);
+          ctx.fillStyle = ink; ctx.font = "700 112px " + serif; ctx.fillText(String(s[0]), x, y);
           ctx.font = "600 30px " + sans; ctx.globalAlpha = .6; ctx.fillText(String(s[1] || "").toUpperCase(), x, y + 46); ctx.globalAlpha = 1;
         });
         var line = top + 540;
-        ctx.fillStyle = "#120F1C";
+        ctx.fillStyle = ink;
         var tops = [[T.top_author, DATA.author], [T.top_genre, DATA.genre]].filter(function (t) { return t[1]; });
         tops.forEach(function (t, k) {
           var x = 130 + k * 440;
@@ -236,7 +227,7 @@
           fitText(ctx, t[1], 400, 40, "600", serif); ctx.fillText(t[1], x, line);
         });
         if (T.style) {
-          ctx.fillStyle = "#F6EEDD"; ctx.textAlign = "center"; fitText(ctx, T.style, W - 200, 64, "600", serif);
+          ctx.fillStyle = ink; ctx.textAlign = "center"; fitText(ctx, T.style, W - 200, 64, "600", serif);
           ctx.fillText(T.style, W / 2, 1830); ctx.textAlign = "left";
         }
         canvas.toBlob(function (blob) {

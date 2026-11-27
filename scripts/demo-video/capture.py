@@ -90,7 +90,7 @@ def capture_year(browser):
                     captured.add(name)
             if captured == targets:
                 break
-            story.keyboard.press("ArrowRight")
+            story.locator(".yr-tap--next").tap()
         assert captured == targets, captured
 
 
@@ -235,6 +235,10 @@ def additional():
         stats_end = page.evaluate("Math.max(0,document.scrollingElement.scrollHeight-innerHeight)")
         assert stats_end > 0, stats_end
         scroll_strip(page,"stats-scroll",stats_end,frames=97)
+        sidebar = page.locator("#sidebar").bounding_box()
+        topbar = page.locator("header.topbar").bounding_box()
+        assert sidebar and topbar
+        stats_content = {"x":sidebar["x"] + sidebar["width"],"y":topbar["y"] + topbar["height"]}
         base.shot(page,"stats-detail.png")
         branding_focus = capture_branding(page)
         base.set_theme(page,"dark")
@@ -250,7 +254,7 @@ def additional():
         base.shot(page,"theme-ocean.png",".book-card")
         base.preset(page,"stock")
         capture_year(browser)
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus}))
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus}))
         ctx.close()
         browser.close()
 

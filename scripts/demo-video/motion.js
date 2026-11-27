@@ -1,4 +1,4 @@
-/* Verso demo V16: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V17: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
@@ -43,10 +43,7 @@ function importStage(t,x){
  if(!stage)return;
  const {start,end,label}=stage;
  const opacity=step(t,start,start+.14)*(1-step(t,end-.14,end));
- fade(opacity,()=>{
-  line(x-28,500,x+28,500,C.gold,2);
-  text(label,x,541,32,C.forest,"Newsreader",600,"center");
- });
+ fade(opacity,()=>text(label,x,479,32,C.forest,"Newsreader",600,"center"));
 }
 function brand(t,opening){
  if(opening){
@@ -116,8 +113,7 @@ function automation(t){
   const front=ctx.createLinearGradient(0,-10,0,91);
   front.addColorStop(0,"#d6b479");front.addColorStop(1,"#bd9558");
   ctx.fillStyle=front;ctx.beginPath();ctx.moveTo(-154,-9);ctx.lineTo(154,-9);ctx.lineTo(137,80);ctx.quadraticCurveTo(135,91,123,91);ctx.lineTo(-123,91);ctx.quadraticCurveTo(-135,91,-137,80);ctx.closePath();ctx.fill();
-  line(-144,-2,144,-2,"#efd4a1",2);
-  text("Watched import folder",0,124,27,C.forest,"Newsreader",600,"center");
+  text("Watched import folder",0,-168,27,C.forest,"Newsreader",600,"center");
  });
  importStage(t,fx);
 }
@@ -251,11 +247,13 @@ function highlights(handoff){
  fade(step(handoff,0,.6),()=>bg(true,Math.max(0,t)));
  fade(1-step(handoff,0,.32),()=>title("Your reading, in perspective",960,85,false,74));
  fade(step(handoff,.32,.78),()=>title("Keep the words that matter",960,85,true,76));
- const ready=step(handoff,.28,highlightsHandoff);
- browser(ready===1?"highlights-light":"stats-scroll-96",350,155,1220,1,.5,.5,true,(x,y,w,h)=>{
-  if(ready===1)return;
-  fade(step(handoff,0,.30),()=>rect(x,y,w,h,0,C.paper));
-  fade(ready,()=>ctx.drawImage(assets["highlights-light"],x,y,w,h));
+ const swapping=handoff>=.28;
+ const veil=step(handoff,0,.28)*(1-step(handoff,.28,highlightsHandoff));
+ browser(swapping?"highlights-light":"stats-scroll-96",350,155,1220,1,.5,.5,true,(x,y,w,h)=>{
+  if(veil===0)return;
+  const b=window.data.statsContent,scale=w/1440;
+  const left=b.x*scale,top=b.y*scale;
+  fade(veil,()=>rect(x+left,y+top,w-left,h-top,0,C.paper));
  });
  let p=step(t,.4,1.0);ctx.save();ctx.translate(1045+(1-p)*65,365+(1-p)*25);
  fade(p,()=>{
@@ -366,8 +364,8 @@ function install(t){
  fade(p,()=>installBrowser(t));
 }
 function close(t){
- bg(true,6.25);fade(1-step(t,0,.68),()=>title("Run Verso yourself",960,105,true,76));
- installBrowser(6.25,step(t,.80,1.48));
+ bg(true,6.25);fade(1-step(t,.50,.98),()=>title("Run Verso yourself",960,105,true,76));
+ installBrowser(6.25,step(t,.72,1.48));
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
