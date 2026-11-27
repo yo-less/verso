@@ -1,8 +1,8 @@
-/* Verso demo V7: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V8: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home"];
-names.push("import-empty","browse-typed","browse-results",...Array.from({length:25},(_,i)=>"browse-scroll-"+i),...Array.from({length:25},(_,i)=>"detail-scroll-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
+names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:25},(_,i)=>"browse-scroll-"+i),...Array.from({length:25},(_,i)=>"detail-scroll-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -18,7 +18,7 @@ function img(k,x,y,w,h,mode="contain"){const im=assets[k],s=(mode==="cover"?Math
 function fade(a,fn){ctx.save();ctx.globalAlpha*=clamp(a);fn();ctx.restore()}
 function bg(dark=true,t=0){rect(0,0,W,H,0,dark?"#091d16":"#e9dcc7");let g=ctx.createRadialGradient(1050+Math.sin(t*.7)*240,260,80,960,440,1420);g.addColorStop(0,dark?"#365847":"#fff9eb");g.addColorStop(.55,dark?"#173a2b":"#f2e7d6");g.addColorStop(1,dark?"#081b13":"#d7c9b3");ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 function shadow(x,y,w,h,r,c,blur=48){ctx.save();ctx.shadowColor="#00000050";ctx.shadowBlur=blur;ctx.shadowOffsetY=22;rect(x,y,w,h,r,c);ctx.restore()}
-function browser(k,x,y,w,zoom=1,focusX=.5,focusY=.5){let im=assets[k],bar=w*.025,h=w*im.height/im.width;shadow(x,y,w,h+bar,19,C.paper);ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();rect(x,y,w,bar,0,"#213c30");["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+bar*.45+i*bar*.52,y+bar*.36,bar*.24,bar*.24,bar*.12,c));ctx.save();ctx.beginPath();ctx.rect(x,y+bar,w,h);ctx.clip();let sw=im.width/zoom,sh=im.height/zoom;ctx.drawImage(im,clamp(focusX)*(im.width-sw),clamp(focusY)*(im.height-sh),sw,sh,x,y+bar,w,h);ctx.restore();ctx.restore();return {x,y:y+bar,w,h}}
+function browser(k,x,y,w,zoom=1,focusX=.5,focusY=.5,withShadow=true){let im=assets[k],bar=w*.025,h=w*im.height/im.width;if(withShadow)shadow(x,y,w,h+bar,19,C.paper);else rect(x,y,w,h+bar,19,C.paper);ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();rect(x,y,w,bar,0,"#213c30");["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+bar*.45+i*bar*.52,y+bar*.36,bar*.24,bar*.24,bar*.12,c));ctx.save();ctx.beginPath();ctx.rect(x,y+bar,w,h);ctx.clip();let sw=im.width/zoom,sh=im.height/zoom;ctx.drawImage(im,clamp(focusX)*(im.width-sw),clamp(focusY)*(im.height-sh),sw,sh,x,y+bar,w,h);ctx.restore();ctx.restore();return {x,y:y+bar,w,h}}
 function phone(k,cx,cy,w,angle=0){let im=assets[k],bezel=12,iw=w-2*bezel,ih=iw*im.height/im.width,h=ih+2*bezel;ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);shadow(-w/2,-h/2,w,h,38,"#0d1410",32);ctx.strokeStyle="#818b80";ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,38);ctx.stroke();ctx.save();ctx.beginPath();ctx.roundRect(-iw/2,-ih/2,iw,ih,26);ctx.clip();img(k,-iw/2,-ih/2,iw,ih);ctx.restore();ctx.restore()}
 function reveal(t,a,b,fn,dy=26){let p=step(t,a,b);ctx.save();ctx.translate(0,(1-p)*dy);fade(p,fn);ctx.restore()}
 const tickRows=[{y:428,start:.65,label:"Import"},{y:522,start:1.35,label:"Convert if needed"},{y:616,start:2.05,label:"Metadata & cover"},{y:710,start:2.75,label:"Organize"}];
@@ -35,8 +35,8 @@ function brand(t,opening){
  }else{
   const z=1+.018*step(t,0,2.5);img("landscape",-(z-1)*W/2,-(z-1)*H/2,W*z,H*z,"cover");
   img("logo",625,220,670,224);
-  text("Self-hosted  ·  Open source",960,526,36,C.forest,"Geist",500,"center");
-  text("github.com/yo-less/verso",960,588,33,C.forest,"Geist",550,"center");
+  text("Self-hosted  ·  Open source",960,526,42,C.forest,"Newsreader",550,"center");
+  text("github.com/yo-less/verso",960,588,36,C.forest,"Newsreader",500,"center");
  }
 }
 function automation(t){
@@ -45,7 +45,7 @@ function automation(t){
  // Draw exactly one browser shell; restore only the hidden card when the cover lands.
  const box=browser("import-empty",770,220,1050),b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
- const flight=step(t,2.05,3.95),morph=step(t,1.12,1.9),lift=step(t,.2,.8),land=step(t,3.95,4.25);
+ const flight=step(t,2.25,3.95),morph=step(t,1.25,1.95),lift=step(t,.2,.8),land=step(t,3.95,4.25);
  const im=assets["import-library"],ratio=im.width/1440;
  fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
  tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,36,C.forest,"Geist",500)});
@@ -53,10 +53,12 @@ function automation(t){
  const w=mix(140,target.w,flight),h=mix(202,target.h,flight);
  fade(step(t,.05,.35)*(1-land),()=>{
   ctx.save();ctx.translate(x,y);ctx.rotate(-.06*(1-flight));
-  // The opaque file/cover is always in the foreground, not under the browser.
-  shadow(-w/2,-h/2,w,h,8,C.paper,14);
-  text("EPUB",0,-7,w*.24,C.rust,"Geist",700,"center");
-  line(-w*.28,h*.22,w*.28,h*.22,C.gold,3);
+  // The EPUB graphic fully disappears before the art begins its flight.
+  if(morph<1)fade(1-morph,()=>{
+   shadow(-w/2,-h/2,w,h,8,C.paper,14);
+   text("EPUB",0,-7,w*.24,C.rust,"Geist",700,"center");
+   line(-w*.28,h*.22,w*.28,h*.22,C.gold,3);
+  });
   fade(morph,()=>img("moby-cover",-w/2,-h/2,w,h,"cover"));
   ctx.restore();
  });
@@ -69,28 +71,28 @@ function footer(s,dark=true){
 function library(t){
  bg(true,t);title("Browse your library",960,84,true,76);
  const w=1160,x=(W-w)/2,y=150;
- let index;
- if(t<1.8){
-  index=Math.round(clamp((t-.28)/1.42)*24);
-  browser("browse-scroll-"+index,x,y,w);
- }else if(t<2.85){
-  index=Math.round((1-step(t,1.92,2.83))*24);
-  browser("browse-scroll-"+index,x,y,w);
- }else if(t<3.7){
-  browser("browse-scroll-0",x,y,w);
-  // Only replace the search field, rather than dissolve entire browser shells.
-  const p=step(t,2.85,3.22);
-  ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,w*.65,19);ctx.clip();
-  fade(p,()=>{const im=assets["browse-typed"];ctx.drawImage(im,x,y+w*.025,w,w*im.height/im.width);});ctx.restore();
- }else{
-  browser("browse-results",x,y,w);
-  if(t<4.03)fade(1-step(t,3.7,4.03),()=>browser("browse-typed",x,y,w));
- }
- footer(t<2.85?"Explore the shelves":t<3.7?"Search by author":"Jane Austen · matching books");
+ if(t<1.35){
+  browser("browse-scroll-"+Math.round(clamp((t-.12)/1.15)*24),x,y,w);
+ }else if(t<2.05){
+  browser("browse-scroll-"+Math.round((1-step(t,1.35,2.05))*24),x,y,w);
+ }else if(t<3.95){
+  const n=Math.min(11,Math.floor(clamp((t-2.35)/1.15)*12));
+  const k="browse-type-"+n;
+  browser(k,x,y,w);
+  // Magnify the real captured field, anchored to its original position.
+  const b=window.data.searchBox,p=step(t,2.05,2.36)*(1-step(t,3.65,3.95)),im=assets[k];
+  const crop={x:Math.max(0,b.x-12),y:Math.max(0,b.y-8),w:Math.min(1440-b.x+12,b.width+24),h:b.height+16};
+  const scale=w/1440,ww=mix(crop.w*scale,1040,p),hh=ww*crop.h/crop.w;
+  const cx=mix(x+(crop.x+crop.w/2)*scale,960,p),cy=mix(y+w*.025+(crop.y+crop.h/2)*scale,405,p);
+  fade(p,()=>{shadow(cx-ww/2-9,cy-hh/2-9,ww+18,hh+18,16,C.paper,25);
+   ctx.drawImage(im,crop.x,crop.y,crop.w,crop.h,cx-ww/2,cy-hh/2,ww,hh);
+  });
+ }else browser("browse-results",x,y,w);
+ footer(t<2.05?"Explore the shelves":t<3.95?"Search by author":"Jane Austen · matching books");
 }
 function details(t){
- bg(false,t);title(t<1.65?"Explore a book":"Discover related titles",960,84,false,76);
- const i=Math.min(24,Math.floor(clamp((t-1.4)/1.65)*24+.5));
+ bg(false,t);title(t<1.45?"Explore a book":"Discover related titles",960,84,false,76);
+ const i=Math.min(24,Math.floor(clamp((t-.55)/1.75)*24+.5));
  browser("detail-scroll-"+i,350,155,1220);
 }
 function devices(t){
@@ -98,14 +100,26 @@ function devices(t){
  browser("book-light",96,180,1090);
  shadow(1395,180,380,715,38,"#202722");rect(1418,203,334,640,14,"#ecebe1");
  text("My books",1441,238,25,C.forest,"Geist",600);
- const a=step(t,.45,1.3),b=step(t,2.0,2.85),progress=38+9*a,synced=38+9*b;
+ const a=step(t,.35,1.05),b=step(t,1.55,2.2),progress=38+9*b,synced=38+9*a;
  [["Moby-Dick","moby-cover",progress],["Pride and Prejudice","pride-cover",64],["Frankenstein","frankenstein-cover",21]].forEach(([s,k,v],i)=>{
   const y=300+i*163;ctx.save();ctx.filter="grayscale(1)";img(k,1437,y,73,110);ctx.restore();
   text(s,1523,y+20,17,C.forest,"Newsreader",600);
   line(1523,y+66,1728,y+66,"#b2b6aa",5);line(1523,y+66,1523+205*v/100,y+66,C.forest,5);text(Math.round(v)+"%",1523,y+89,18,C.forest);
  });
+ const opened=step(t,2.35,2.72);
+ fade(opened,()=>{
+  rect(1418,203,334,640,14,"#ecebe1");
+  text("Moby-Dick",1585,245,25,C.forest,"Newsreader",600,"center");
+  line(1440,274,1730,274,"#a1a59a",1);
+  text("The Whiteness of the Whale",1585,317,20,C.forest,"Newsreader",600,"center");
+  const excerpt=["It was the whiteness of","the whale that above all","things appalled me. But","how can I hope to explain","myself here; and yet, in","some dim, random way,","explain myself I must,","else all these chapters","might be naught."];
+  excerpt.forEach((s,i)=>text(s,1445,365+i*36,24,C.forest,"Newsreader",500));
+  line(1445,786,1725,786,"#b2b6aa",3);
+  line(1445,786,1445+280*synced/100,786,C.forest,3);
+  text(Math.round(synced)+"%",1585,815,17,C.forest,"Geist",500,"center");
+ });
  rect(1520,865,130,6,3,"#6a7469");
- const spin=step(t,1.3,2.0),x=1290,y=520;
+ const spin=step(t,1.05,1.55),x=1290,y=520;
  rect(x-42,y-42,84,84,42,C.gold);ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI*2*spin);ctx.strokeStyle=C.forest;ctx.lineWidth=5;ctx.beginPath();ctx.arc(0,0,22,-2.7,.1);ctx.stroke();ctx.beginPath();ctx.arc(0,0,22,.45,3.25);ctx.stroke();line(22,2,14,-7,C.forest,5);line(22,2,29,-8,C.forest,5);line(-22,-2,-14,7,C.forest,5);line(-22,-2,-29,8,C.forest,5);ctx.restore();
  // Conceptual progress indicator, explicitly distinct from the captured UI.
  rect(96,875,1090,86,14,"#274739");text("Moby-Dick  ·  Reading progress",125,901,26,C.ivory,"Geist",550);line(125,936,950,936,"#637a6c",6);line(125,936,125+825*synced/100,936,C.gold,6);text(Math.round(synced)+"%",1100,936,32,C.ivory,"Geist",600,"right");
@@ -115,12 +129,13 @@ function devices(t){
 function statistics(t){
  bg(false,t);title("Your reading, in perspective",960,85,false,74);
  browser("stats",350,155,1220);
- fade(step(t,1.65,2.15),()=>browser("stats-detail",350,155,1220));
+ fade(step(t,1.3,1.85),()=>browser("stats-detail",350,155,1220));
 }
 function highlights(t){
  bg(true,t);title("Keep the words that matter",960,85,true,76);
- browser("highlights-light",90,190,1240);
- let p=step(t,.35,.95);ctx.save();ctx.translate(1045+(1-p)*85,350+(1-p)*40);
+ // Keep the browser in the same position as the preceding statistics scene.
+ browser("highlights-light",350,155,1220);
+ let p=step(t,.4,1.0);ctx.save();ctx.translate(1045+(1-p)*65,365+(1-p)*25);
  fade(p,()=>{
   shadow(0,0,770,465,15,C.paper,30);text("“",48,88,105,C.rust,"Newsreader",600);
   const quote=[["I am no bird; and no net",192,.85,1.55],["ensnares me.",262,1.55,2.12]];
@@ -149,17 +164,27 @@ function year(t){
 }
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
- const seq=["theme-light","theme-dark","theme-sunset","theme-ocean","branding-viewport"];
- const labels=["Light","Dark","Sunset","Ocean","Custom logos & instance branding"];
- const starts=[0,1.35,2.70,4.05,5.40];
+ const seq=["theme-light","theme-dark","theme-sunset","theme-ocean"];
+ const labels=["Light","Dark","Sunset","Ocean"];
+ const starts=[0,1.15,2.30,3.45];
  const i=Math.max(0,starts.filter(s=>t>=s).length-1),q=t-starts[i],x=380,y=150,w=1160;
- // Sliding separate windows in an opaque clipped viewport avoids double-image sidebars.
  ctx.save();ctx.beginPath();ctx.rect(350,130,1220,790);ctx.clip();
- const p=i===0?1:step(q,0,.65);
- if(i>0&&p<1)browser(seq[i-1],x-1220*p,y,w);
- browser(seq[i],x+1220*(1-p),y,w);
+ const p=i===0?1:step(q,0,.48);
+ if(i>0&&p<1)browser(seq[i-1],x-1220*p,y,w,1,.5,.5,false);
+ browser(seq[i],x+1220*(1-p),y,w,1,.5,.5,false);
  ctx.restore();
  rect(630,936,660,58,29,C.forest);text(labels[i],960,965,29,C.ivory,"Geist",550,"center");
+}
+function branding(t){
+ bg(false,t);title("Give your library its own identity",960,85,false,72);
+ browser("branding-viewport",620,160,1210);
+ reveal(t,.12,.55,()=>text("Instance branding",90,275,47,C.forest,"Newsreader",600));
+ const rows=["Custom library name","Your own logo","Custom colours","Favicon & login artwork"];
+ rows.forEach((s,i)=>reveal(t,.32+i*.24,.62+i*.24,()=>{
+  rect(95,386+i*89,12,12,6,C.rust);
+  text(s,125,392+i*89,31,C.forest,"Geist",500);
+ }));
+ reveal(t,1.3,1.8,()=>text("New in Verso",90,820,31,C.rust,"Newsreader",600));
 }
 function install(t){
  bg(true,t);title("Run Verso yourself",960,105,true,76);
@@ -171,13 +196,14 @@ function install(t){
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
  {id:"automation",len:5,draw:automation},
- {id:"library",len:5,draw:library},
+ {id:"library",len:5.1,draw:library},
  {id:"details",len:4,draw:details},
  {id:"devices",len:4,draw:devices},
  {id:"statistics",len:3.5,draw:statistics},
  {id:"highlights",len:3,draw:highlights},
  {id:"year",len:6,draw:year},
- {id:"personalize",len:7,draw:personalize},
+ {id:"personalize",len:4.75,draw:personalize},
+ {id:"branding",len:2.9,draw:branding},
  {id:"install",len:3.5,draw:install},
  {id:"close",len:3,draw:t=>brand(t,false)}
 ];

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Additional real UI captures for the feature-led demo."""
 import importlib.util
+import io
 import json
 import os
 import sqlite3
@@ -64,6 +65,13 @@ def additional():
         cover = card.locator(".cover img")
         expect(cover).to_be_visible()
         cover.evaluate("img => img.decode()")
+        # Fetch actual image bytes, never a clipped viewport screenshot: sticky
+        # headers and browser overlays can otherwise contaminate cover art.
+        cover_url = cover.evaluate("img => img.currentSrc || img.src")
+        response = page.request.get(cover_url)
+        assert response.ok, (cover_url, response.status)
+        with Image.open(io.BytesIO(response.body())) as source:
+            source.convert("RGB").save(base.OUT / "moby-cover.png")
         # Center the actual target card, not the books heading, which may
         # appear after it depending on the seeded shelf layout.
         card.evaluate("el => el.scrollIntoView({block:'center', inline:'nearest', behavior:'instant'})")
@@ -88,7 +96,13 @@ def additional():
         destination = page.evaluate("Math.max(0,document.getElementById('books-heading').getBoundingClientRect().top + scrollY - 88)")
         scroll_strip(page,"browse-scroll",destination)
         page.evaluate("window.scrollTo(0,0)")
-        page.locator("#query").fill("Jane Austen")
+        query = page.locator("#query")
+        query.click()
+        search_box = query.bounding_box()
+        assert search_box and search_box["width"] > 100, search_box
+        for i in range(len("Jane Austen") + 1):
+            query.fill("Jane Austen"[:i])
+            page.screenshot(path=str(base.OUT / f"browse-type-{i}.png"), animations="disabled")
         base.shot(page,"browse-typed.png","#query")
         page.locator("#query").press("Enter")
         page.wait_for_load_state("domcontentloaded")
@@ -107,9 +121,7 @@ def additional():
         related.scroll_into_view_if_needed()
         page.wait_for_timeout(400)
         related.screenshot(path=str(base.OUT/"related.png"),animations="disabled")
-        cover = page.locator(".detail-aside .cover img").first
-        expect(cover).to_be_visible()
-        cover.screenshot(path=str(base.OUT/"moby-cover.png"),animations="disabled")
+        # The Moby-Dick artwork was already extracted from its image URL.
         base.open_page(page,"/reading-stats")
         expect(page.locator(".rs-heatmap")).to_be_visible()
         base.shot(page,"stats.png",".rs-heatmap")
@@ -152,7 +164,7 @@ def additional():
             story.wait_for_timeout(450)
         assert found == targets, (found, targets)
         portrait.close()
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card,"importCover":import_cover}))
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card,"importCover":import_cover,"searchBox":search_box}))
         ctx.close()
         browser.close()
 

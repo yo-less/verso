@@ -46,13 +46,18 @@ def run():
             page.evaluate("window.ready")
             duration=page.evaluate("window.duration")
             timeline=page.evaluate("window.timeline")
-            assert duration == 47.5, duration
+            assert abs(duration - 48.25) < .001, duration
             checks = page.evaluate("window.verifyChecks()")
             assert all(row['ok'] for row in checks), checks
             (OUT/"checkmarks.json").write_text(json.dumps(checks,indent=2))
             for n,t in enumerate((.9,1.6,2.3,3.2,4.5)):
                 page.evaluate("(t)=>window.render(t+3.5)",t)
                 page.screenshot(path=str(OUT/f"import-step-{n+1}.jpg"),type="jpeg",quality=90)
+            for scene_id, times in {"library":(2.5,3.2,3.8,4.5),"details":(.4,1.2,2.0),"devices":(2.3,3.3),"branding":(2.2,)}.items():
+                start = sum(s["seconds"] for s in timeline[:next(i for i,s in enumerate(timeline) if s["id"] == scene_id)])
+                for n, t in enumerate(times):
+                    page.evaluate("(t)=>window.render(t)",start+t)
+                    page.screenshot(path=str(OUT/f"review-{scene_id}-{n+1}.jpg"),type="jpeg",quality=90)
             page.evaluate("window.render(2.75)")
             page.screenshot(path=str(OUT/"verso-demo-poster.jpg"),type="jpeg",quality=94)
             for i,scene in enumerate(timeline):
