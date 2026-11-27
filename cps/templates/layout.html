@@ -22,7 +22,12 @@
   {%- if g.google_site_verification|length > 0 %}
   <meta name="google-site-verification" content="{{ g.google_site_verification }}">
   {%- endif %}
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('admin.branding_asset', kind='favicon') }}">
+  {%- if 'favicon' in branding.assets %}
+  <link rel="icon" type="image/svg+xml" sizes="any" href="{{ url_for('admin.branding_asset', kind='favicon') }}">
+  {%- else %}
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='verso-favicon-32.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='verso-favicon-16.png') }}">
+  {%- endif %}
   <link rel="apple-touch-icon" href="{{ url_for('admin.branding_asset', kind='favicon') }}">
   <meta name="theme-color" content="#0E1016">
   <link rel="manifest" href="{{ url_for('admin.branding_manifest') }}">

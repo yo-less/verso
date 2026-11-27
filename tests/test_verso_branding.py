@@ -114,3 +114,16 @@ def test_custom_dark_asset_falls_back_to_custom_light(monkeypatch):
     custom = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L10 10"/></svg>'
     monkeypatch.setattr(branding, "load", lambda: {**branding.DEFAULT, "assets": {"wordmark": custom}})
     assert branding.svg_asset("wordmark-dark") == custom
+
+
+def test_stock_tab_icons_have_native_pixel_dimensions():
+    import struct
+    from pathlib import Path
+    static = Path(branding.__file__).parent / "static"
+    for size in (16, 32):
+        data = (static / f"verso-favicon-{size}.png").read_bytes()
+        assert data[:8] == b"\x89PNG\r\n\x1a\n"
+        assert struct.unpack(">II", data[16:24]) == (size, size)
+    ico = (static / "favicon.ico").read_bytes()
+    assert struct.unpack_from("<HHH", ico) == (0, 1, 4)
+    assert [(ico[6+i*16], ico[7+i*16]) for i in range(4)] == [(16,16), (32,32), (48,48), (64,64)]
