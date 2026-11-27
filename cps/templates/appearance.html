@@ -122,6 +122,11 @@
         <span class="ap-hue-dot" data-hue-dot="hue2"></span>
         <input type="range" id="ap-hue2" name="hue2" min="0" max="359" step="1" value="{{ current.hue2 }}" class="ap-hue-range">
       </div>
+      <div class="ap-hue" data-paper-tone{% if current.surface != "verso" %} hidden{% endif %}>
+        <label for="ap-paper-depth">{{ _('Paper tone') }}</label>
+        <span class="ap-paper-dot" aria-hidden="true"></span>
+        <input type="range" id="ap-paper-depth" name="paper_depth" min="0" max="100" step="1" value="{{ current.paper_depth }}" class="ap-hue-range ap-paper-range" aria-label="{{ _('Paper tone from ivory to parchment') }}">
+      </div>
       <fieldset class="ap-group">
         <legend>{{ _('Intensity') }}</legend>
         <div class="ap-choices ap-choices--text">{% for v in options.vibrancy %}{{ choice('vibrancy', v, vibrancy_labels[v]) }}{% endfor %}</div>

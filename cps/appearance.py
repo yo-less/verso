@@ -16,7 +16,7 @@ from flask_babel import gettext as _, lazy_gettext as N_
 from sqlalchemy.orm.attributes import flag_modified
 
 from . import calibre_db, db, logger, ub
-from .appearance_styles import CLASSIC, HUE_KEYS, OPTIONS, PRESETS, SETTINGS_KEY, html_attrs, sanitize
+from .appearance_styles import CLASSIC, NUMERIC_KEYS, OPTIONS, PRESETS, SETTINGS_KEY, html_attrs, sanitize
 from .cw_login import current_user
 from .cover_quality import cover_quality_for, COVER_QUALITY_MODES, with_cover_quality
 from .render_template import render_title_template
@@ -83,7 +83,7 @@ def customize():
             _save(current_user, sanitize(PRESETS[preset]))
             flash(_("Your style is saved."), category="success")
         else:
-            _save(current_user, sanitize({key: request.form.get(key) for key in list(OPTIONS) + list(HUE_KEYS)}))
+            _save(current_user, sanitize({key: request.form.get(key) for key in list(OPTIONS) + list(NUMERIC_KEYS)}))
             flash(_("Your style is saved."), category="success")
         return redirect(url_for('appearance.customize'))
 

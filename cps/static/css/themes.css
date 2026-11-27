@@ -421,3 +421,25 @@
     --ap-side-faint:#a8bcaa; --ap-side-active-text:#fff7e8; --ap-side-active-icon:#fff7e8;
   }
 }
+
+/* Verso paper tone: retain forest, terracotta, type and spacing; deepen the
+ * light surfaces together. At zero the original stock tokens are unchanged. */
+[data-ap], .ap-reset { --ap-paper-depth: 0%; }
+[data-ap][data-ap-surface="verso"]:not([data-theme="dark"]) {
+  --bg: color-mix(in srgb, #f8f1e5, #e2d3bc var(--ap-paper-depth));
+  --bg-sunken: color-mix(in srgb, #eee4d3, #d8c9b0 var(--ap-paper-depth));
+  --surface: color-mix(in srgb, #fffbf4, #f0e5d3 var(--ap-paper-depth));
+  --surface-2: color-mix(in srgb, #f7efe1, #e6d8c1 var(--ap-paper-depth));
+  --surface-hover: color-mix(in srgb, #f0e6d8, #dfcfb6 var(--ap-paper-depth));
+  --surface-active: color-mix(in srgb, #e6dac8, #d3c0a4 var(--ap-paper-depth));
+  --border: color-mix(in srgb, #e5d9c7, #ccbaa0 var(--ap-paper-depth));
+  --border-strong: color-mix(in srgb, #cbbda8, #b5a087 var(--ap-paper-depth));
+}
+/* In dark mode paper depth is intentionally inert. */
+[data-theme="dark"] [data-ap][data-ap-surface="verso"] {
+  --bg:#101e19; --bg-sunken:#0b1712; --surface:#182b23; --surface-2:#14251e;
+  --surface-hover:#223a2e; --surface-active:#2c4738; --border:#30463a; --border-strong:#476051;
+}
+.ap-paper-dot { width:18px; height:18px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 1px var(--border-strong); }
+.ap-hue-range.ap-paper-range { background:linear-gradient(90deg,#f8f1e5,#e2d3bc); box-shadow:inset 0 0 0 1px var(--border-strong); }
+[data-paper-tone][hidden] { display:none; }

@@ -1,9 +1,9 @@
-/* Verso demo V25: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V26: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","branding-viewport","mobile-home","login","login-background"];
-names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),...Array.from({length:37},(_,i)=>"custom-colour-"+i));
+names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),...Array.from({length:61},(_,i)=>"custom-colour-"+i));
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -37,7 +37,7 @@ function reveal(t,a,b,fn,dy=26){let p=step(t,a,b);ctx.save();ctx.translate(0,(1-
 const importStages=[
  {start:.65,end:1.85,label:"Importing file"},
  {start:1.85,end:2.68,label:"Converting to EPUB"},
- {start:2.68,end:3.45,label:"Adding metadata and cover"}
+ {start:2.68,end:4.35,label:"Adding metadata and cover"}
 ];
 function importStage(t,x){
  const stage=importStages.find(({start,end})=>t>=start&&t<end);
@@ -58,6 +58,9 @@ function brand(t,opening){
  }
 }
 function automation(t){
+ const clock=t;
+ // A deliberate 0.90s hold after the cover is added, before the flight.
+ t=t<=3.45?t:Math.max(3.45,t-.90);
  bg(false,t);
  const center=step(t,5.05,5.85);
  fade(1-step(t,5.05,5.43),()=>title("From file to bookshelf",960,85,false,76));
@@ -128,7 +131,7 @@ function automation(t){
   ctx.fillStyle=front;ctx.beginPath();ctx.moveTo(-154,-9);ctx.lineTo(154,-9);ctx.lineTo(137,80);ctx.quadraticCurveTo(135,91,123,91);ctx.lineTo(-123,91);ctx.quadraticCurveTo(-135,91,-137,80);ctx.closePath();ctx.fill();
   text("Watched import folder",0,-168,27,C.forest,"Newsreader",600,"center");
  });
- importStage(t,fx);
+ importStage(clock,fx);
 }
 function footer(s,dark=true){
  // Captions have a dedicated safe area above player controls.
@@ -315,8 +318,10 @@ function yearPhone(key,cx,cy,w){
  ctx.drawImage(im,x+bezel,y+bezel,screen,height);
  ctx.restore();
 }
-function year(t){
- bg(true,t);title("Your year in books",960,79,true,78);
+function year(t,exit=0){
+ bg(true,t);
+ ctx.save();ctx.globalAlpha*=1-exit;ctx.translate(0,-34*exit);
+ title("Your year in books",960,79,true,78);
  const slides=["intro","finished","authors","rhythm","summary"];
  let pos=0;
  for(let i=1;i<slides.length;i++)pos+=step(t,1.48*i-.28,1.48*i+.48);
@@ -327,16 +332,27 @@ function year(t){
   fade(mix(.43,1,strength),()=>yearPhone("year-mobile-"+key,960+delta*450,565+(1-strength)*30,mix(300,398,strength)));
  }
  slides.forEach((_,i)=>rect(885+i*32,984,22,5,2,Math.abs(i-pos)<.5?C.gold:C.muted));
+ ctx.restore();
 }
+const personalizeEntry=1.05, paletteDuration=7.8;
 function personalize(t){
- bg(false,t);title("Make it yours",960,85,false,82);
- const q=t-4.75,x=380,y=150,w=1160;
- // Genuine colour controls, one fixed browser. Start at Classic,
- // hold the olive-and-ochre result, then reverse the exact capture
- // strip to return to the starting design before the branding scene.
- if(t<4.75){
-  const f=t<2.35?clamp((t-.38)/1.52):1-clamp((t-2.55)/1.52);
-  const n=Math.round(36*f);
+ // Clear the phone composition before introducing the desktop. The dark
+ // backdrop becomes paper while the foreground is empty: no ghosting.
+ if(t<.46){
+  year(7.999,step(t,0,.34));
+  fade(step(t,.23,.46),()=>bg(false,0));
+  return;
+ }
+ const enter=step(t,.46,personalizeEntry);
+ t=Math.max(0,t-personalizeEntry);
+ bg(false,t);
+ ctx.globalAlpha*=enter;
+ title("Make it yours",960,85,false,82);
+ const q=t-paletteDuration,x=380,y=150,w=1160;
+ // Default 1.2s, travel 2.1s, hold 1.1s, return 2.1s, settle 1.3s.
+ if(t<paletteDuration){
+  const f=t<4.4?clamp((t-1.2)/2.1):1-clamp((t-4.4)/2.1);
+  const n=Math.round(60*f);
   browser("custom-colour-"+n,x,y,w);
   rect(630,936,660,58,29,C.forest);
   text("Choose your own colours",960,965,29,C.ivory,"Geist",550,"center");
@@ -411,14 +427,14 @@ function close(t){
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
- {id:"automation",len:7.1,draw:automation,review:[.26,.8,1.5,2.2,2.55,3.15,4.18,4.52,4.90,5.30,5.45,5.60,6.05,6.95]},
+ {id:"automation",len:8.0,draw:automation,review:[.26,.8,1.5,2.2,2.55,3.15,4.12,5.08,5.42,5.80,6.20,6.35,6.50,6.95,7.85]},
  {id:"library",len:5.8,draw:library,review:[1.6,2.5,3.6,4.55,4.85,5.3]},
  {id:"details",len:5.0,draw:details,review:[.4,1.2,2,2.85,3.15,3.48,4.98]},
  {id:"devices",len:5.35+syncHandoff,draw:devices,entry:"continuous",review:[0,1.42,2.08,2.95,3.42,4.13,4.65,5.85,6.75]},
  {id:"statistics",len:statisticsEnd,draw:statistics,review:[.8,1.7,2.8,4,5.39]},
  {id:"highlights",len:3+highlightsHandoff,draw:highlights,entry:"continuous",review:[0,.32,.78,1.65,2.8]},
  {id:"year",len:8,draw:year,review:[.75,1.9,2.75,4.35,5.25,7.7]},
- {id:"personalize",len:13.1,draw:personalize,review:[.4,1.2,2.1,3.3,4.5,5.7,7.2,8.75,10.3,11.85,12.8]},
+ {id:"personalize",len:personalizeEntry+paletteDuration+8.35,draw:personalize,entry:"continuous",review:[.16,.38,.8,1.3,2.1,3.3,4.5,5.2,6.4,7.6,8.6,9.8,11.3,12.85,14.4,15.95,16.9]},
  {id:"install",len:6.25,draw:install,review:[3.6,4.8,5.8]},
  {id:"close",len:3.8,draw:close,entry:"continuous",review:[0,.25,.55,.85,3.3]}
 ];

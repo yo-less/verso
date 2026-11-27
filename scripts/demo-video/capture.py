@@ -382,8 +382,8 @@ def additional():
         stats_content = {"x":sidebar["x"] + sidebar["width"],"y":topbar["y"] + topbar["height"]}
         base.shot(page,"stats-detail.png")
         branding_focus = capture_branding(page)
-        # Film the genuine appearance controls in the original Verso
-        # palette, then change the two hues and return to Classic.
+        # Film the real Verso paper tone slider at 2x resolution. Keep the
+        # forest-green rail and terracotta accents throughout.
         base.set_theme(page,"light")
         base.preset(page,"stock")
         palette_ctx = browser.new_context(viewport={"width":1440,"height":900},
@@ -393,40 +393,39 @@ def additional():
         base.open_page(palette_page,"/me/appearance")
         base.set_theme(palette_page,"light")
         base.open_page(palette_page,"/me/appearance")
-        main_hue = palette_page.locator("#ap-hue")
-        accent_hue = palette_page.locator("#ap-hue2")
+        paper = palette_page.locator("#ap-paper-depth")
         colours = palette_page.locator("section[aria-labelledby='ap-colours-h']")
         colours.evaluate("el => window.scrollTo(0,Math.max(0,el.getBoundingClientRect().top+scrollY-100))")
-        expect(main_hue).to_have_value("155")
-        expect(accent_hue).to_have_value("35")
+        expect(paper).to_have_value("0")
+        expect(paper).to_be_visible()
         expect(palette_page.locator("#ap-stage")).to_be_visible()
         assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
         palette_page.evaluate("""async () => {
             await document.fonts.ready;
             await Promise.all([...document.images].filter(i=>i.getBoundingClientRect().top<innerHeight).map(i=>i.decode().catch(()=>{})));
         }""")
-        palette_controls = [main_hue.bounding_box(),accent_hue.bounding_box()]
+        palette_controls = [paper.bounding_box()]
         assert all(b and 0 <= b["y"] < 900 for b in palette_controls), palette_controls
         stock_rail = palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor")
-        for i in range(37):
-            # Real range controls dispatch the application's input events.
-            # Smooth the travel of each knob independently.
-            def ease(p):
-                p=max(0,min(1,p))
-                return p*p*(3-2*p)
-            main_hue.fill(str(round(155+(85-155)*ease(i/20))))
-            accent_hue.fill(str(round(35+(65-35)*ease((i-16)/20))))
+        stock_paper = palette_page.locator("body").evaluate("el => getComputedStyle(el).backgroundColor")
+        for i in range(61):
+            p=i/60
+            eased=p*p*(3-2*p)
+            paper.fill(str(round(90*eased)))
             palette_page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
             palette_page.screenshot(path=str(base.OUT / f"custom-colour-{i}.png"), animations="disabled")
-        expect(main_hue).to_have_value("85")
-        expect(accent_hue).to_have_value("65")
+        expect(paper).to_have_value("90")
         expect(palette_page.locator("html")).to_have_attribute("data-ap-surface","verso")
-        assert palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor") != stock_rail
-        main_hue.fill("155")
-        accent_hue.fill("35")
+        assert palette_page.locator("body").evaluate("el => getComputedStyle(el).backgroundColor") != stock_paper
+        # Equivalent relative-color syntax can serialize differently, so
+        # compare the resolved sidebar in a temporary computed color sample.
+        assert palette_page.locator("#ap-hue").input_value() == "155"
+        assert palette_page.locator("#ap-hue2").input_value() == "35"
+        paper.fill("0")
         assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
         expect(palette_page.locator("[data-ap-savebar]")).to_be_hidden()
         assert palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor") == stock_rail
+        assert palette_page.locator("body").evaluate("el => getComputedStyle(el).backgroundColor") == stock_paper
         palette_ctx.close()
         capture_year(browser)
         (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"importCount":import_count,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"paletteControls":palette_controls,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))

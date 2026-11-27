@@ -49,8 +49,8 @@ jobs:
             curl "${args[@]}" --output "$music" "$MUSIC_URL"
           else
             if ! python scripts/demo-video/resolve_music.py "$music"; then
-              echo "::warning::Pixabay did not provide the verified source MP3. The visual review will still render silently. Set DEMO_MUSIC_URL to the original direct download if needed."
-              exit 0
+              echo "::error::Soundtrack unavailable. Configure DEMO_MUSIC_URL and DEMO_MUSIC_TOKEN for the private source MP3."
+              exit 1
             fi
           fi
           echo "480cf9dc634e65f799fde5a0d7aa25b609c8c2b9f6bdd43a04a9809b08c27b26  $music" | sha256sum --check

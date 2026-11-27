@@ -24,9 +24,10 @@ OPTIONS = {
     "vibrancy": ("soft", "vivid"),
 }
 HUE_KEYS = ("hue", "hue2")
+NUMERIC_KEYS = HUE_KEYS + ("paper_depth",)
 
 # Starting point for editing Classic: the same Verso typography, layout and palette.
-CLASSIC = {"hue": 155, "hue2": 35, "header": "plain", "sidebar": "plain",
+CLASSIC = {"hue": 155, "hue2": 35, "paper_depth": 0, "header": "plain", "sidebar": "plain",
            "backdrop": "none", "surface": "verso", "buttons": "mono",
            "radius": "default", "headings": "serif", "vibrancy": "soft"}
 
@@ -56,6 +57,11 @@ PRESETS = {
 }
 
 
+# Existing presets retain their previous appearance.
+for _preset in PRESETS.values():
+    if _preset:
+        _preset["paper_depth"] = 0
+
 
 def sanitize(raw):
     """Return a complete, valid appearance dict, or {} for the stock look."""
@@ -70,6 +76,10 @@ def sanitize(raw):
             clean[key] = int(raw.get(key)) % 360
         except (TypeError, ValueError):
             clean[key] = 230 if key == "hue" else 190
+    try:
+        clean["paper_depth"] = max(0, min(100, int(raw.get("paper_depth", 0))))
+    except (TypeError, ValueError, OverflowError):
+        clean["paper_depth"] = 0
     return clean
 
 
@@ -80,5 +90,5 @@ def html_attrs(ap):
     attrs = {"data-ap": ""}
     for key in OPTIONS:
         attrs["data-ap-" + key] = ap[key]
-    attrs["style"] = "--ap-h:{};--ap-h2:{}".format(int(ap["hue"]), int(ap["hue2"]))
+    attrs["style"] = "--ap-h:{};--ap-h2:{};--ap-paper-depth:{}%".format(int(ap["hue"]), int(ap["hue2"]), ap.get("paper_depth", 0))
     return attrs
