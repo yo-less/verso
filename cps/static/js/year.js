@@ -5,6 +5,7 @@
   var doc = document;
   var slides = Array.prototype.slice.call(doc.querySelectorAll(".yr-slide"));
   var bar = doc.querySelector(".yr-progress");
+  var stage = doc.getElementById("yr-stage");
   if (!slides.length || !bar || !doc.getElementById("yr-slides")) return;
 
   function json(id) {
@@ -70,13 +71,13 @@
     index = i;
     var slide = slides[index];
     slide.classList.add("is-active");
+    if (stage) stage.style.setProperty("--yr-landscape-shift", (14 * index / Math.max(1, slides.length - 1)) + "%");
     for (var k = 0; k < segments.length; k++) {
       segments[k].classList.toggle("is-done", k < index);
       var inner = segments[k].firstChild;
       inner.style.transition = "none";
       inner.style.width = k < index ? "100%" : (k === index && holds(slide) ? "100%" : "0");
     }
-    var stage = doc.getElementById("yr-stage");
     if (stage) stage.classList.toggle("is-last", index === slides.length - 1);
     countUp(slide);
     schedule(DURATION);

@@ -1,7 +1,7 @@
-/* Verso demo V11: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V16: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
-const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
+const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
 names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
@@ -18,11 +18,36 @@ function img(k,x,y,w,h,mode="contain"){const im=assets[k],s=(mode==="cover"?Math
 function fade(a,fn){ctx.save();ctx.globalAlpha*=clamp(a);fn();ctx.restore()}
 function bg(dark=true,t=0){rect(0,0,W,H,0,dark?"#091d16":"#e9dcc7");let g=ctx.createRadialGradient(1050+Math.sin(t*.7)*240,260,80,960,440,1420);g.addColorStop(0,dark?"#365847":"#fff9eb");g.addColorStop(.55,dark?"#173a2b":"#f2e7d6");g.addColorStop(1,dark?"#081b13":"#d7c9b3");ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
 function shadow(x,y,w,h,r,c,blur=48){ctx.save();ctx.shadowColor="#00000050";ctx.shadowBlur=blur;ctx.shadowOffsetY=22;rect(x,y,w,h,r,c);ctx.restore()}
-function browser(k,x,y,w,zoom=1,focusX=.5,focusY=.5,withShadow=true){let im=assets[k],bar=w*.025,h=w*im.height/im.width;if(withShadow)shadow(x,y,w,h+bar,19,C.paper);else rect(x,y,w,h+bar,19,C.paper);ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();rect(x,y,w,bar,0,"#213c30");["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+bar*.45+i*bar*.52,y+bar*.36,bar*.24,bar*.24,bar*.12,c));ctx.save();ctx.beginPath();ctx.rect(x,y+bar,w,h);ctx.clip();let sw=im.width/zoom,sh=im.height/zoom;ctx.drawImage(im,clamp(focusX)*(im.width-sw),clamp(focusY)*(im.height-sh),sw,sh,x,y+bar,w,h);ctx.restore();ctx.restore();return {x,y:y+bar,w,h}}
-function phone(k,cx,cy,w,angle=0){let im=assets[k],bezel=12,iw=w-2*bezel,ih=iw*im.height/im.width,h=ih+2*bezel;ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);shadow(-w/2,-h/2,w,h,38,"#0d1410",32);ctx.strokeStyle="#818b80";ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,38);ctx.stroke();ctx.save();ctx.beginPath();ctx.roundRect(-iw/2,-ih/2,iw,ih,26);ctx.clip();img(k,-iw/2,-ih/2,iw,ih);ctx.restore();ctx.restore()}
+function browser(k,x,y,w,zoom=1,focusX=.5,focusY=.5,withShadow=true,overlay=null){
+ const im=assets[k],bar=w*.025,h=w*im.height/im.width,top=y+bar;
+ if(withShadow)shadow(x,y,w,h+bar,19,C.paper);
+ else rect(x,y,w,h+bar,19,C.paper);
+ ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();
+ rect(x,y,w,bar,0,"#213c30");
+ ["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+bar*.45+i*bar*.52,y+bar*.36,bar*.24,bar*.24,bar*.12,c));
+ ctx.beginPath();ctx.rect(x,top,w,h);ctx.clip();
+ const sw=im.width/zoom,sh=im.height/zoom;
+ ctx.drawImage(im,clamp(focusX)*(im.width-sw),clamp(focusY)*(im.height-sh),sw,sh,x,top,w,h);
+ if(overlay)overlay(x,top,w,h);
+ ctx.restore();
+ return {x,y:top,w,h};
+}
 function reveal(t,a,b,fn,dy=26){let p=step(t,a,b);ctx.save();ctx.translate(0,(1-p)*dy);fade(p,fn);ctx.restore()}
-const tickRows=[{y:505,start:1.35,label:"Import"},{y:601,start:2.05,label:"Convert if needed"},{y:697,start:2.75,label:"Metadata & cover"},{y:793,start:3.45,label:"Organize"}];
-function tick(cx,cy,p){rect(cx-24,cy-24,48,48,24,C.gold);ctx.save();ctx.strokeStyle=C.forest;ctx.lineWidth=5;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(cx-11,cy);let a=clamp(p*2),b=clamp(p*2-1);ctx.lineTo(cx-11+8*a,cy+8*a);if(b>0)ctx.lineTo(cx-3+15*b,cy+8-19*b);if(p>0)ctx.stroke();ctx.restore()}
+const importStages=[
+ {start:.65,end:1.85,label:"Importing file"},
+ {start:1.85,end:2.68,label:"Converting to EPUB"},
+ {start:2.68,end:3.45,label:"Adding metadata and cover"}
+];
+function importStage(t,x){
+ const stage=importStages.find(({start,end})=>t>=start&&t<end);
+ if(!stage)return;
+ const {start,end,label}=stage;
+ const opacity=step(t,start,start+.14)*(1-step(t,end-.14,end));
+ fade(opacity,()=>{
+  line(x-28,500,x+28,500,C.gold,2);
+  text(label,x,541,32,C.forest,"Newsreader",600,"center");
+ });
+}
 function brand(t,opening){
  if(opening){
   // Let the artwork establish itself before the wordmark arrives.
@@ -35,59 +60,66 @@ function brand(t,opening){
  }
 }
 function automation(t){
- bg(false,t);title("From file to bookshelf",960,85,false,76);
- const box=browser("import-empty",720,210,1120),b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
+ bg(false,t);
+ const center=step(t,5.05,5.85);
+ fade(1-step(t,5.05,5.43),()=>title("From file to bookshelf",960,85,false,76));
+ fade(step(t,5.43,5.85),()=>title("Fully automated import",960,85,false,76));
+ const box=browser("import-empty",mix(720,310,center),mix(210,155,center),mix(1120,1300,center));
+ const b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
- const organize=step(t,3.45,3.83),flight=step(t,3.83,5.35),land=step(t,5.35,5.60);
+ const dissolve=step(t,3.45,4.13),flight=step(t,3.45,5.35),land=step(t,5.35,5.60);
  const im=assets["import-library"],ratio=im.width/1440;
  fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
- const drop=step(t,.22,1.18),fx=450,fy=300;
- const converted=step(t,2.05,2.43),cover=step(t,2.75,3.13);
- const wiggle=Math.sin((t-1.12)*19)*.045*(step(t,1.12,1.27)-step(t,1.95,2.15));
- function paper(x,y,angle,alpha){
-  fade(alpha,()=>{
-   ctx.save();ctx.translate(x,y);ctx.rotate(angle);
-   rect(-92,-50,184,100,6,"#fffcf4");
-   ctx.fillStyle="#d4b87e";ctx.beginPath();ctx.moveTo(66,-50);ctx.lineTo(92,-24);ctx.lineTo(66,-24);ctx.closePath();ctx.fill();
-   text("EPUB",0,-28,26,C.forest,"Geist",650,"center");
-   fade(1-converted,()=>{line(-46,-3,45,-3,"#cbb88f",2);line(-46,7,26,7,"#cbb88f",2)});
-   fade(converted,()=>text("Ready to import",0,0,16,C.forest,"Geist",500,"center"));
-   ctx.restore();
+ const drop=step(t,.17,1.32),fx=460,fy=326;
+ const converted=step(t,1.97,2.52),cover=step(t,2.75,3.25);
+ const fold=Math.sin(Math.PI*converted);
+ function folder(layer){
+  fade(1-dissolve,()=>{
+   ctx.translate(fx,fy+12*dissolve);
+   ctx.scale(1-.08*dissolve,1-.18*dissolve);
+   layer();
   });
  }
- // The file is landscape-shaped and fully contained once it enters
- // the folder. The interior clipping also prevents any stray pixels.
- fade(1-organize,()=>{
-  ctx.save();ctx.translate(fx,fy);
-  ctx.scale(1-.06*organize,1-.16*organize);
-  shadow(-133,-75,266,159,14,"#a47e42",14);
-  rect(-133,-95,112,35,9,"#a47e42");
-  rect(-120,-64,240,136,10,"#edd5a5");
-  ctx.restore();
-  if(drop<1){
-   const px=mix(155,fx,drop),py=mix(278,fy-22,drop)-52*Math.sin(Math.PI*drop);
-   // The approaching sheet remains visible outside the folder only
-   // until it enters; its bottom never reaches below the folder front.
-   paper(px,py,-.11*(1-drop),1-cover);
-  }else{
-   ctx.save();ctx.beginPath();ctx.roundRect(fx-120,fy-64,240,136,10);ctx.clip();
-   paper(fx,fy-18,wiggle,1-cover);ctx.restore();
-  }
-  // Folded front is drawn after the file, occluding the lower edge.
-  ctx.save();ctx.translate(fx,fy);ctx.scale(1-.06*organize,1-.16*organize);
-  ctx.fillStyle="#c9a467";ctx.beginPath();ctx.moveTo(-143,-1);ctx.lineTo(143,-1);ctx.lineTo(126,83);ctx.quadraticCurveTo(124,92,113,92);ctx.lineTo(-113,92);ctx.quadraticCurveTo(-124,92,-126,83);ctx.closePath();ctx.fill();
-  line(-130,7,130,7,"#ead3a5",2);ctx.restore();
-  text("Watched import folder",fx,fy+125,27,C.forest,"Newsreader",600,"center");
-  fade(1-step(t,.65,1.15),()=>text("Moby-Dick.epub",155,377,22,C.forest,"Geist",500,"center"));
+ folder(()=>{
+  shadow(-146,-98,292,181,15,"#a47e42",18);
+  rect(-146,-115,115,35,9,"#a47e42");
+  rect(-132,-85,264,154,11,"#edd5a5");
  });
- // The real cover emerges in place as Metadata & cover is checked.
- // Once Organize begins, the folder softly collapses and dissolves;
- // the cover is the only element that travels to the shelf.
- const x=mix(fx,target.x,flight),y=mix(fy-12,target.y,flight)-85*Math.sin(Math.PI*flight);
- const w=mix(132,target.w,flight),hh=mix(190,target.h,flight);
- fade(cover*(1-land),()=>{ctx.save();ctx.translate(x,y+34*(1-cover));ctx.rotate(-.035*(1-flight));img("moby-cover",-w/2,-hh/2,w,hh,"cover");ctx.restore()});
- line(120,529,120,769,"#d6c29a",2);
- tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,35,C.forest,"Geist",500)});
+ // The sheet and its artwork share one transform and one silhouette.
+ const x=mix(mix(145,fx,drop),target.x,flight);
+ const y=mix(mix(274,fy-35-18*cover,drop)-75*Math.sin(Math.PI*drop),target.y,flight)-140*Math.sin(Math.PI*flight);
+ const w=mix(mix(113,132,cover),target.w,flight),h=mix(mix(212,198,cover),target.h,flight);
+ fade(1-land,()=>{
+  ctx.translate(x,y);
+  const rotation=mix(-Math.PI/2,-.045,cover)-.10*(1-drop);
+  ctx.rotate(rotation*(1-flight));
+  ctx.scale(1+.07*fold,1-.22*fold);
+  ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,3*(1-flight));ctx.clip();
+  rect(-w/2,-h/2,w,h,0,"#fffcf4");
+  fade(1-cover,()=>{
+   ctx.rotate(Math.PI/2);
+   text("Moby-Dick",0,-34,23,C.forest,"Newsreader",600,"center");
+   fade(1-converted,()=>rect(-43,-19,86,28,5,"#eddfc0"));
+   fade(converted,()=>rect(-43,-19,86,28,5,C.forest));
+   const epub=converted>=.5;
+   fade(1-.75*fold,()=>text(epub?"EPUB":"MOBI",0,-5,19,epub?C.ivory:C.forest,"Geist",650,"center"));
+   fade(fold,()=>{
+    const crease=mix(-106,106,converted);
+    const sheen=ctx.createLinearGradient(crease-20,0,crease+20,0);
+    sheen.addColorStop(0,"#b58a4000");sheen.addColorStop(.5,"#b58a4066");sheen.addColorStop(1,"#b58a4000");
+    rect(crease-20,-58,40,116,0,sheen);
+   });
+  });
+  fade(cover,()=>img("moby-cover",-w/2,-h/2,w,h,"cover"));
+ });
+ folder(()=>{
+  const front=ctx.createLinearGradient(0,-10,0,91);
+  front.addColorStop(0,"#d6b479");front.addColorStop(1,"#bd9558");
+  ctx.fillStyle=front;ctx.beginPath();ctx.moveTo(-154,-9);ctx.lineTo(154,-9);ctx.lineTo(137,80);ctx.quadraticCurveTo(135,91,123,91);ctx.lineTo(-123,91);ctx.quadraticCurveTo(-135,91,-137,80);ctx.closePath();ctx.fill();
+  line(-144,-2,144,-2,"#efd4a1",2);
+  text("Watched import folder",0,124,27,C.forest,"Newsreader",600,"center");
+ });
+ importStage(t,fx);
 }
 function footer(s,dark=true){
  // Captions have a dedicated safe area above player controls.
@@ -110,78 +142,121 @@ function library(t){
   fade(p,()=>{shadow(cx-ww/2-9,cy-hh/2-9,ww+18,hh+18,16,C.paper,25);
    ctx.drawImage(im,cx-ww/2,cy-hh/2,ww,hh);
   });
+ }else if(t<5.19){
+  browser("browse-type-11",x,y,w,1,.5,.5,true,(bx,by,bw,bh)=>{
+   const im=assets["browse-results"],b=window.data.resultsBox,s=bw/im.width;
+   const left=bx+b.x*s,top=by+b.y*s,width=bw-b.x*s,height=bh-b.y*s;
+   fade(step(t,4.55,4.80),()=>rect(left,top,width,height,0,C.paper));
+   fade(step(t,4.78,5.17),()=>ctx.drawImage(im,b.x,b.y,im.width-b.x,im.height-b.y,left,top,width,height));
+  });
  }else browser("browse-results",x,y,w);
  // Explanation lives with the title; the area below the window stays clear.
 }
+const detailBrowser={x:350,y:155,w:1220};
+const detailsHold=4.90;
 function details(t){
- bg(false,t);
- const heading=step(t,1.25,1.72),p=step(t,2.85,3.38);
+ bg(false,Math.min(t,detailsHold));
+ const heading=step(t,1.25,1.72),p=step(t,2.85,3.48);
  fade(1-heading,()=>title("Explore a book",960,84,false,76));
  fade(heading,()=>title("Discover related titles",960,84,false,76));
  const i=Math.round(clamp((t-.85)/2.0)*60);
- browser("detail-scroll-"+i,350,155,1220);
- // Arrive at the real recommendation section before lifting it into
- // the foreground; retain the editorial inset from V10.
- const im=assets["related-focus"],scale=Math.min(1030/im.width,475/im.height,1.65);
- const iw=im.width*scale,ih=im.height*scale,pad=24;
- const w=iw+pad*2,h=ih+pad*2,x=1810-w+(1-p)*65,y=Math.min(440,890-h)+(1-p)*25;
- fade(p,()=>{
-  shadow(x,y,w,h,18,C.paper,34);
-  ctx.save();ctx.beginPath();ctx.roundRect(x+pad,y+pad,iw,ih,6);ctx.clip();
-  ctx.drawImage(im,x+pad,y+pad,iw,ih);ctx.restore();
- });
+ const box=browser("detail-scroll-"+i,detailBrowser.x,detailBrowser.y,detailBrowser.w);
+ relatedInset(box,p);
 }
-function devices(t){
- bg(true,t);title("Pick up where you left off",960,85,true,76);
- browser("book-light",96,180,1090);
- shadow(1395,180,380,715,38,"#202722");rect(1418,203,334,640,14,"#ecebe1");
- text("My books",1441,238,25,C.forest,"Geist",600);
- const a=step(t,.35,1.05),b=step(t,1.55,2.2),progress=38+9*b,synced=38+9*a;
- [["Moby-Dick","moby-cover",progress],["Pride and Prejudice","pride-cover",64],["Frankenstein","frankenstein-cover",21]].forEach(([s,k,v],i)=>{
-  const y=300+i*163;ctx.save();ctx.filter="grayscale(1)";img(k,1437,y,73,110);ctx.restore();
-  text(s,1523,y+20,17,C.forest,"Newsreader",600);
-  line(1523,y+66,1728,y+66,"#b2b6aa",5);line(1523,y+66,1523+205*v/100,y+66,C.forest,5);text(Math.round(v)+"%",1523,y+89,18,C.forest);
+function relatedInset(box,p){
+ if(p===0)return;
+ const b=window.data.relatedFocus,im=assets["related-focus"],s=box.w/assets["detail-scroll-60"].width;
+ const scale=Math.min(1030/b.width,475/b.height,1.65),pad=24*p;
+ const w=b.width*mix(s,scale,p),h=b.height*mix(s,scale,p);
+ const x=mix(box.x+b.x*s,1786-b.width*scale,p);
+ const y=mix(box.y+b.y*s,Math.min(464,866-b.height*scale),p);
+ fade(p,()=>shadow(x-pad,y-pad,w+2*pad,h+2*pad,18*p,C.paper,34*p));
+ const scaleBlend=step(p,0,.4);
+ const source=assets["detail-scroll-60"];
+ ctx.drawImage(source,b.x,b.y,b.width,b.height,x,y,w,h);
+ fade(scaleBlend,()=>ctx.drawImage(im,x,y,w,h));
+}
+const syncHandoff=1.55;
+function devices(handoff){
+ const move=step(handoff,0,.88),t=handoff-syncHandoff;
+ // The capture strip is already eased. Run it backward within the same
+ // browser to return to the book's reading progress.
+ const frame=60-Math.round(60*clamp((handoff-.54)/.83));
+ bg(false,detailsHold);
+ fade(move,()=>bg(true,Math.max(0,t)));
+ fade(1-step(handoff,0,.38),()=>title("Discover related titles",960,84,false,76));
+ fade(step(t,0,.44),()=>title("Pick up where you left off",960,85,true,76));
+ const box=browser("detail-scroll-"+frame,mix(detailBrowser.x,96,move),
+  mix(detailBrowser.y,180,move),mix(detailBrowser.w,1090,move));
+ const a=step(t,3.66,4.25),b=step(t,1.45,1.98),progress=38+9*b,synced=38+9*a;
+ const device=step(t,.68,1.27);
+ fade(device,()=>{
+  ctx.translate(92*(1-device),22*(1-device));
+  ctx.translate(1585,535);ctx.scale(.96+.04*device,.96+.04*device);ctx.translate(-1585,-535);
+  shadow(1395,180,380,715,38,"#202722");rect(1418,203,334,640,14,"#ecebe1");
+  text("My books",1441,238,25,C.forest,"Geist",600);
+  [["Moby-Dick","moby-cover",progress],["Pride and Prejudice","pride-cover",64],["Frankenstein","frankenstein-cover",21]].forEach(([s,k,v],i)=>{
+   const y=300+i*163;ctx.save();ctx.filter="grayscale(1)";img(k,1437,y,73,110);ctx.restore();
+   text(s,1523,y+20,17,C.forest,"Newsreader",600);
+   line(1523,y+66,1728,y+66,"#b2b6aa",5);line(1523,y+66,1523+205*v/100,y+66,C.forest,5);text(Math.round(v)+"%",1523,y+89,18,C.forest);
+  });
+  const opened=step(t,2.0,2.48);
+  fade(opened,()=>{
+   rect(1418,203,334,640,14,"#ecebe1");
+   text("Moby-Dick",1585,245,25,C.forest,"Newsreader",600,"center");
+   line(1440,274,1730,274,"#a1a59a",1);
+   text("The Whiteness of the Whale",1585,317,20,C.forest,"Newsreader",600,"center");
+   const excerpt=["It was the whiteness of","the whale that above all","things appalled me. But","how can I hope to explain","myself here; and yet, in","some dim, random way,","explain myself I must,","else all these chapters","might be naught."];
+   excerpt.forEach((s,i)=>text(s,1445,365+i*36,24,C.forest,"Newsreader",500));
+   line(1445,786,1725,786,"#b2b6aa",3);
+   line(1445,786,1445+280*synced/100,786,C.forest,3);
+   text(Math.round(synced)+"%",1585,815,17,C.forest,"Geist",500,"center");
+  });
+  rect(1520,865,130,6,3,"#6a7469");
+  text("KOReader  ·  Kobo",1585,932,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
  });
- const opened=step(t,2.35,2.72);
- fade(opened,()=>{
-  rect(1418,203,334,640,14,"#ecebe1");
-  text("Moby-Dick",1585,245,25,C.forest,"Newsreader",600,"center");
-  line(1440,274,1730,274,"#a1a59a",1);
-  text("The Whiteness of the Whale",1585,317,20,C.forest,"Newsreader",600,"center");
-  const excerpt=["It was the whiteness of","the whale that above all","things appalled me. But","how can I hope to explain","myself here; and yet, in","some dim, random way,","explain myself I must,","else all these chapters","might be naught."];
-  excerpt.forEach((s,i)=>text(s,1445,365+i*36,24,C.forest,"Newsreader",500));
-  line(1445,786,1725,786,"#b2b6aa",3);
-  line(1445,786,1445+280*synced/100,786,C.forest,3);
-  text(Math.round(synced)+"%",1585,815,17,C.forest,"Geist",500,"center");
+ relatedInset(box,1-step(handoff,0,.54));
+ fade(step(t,2.75,3.04),()=>{
+  const spin=step(t,3.12,3.65),x=1290,y=520;
+  rect(x-42,y-42,84,84,42,C.gold);
+  ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI*2*spin);
+  ctx.fillStyle=C.forest;
+  // Each curved shaft and its triangular tip share a single filled outline.
+  for(const start of [-Math.PI+.50,.50]){
+   const end=start+Math.PI-1,R=22,ex=R*Math.cos(end),ey=R*Math.sin(end);
+   const tx=-Math.sin(end),ty=Math.cos(end),nx=-ty,ny=tx;
+   ctx.beginPath();ctx.arc(0,0,R+2.6,start,end);
+   ctx.lineTo(ex-8*nx,ey-8*ny);ctx.lineTo(ex+12*tx,ey+12*ty);
+   ctx.lineTo(ex+8*nx,ey+8*ny);ctx.lineTo(ex+2.6*nx,ey+2.6*ny);
+   ctx.arc(0,0,R-2.6,end,start,true);ctx.closePath();ctx.fill();
+  }
+  ctx.restore();
  });
- rect(1520,865,130,6,3,"#6a7469");
- const spin=step(t,1.05,1.55),x=1290,y=520;
- rect(x-42,y-42,84,84,42,C.gold);
- ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI*2*spin);
- ctx.strokeStyle=C.forest;ctx.lineWidth=4.5;ctx.lineCap="round";ctx.lineJoin="round";
- // Each head meets its own arc at the exact tangent endpoint.
- // Draw the two sides of each arrowhead as one joined path.
- for(const start of [-Math.PI+.42,.42]){
-  const end=start+Math.PI-.84,R=23,ex=R*Math.cos(end),ey=R*Math.sin(end);
-  const tx=-Math.sin(end),ty=Math.cos(end),nx=-ty,ny=tx;
-  ctx.beginPath();ctx.arc(0,0,R,start,end);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(ex-10*tx+8*nx,ey-10*ty+8*ny);ctx.lineTo(ex,ey);ctx.lineTo(ex-10*tx-8*nx,ey-10*ty-8*ny);ctx.stroke();
- }
- ctx.restore();
  // Conceptual progress indicator, explicitly distinct from the captured UI.
- rect(96,875,1090,86,14,"#274739");text("Moby-Dick  ·  Reading progress",125,901,26,C.ivory,"Geist",550);line(125,936,950,936,"#637a6c",6);line(125,936,125+825*synced/100,936,C.gold,6);text(Math.round(synced)+"%",1100,936,32,C.ivory,"Geist",600,"right");
- fade(step(t,2.15,2.45),()=>text("Progress synchronized",640,990,25,C.muted,"Geist",500,"center"));
- text("KOReader  ·  Kobo",1585,932,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
+ fade(step(t,2.48,2.73),()=>{
+  rect(96,875,1090,86,14,"#274739");text("Moby-Dick  ·  Reading progress",125,901,26,C.ivory,"Geist",550);line(125,936,950,936,"#637a6c",6);line(125,936,125+825*synced/100,936,C.gold,6);text(Math.round(synced)+"%",1100,936,32,C.ivory,"Geist",600,"right");
+ });
+ fade(step(t,4.25,4.57),()=>text("Progress synchronized",640,990,25,C.muted,"Geist",500,"center"));
 }
 function statistics(t){
  bg(false,t);title("Your reading, in perspective",960,85,false,74);
  const i=Math.round(clamp((t-1.15)/3.2)*96);
  browser("stats-scroll-"+i,350,155,1220);
 }
-function highlights(t){
- bg(true,t);title("Keep the words that matter",960,85,true,76);
- // Keep the browser in the same position as the preceding statistics scene.
- browser("highlights-light",350,155,1220);
+const statisticsEnd=5.4;
+const highlightsHandoff=.65;
+function highlights(handoff){
+ const t=handoff-highlightsHandoff;
+ bg(false,statisticsEnd-.001);
+ fade(step(handoff,0,.6),()=>bg(true,Math.max(0,t)));
+ fade(1-step(handoff,0,.32),()=>title("Your reading, in perspective",960,85,false,74));
+ fade(step(handoff,.32,.78),()=>title("Keep the words that matter",960,85,true,76));
+ const ready=step(handoff,.28,highlightsHandoff);
+ browser(ready===1?"highlights-light":"stats-scroll-96",350,155,1220,1,.5,.5,true,(x,y,w,h)=>{
+  if(ready===1)return;
+  fade(step(handoff,0,.30),()=>rect(x,y,w,h,0,C.paper));
+  fade(ready,()=>ctx.drawImage(assets["highlights-light"],x,y,w,h));
+ });
  let p=step(t,.4,1.0);ctx.save();ctx.translate(1045+(1-p)*65,365+(1-p)*25);
  fade(p,()=>{
   shadow(0,0,770,465,15,C.paper,30);text("“",48,88,105,C.rust,"Newsreader",600);
@@ -195,19 +270,27 @@ function highlights(t){
   text("Charlotte Brontë · Jane Eyre",50,370,26,C.rust,"Geist",500);
  });ctx.restore();
 }
+function yearPhone(key,cx,cy,w){
+ const im=assets[key],bezel=12,screen=w-2*bezel,height=screen*im.height/im.width;
+ const x=cx-w/2,y=cy-height/2-bezel;
+ shadow(x,y,w,height+2*bezel,36,"#0d1712",32);
+ ctx.save();
+ ctx.beginPath();ctx.roundRect(x+bezel,y+bezel,screen,height,26);ctx.clip();
+ ctx.drawImage(im,x+bezel,y+bezel,screen,height);
+ ctx.restore();
+}
 function year(t){
  bg(true,t);title("Your year in books",960,79,true,78);
- // A moving story carousel, not three independent stationary devices.
- const seq=["story-intro","story-finished","story-authors","story-rhythm","story-summary"];
+ const slides=["intro","finished","authors","rhythm","summary"];
  let pos=0;
- for(let i=1;i<seq.length;i++)pos+=step(t,i*1.22-.42,i*1.22+.28);
- const cards=seq.map((k,i)=>({k,i,delta:i-pos})).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
- for(const {k,delta} of cards){
+ for(let i=1;i<slides.length;i++)pos+=step(t,1.48*i-.28,1.48*i+.48);
+ const phones=slides.map((key,i)=>({key,delta:i-pos})).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+ for(const {key,delta} of phones){
   if(Math.abs(delta)>2.5)continue;
-  const strength=1-clamp(Math.abs(delta)/1.6),w=mix(300,398,strength),x=960+delta*450,y=570+(1-strength)*30;
-  fade(mix(.46,1,strength),()=>phone(k,x,y,w,0));
+  const strength=1-clamp(Math.abs(delta)/1.6);
+  fade(mix(.43,1,strength),()=>yearPhone("year-mobile-"+key,960+delta*450,565+(1-strength)*30,mix(300,398,strength)));
  }
- seq.forEach((_,i)=>rect(960-64+i*32,980,22,5,2,Math.abs(i-pos)<.5?C.gold:"#718579"));
+ slides.forEach((_,i)=>rect(885+i*32,984,22,5,2,Math.abs(i-pos)<.5?C.gold:C.muted));
 }
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
@@ -283,28 +366,36 @@ function install(t){
  fade(p,()=>installBrowser(t));
 }
 function close(t){
- bg(true,6.25);fade(1-step(t,0,.9),()=>title("Run Verso yourself",960,105,true,76));
- installBrowser(6.25,step(t,.15,1.05));
+ bg(true,6.25);fade(1-step(t,0,.68),()=>title("Run Verso yourself",960,105,true,76));
+ installBrowser(6.25,step(t,.80,1.48));
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
- {id:"automation",len:6.1,draw:automation},
- {id:"library",len:5.8,draw:library},
- {id:"details",len:5.0,draw:details},
- {id:"devices",len:4,draw:devices},
- {id:"statistics",len:5.4,draw:statistics},
- {id:"highlights",len:3,draw:highlights},
- {id:"year",len:6,draw:year},
- {id:"personalize",len:13.1,draw:personalize},
- {id:"install",len:6.25,draw:install},
- {id:"close",len:3.8,draw:close}
+ {id:"automation",len:7.1,draw:automation,review:[.26,.8,1.5,2.2,2.55,3.15,4.4,5.35,6.05,6.95]},
+ {id:"library",len:5.8,draw:library,review:[1.6,2.5,3.6,4.55,4.85,5.3]},
+ {id:"details",len:5.0,draw:details,review:[.4,1.2,2,2.85,3.15,3.48,4.98]},
+ {id:"devices",len:5.35+syncHandoff,draw:devices,entry:"continuous",review:[0,1.42,2.08,2.95,3.42,4.13,4.65,5.85,6.75]},
+ {id:"statistics",len:statisticsEnd,draw:statistics,review:[.8,1.7,2.8,4,5.39]},
+ {id:"highlights",len:3+highlightsHandoff,draw:highlights,entry:"continuous",review:[0,.32,.78,1.65,2.8]},
+ {id:"year",len:8,draw:year,review:[.75,1.9,2.75,4.35,5.25,7.7]},
+ {id:"personalize",len:13.1,draw:personalize,review:[4.5,5.7,7.2,8.75,10.3,11.85,12.8]},
+ {id:"install",len:6.25,draw:install,review:[3.6,4.8,5.8]},
+ {id:"close",len:3.8,draw:close,entry:"continuous",review:[.5,.76,1.10,1.6,3.3]}
 ];
-window.timeline=scenes.map(s=>({id:s.id,seconds:s.len}));window.duration=scenes.reduce((n,s)=>n+s.len,0);
+window.timeline=scenes.map(({id,len,review=[]})=>({id,seconds:len,review}));
+window.duration=scenes.reduce((n,s)=>n+s.len,0);
 function drawScene(i,t){ctx.save();scenes[i].draw(Math.max(0,t));ctx.restore()}
-window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);if(i>0&&scenes[i].id==="automation"&&t<.65){
- const p=step(t,0,.65);ctx.save();ctx.beginPath();ctx.rect(0,0,W*(1-p),H);ctx.clip();drawScene(i-1,scenes[i-1].len-.001);ctx.restore();
- }else if(i>0&&scenes[i].id!=="close"&&scenes[i].id!=="automation"&&t<.52)fade(1-step(t,0,.52),()=>drawScene(i-1,scenes[i-1].len-.001))};
-// Test the actual rendered pixels at each circle, before and after its own reveal.
-// The check is dark forest against a solid gold circle; test only its inner square.
-window.verifyChecks=function(){function darkPixels(x,y){let d=ctx.getImageData(x-13,y-13,28,28).data,n=0;for(let i=0;i<d.length;i+=4)if(d[i]<45&&d[i+1]<95&&d[i+2]<65)n++;return n}
- return tickRows.map(row=>{drawScene(1,row.start-.08);let before=darkPixels(120,row.y);drawScene(1,row.start+.45);let after=darkPixels(120,row.y);return {row:row.label,before,after,ok:before===0&&after>45}})};
+window.render=function(time){
+ let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;
+ while(t>=scenes[i].len)t-=scenes[i++].len;
+ drawScene(i,t);
+ const entry=scenes[i].entry??"dissolve";
+ if(i===0||entry==="continuous")return;
+ const previous=()=>drawScene(i-1,scenes[i-1].len-.001);
+ if(entry==="wipe"&&t<.65){
+  const p=step(t,0,.65);
+  ctx.save();ctx.beginPath();ctx.rect(0,0,W*(1-p),H);ctx.clip();previous();ctx.restore();
+ }else if(entry==="dissolve"&&t<.52){
+  fade(1-step(t,0,.52),previous);
+ }
+};

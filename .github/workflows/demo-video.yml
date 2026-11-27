@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 65
     env:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
       DEMO_ROOT: /tmp/verso-demo
       DEMO_URL: http://127.0.0.1:18083
       DEMO_OUT: /tmp/verso-screenshots
@@ -79,10 +81,19 @@ jobs:
           mkdir -p "$VIDEO_OUT"
           docker logs verso-screenshot > "$VIDEO_OUT/container.log" 2>&1 || true
           docker rm -f verso-screenshot || true
-      - uses: actions/upload-artifact@v4
-        if: always()
+      - name: Upload preview MP4
+        uses: actions/upload-artifact@v4
         with:
           name: verso-demo-video
+          path: ${{ env.VIDEO_OUT }}/*.mp4
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload review frames and logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verso-demo-review
           path: |
             ${{ env.VIDEO_OUT }}
+            !${{ env.VIDEO_OUT }}/*.mp4
           retention-days: 14

@@ -3,6 +3,7 @@
 import importlib.util
 import io
 import json
+import math
 import os
 import sqlite3
 from datetime import datetime, timedelta
@@ -51,9 +52,51 @@ def scroll_strip(page, prefix, destination, frames=25):
         page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
         page.screenshot(path=str(base.OUT / f"{prefix}-{i}.png"), animations="disabled")
 
+def capture_branding(page):
+    base.open_page(page,"/admin/branding")
+    base.shot(page,"branding-viewport.png","#name")
+    branding_focus = []
+    for i, selectors in enumerate((("#name",),("#asset-wordmark",),("#background","#accent"),
+                                   ("#asset-favicon",),("#asset-login",))):
+        fields = [page.locator(sel).locator("xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' field ')][1]") for sel in selectors]
+        fields[0].evaluate("el => el.scrollIntoView({block:'center', behavior:'instant'})")
+        page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+        boxes = [f.bounding_box() for f in fields]
+        assert all(b and b["y"] >= 0 and b["y"] + b["height"] <= 900 for b in boxes), (selectors,boxes)
+        expect(fields[0]).to_be_visible()
+        base.shot(page,f"branding-focus-{i}.png")
+        branding_focus.append(boxes)
+    return branding_focus
+
+def capture_year(browser):
+    with browser.new_context(viewport={"width":420,"height":840}, device_scale_factor=2,
+                             locale="en-US", reduced_motion="no-preference",
+                             is_mobile=True, has_touch=True, service_workers="block") as context:
+        story = context.new_page()
+        base.login(story)
+        base.open_page(story,"/year")
+        expect(story.locator(".yr-landscape img")).to_be_visible()
+        story.locator(".yr-landscape img").evaluate("image => image.decode()")
+        story.locator("[data-yr-pause]").tap()
+        targets = {"intro","finished","authors","rhythm","summary"}
+        captured = set()
+        for _ in range(story.locator(".yr-slide").count()):
+            active = story.locator(".yr-slide.is-active")
+            classes = set(active.get_attribute("class").split())
+            for name in targets:
+                if f"yr-s-{name}" in classes:
+                    story.wait_for_timeout(1550)
+                    base.shot(story,f"year-mobile-{name}.png",".yr-slide.is-active")
+                    captured.add(name)
+            if captured == targets:
+                break
+            story.keyboard.press("ArrowRight")
+        assert captured == targets, captured
+
+
 def additional():
     with sync_playwright() as pw:
-        browser = pw.chromium.launch()
+        browser = pw.chromium.launch(args=["--lang=en-US"])
         ctx = browser.new_context(viewport={"width":1440,"height":900}, device_scale_factor=1,
                                   locale="en-US",color_scheme="light",reduced_motion="reduce",service_workers="block")
         # Both closing plates use precisely the same browser viewport, CSS
@@ -71,7 +114,10 @@ def additional():
         base.login(page)
         base.set_theme(page,"light")
         base.open_page(page,"/")
-        card = page.locator(".book-card").filter(has_text="Moby-Dick").first
+        import_shelves = page.add_style_tag(content="""
+            [aria-labelledby="continue-heading"], [aria-labelledby="discover-heading"] { display: none; }
+        """)
+        card = page.locator('[aria-labelledby="books-heading"] .book-card').filter(has_text="Moby-Dick")
         expect(card).to_be_visible()
         cover = card.locator(".cover img")
         expect(cover).to_be_visible()
@@ -87,7 +133,7 @@ def additional():
         # appear after it depending on the seeded shelf layout.
         card.evaluate("el => el.scrollIntoView({block:'center', inline:'nearest', behavior:'instant'})")
         page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
-        base.shot(page,"import-library.png",".book-card")
+        base.shot(page,"import-library.png",'[aria-labelledby="books-heading"] .book-card')
         import_card = card.bounding_box()
         import_cover = cover.bounding_box()
         assert import_card and import_card["y"] >= 0 and import_card["y"] + import_card["height"] <= 900, import_card
@@ -97,6 +143,7 @@ def additional():
             page.screenshot(path=str(base.OUT/"import-empty.png"), animations="disabled")
         finally:
             card.evaluate("el => el.style.visibility = ''")
+            import_shelves.evaluate("el => el.remove()")
         for title, filename in (("Pride and Prejudice","pride-cover.png"),("Frankenstein","frankenstein-cover.png")):
             cover = page.locator(".book-card").filter(has_text=title).first.locator(".cover img")
             expect(cover).to_be_visible()
@@ -128,12 +175,13 @@ def additional():
         for i in range(len("Jane Austen") + 1):
             sharp_query.fill("Jane Austen"[:i])
             sharp_query.screenshot(path=str(base.OUT / f"search-sharp-{i}.png"),animations="disabled")
-        sharp.close()
         page.locator("#query").press("Enter")
         page.wait_for_load_state("domcontentloaded")
         expect(page.locator(".book-card").first).to_be_visible()
         base.shot(page,"search.png",".book-card")
         base.shot(page,"browse-results.png",".book-card")
+        results_box = page.locator("#main").bounding_box()
+        assert results_box and 0 <= results_box["y"] < 900, results_box
         base.open_page(page,"/")
         href = page.locator(".continue-card").filter(has_text="Moby-Dick").first.get_attribute("href")
         base.open_page(page,href)
@@ -144,22 +192,40 @@ def additional():
         # Use the same actual scroll capture method as the library scene.
         detail_end = related.evaluate("el => Math.min(document.scrollingElement.scrollHeight-innerHeight, Math.max(0,el.getBoundingClientRect().top+scrollY-100))")
         scroll_strip(page,"detail-scroll",detail_end,frames=61)
-        page.wait_for_timeout(400)
-        related.screenshot(path=str(base.OUT/"related.png"),animations="disabled")
+        # Give newly visible cover images time to decode for the held frame.
+        base.shot(page,"detail-scroll-60.png",".similar-books")
         section_box = related.bounding_box()
         related_cards = related.locator(".book-card")
         assert section_box and related_cards.count() > 0
         card_boxes = [related_cards.nth(i).bounding_box() for i in range(related_cards.count())]
         assert all(card_boxes), card_boxes
         # Trim unused trailing grid columns without removing any book or header.
-        header_box = related.locator(".section-header").bounding_box()
         header_text = related.locator(".section-header p").bounding_box()
-        right = max([b["x"]+b["width"] for b in card_boxes] +
-                    [header_text["x"]+header_text["width"]])
-        with Image.open(base.OUT/"related.png") as im:
-            crop_right = min(im.width, max(1, round(right - section_box["x"] + 16)))
-            # If the header spans the section, leave the entire real section.
-            im.crop((0,0,crop_right,im.height)).save(base.OUT/"related-focus.png")
+        assert header_text
+        right = min(section_box["x"] + section_box["width"],
+                    max(b["x"] + b["width"] for b in [*card_boxes, header_text]) + 16)
+        # Record the final viewport geometry in CSS pixels.
+        with Image.open(base.OUT/"detail-scroll-60.png") as im:
+            x = max(0, math.floor(section_box["x"]))
+            y = max(0, math.floor(section_box["y"]))
+            end_x = min(im.width, math.ceil(right))
+            end_y = min(im.height, math.ceil(section_box["y"] + section_box["height"]))
+            assert end_x > x and end_y > y, section_box
+            related_focus = {"x":x,"y":y,"width":end_x-x,"height":end_y-y}
+        # Repeat that viewport at 4x and crop the same rectangle. Capturing
+        # by locator can scroll the section and change its visible edges.
+        base.open_page(sharp_page,href)
+        final_y = page.evaluate("window.scrollY")
+        sharp_page.evaluate("(y) => window.scrollTo(0,y)", final_y)
+        sharp_section = sharp_page.locator(".similar-books")
+        expect(sharp_section).to_be_visible()
+        sharp_box = sharp_section.bounding_box()
+        assert sharp_box and all(abs(sharp_box[k] - section_box[k]) < 1 for k in section_box), sharp_box
+        base.shot(sharp_page,"related-sharp-viewport.png",".similar-books")
+        with Image.open(base.OUT/"related-sharp-viewport.png") as im:
+            im.crop((4*x,4*y,4*end_x,4*end_y)).save(base.OUT/"related-focus.png")
+        (base.OUT/"related-sharp-viewport.png").unlink()
+        sharp.close()
         # The Moby-Dick artwork was already extracted from its image URL.
         base.open_page(page,"/reading-stats")
         expect(page.locator(".rs-heatmap")).to_be_visible()
@@ -170,18 +236,7 @@ def additional():
         assert stats_end > 0, stats_end
         scroll_strip(page,"stats-scroll",stats_end,frames=97)
         base.shot(page,"stats-detail.png")
-        base.open_page(page,"/admin/branding")
-        base.shot(page,"branding-viewport.png","#name")
-        branding_focus = []
-        for i, selectors in enumerate((("#name",),("#asset-wordmark",),("#background","#accent"),
-                                       ("#asset-favicon",),("#asset-login",))):
-            fields = [page.locator(sel).locator("xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' field ')][1]") for sel in selectors]
-            fields[0].evaluate("el => el.scrollIntoView({block:'center', behavior:'instant'})")
-            page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
-            boxes = [f.bounding_box() for f in fields]
-            assert all(b and b["y"] >= 0 and b["y"] + b["height"] <= 900 for b in boxes), (selectors,boxes)
-            base.shot(page,f"branding-focus-{i}.png",selectors[0])
-            branding_focus.append(boxes)
+        branding_focus = capture_branding(page)
         base.set_theme(page,"dark")
         base.open_page(page,"/")
         base.shot(page,"theme-dark.png",".book-card")
@@ -194,28 +249,8 @@ def additional():
         base.shot(page,"styled-ocean.png",".book-card")
         base.shot(page,"theme-ocean.png",".book-card")
         base.preset(page,"stock")
-        # Capture actual portrait story layouts, including complete headers.
-        portrait = browser.new_context(viewport={"width":420,"height":840},device_scale_factor=2,
-                                       locale="en-US",color_scheme="dark",reduced_motion="reduce",service_workers="block")
-        story = portrait.new_page()
-        base.login(story)
-        base.open_page(story,"/year")
-        expect(story.locator(".yr-brand img")).to_be_visible()
-        story.locator("[data-yr-pause]").click()
-        targets = {"intro","finished","authors","rhythm","summary"}
-        found = set()
-        for _ in range(story.locator(".yr-slide").count()):
-            active = story.locator(".yr-slide.is-active")
-            classes = active.get_attribute("class") or ""
-            for name in targets:
-                if f"yr-s-{name}" in classes:
-                    base.shot(story,f"story-{name}.png",".yr-slide.is-active")
-                    found.add(name)
-            story.keyboard.press("ArrowRight")
-            story.wait_for_timeout(450)
-        assert found == targets, (found, targets)
-        portrait.close()
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"brandingFocus":branding_focus}))
+        capture_year(browser)
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus}))
         ctx.close()
         browser.close()
 

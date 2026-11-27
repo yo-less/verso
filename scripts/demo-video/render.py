@@ -46,18 +46,16 @@ def run():
             page.evaluate("window.ready")
             duration=page.evaluate("window.duration")
             timeline=page.evaluate("window.timeline")
-            assert abs(duration - 61.95) < .001, duration
-            checks = page.evaluate("window.verifyChecks()")
-            assert all(row['ok'] for row in checks), checks
-            (OUT/"checkmarks.json").write_text(json.dumps(checks,indent=2))
-            for n,t in enumerate((.5,1.2,1.7,2.45,3.15,3.7,4.4,5.7)):
-                page.evaluate("(t)=>window.render(t+3.5)",t)
-                page.screenshot(path=str(OUT/f"import-step-{n+1}.jpg"),type="jpeg",quality=90)
-            for scene_id, times in {"library":(1.6,2.5,3.6,5.0),"details":(.4,1.2,2.0,2.85,3.4,4.5),"devices":(1.3,2.3,3.3),"personalize":(4.5,5.7,7.2,8.75,10.3,11.85,12.8),"statistics":(.8,1.7,2.8,4.0,5.0),"install":(3.6,4.8,5.8),"close":(.5,1.5,3.3)}.items():
-                start = sum(s["seconds"] for s in timeline[:next(i for i,s in enumerate(timeline) if s["id"] == scene_id)])
-                for n, t in enumerate(times):
+            assert timeline and len({s["id"] for s in timeline}) == len(timeline), timeline
+            assert duration > 0 and math.isclose(duration, sum(s["seconds"] for s in timeline)), duration
+            start = 0
+            for scene in timeline:
+                scene_id = scene["id"]
+                assert scene["seconds"] > 0 and all(0 <= t < scene["seconds"] for t in scene["review"]), scene
+                for n, t in enumerate(scene["review"]):
                     page.evaluate("(t)=>window.render(t)",start+t)
                     page.screenshot(path=str(OUT/f"review-{scene_id}-{n+1}.jpg"),type="jpeg",quality=90)
+                start += scene["seconds"]
             page.evaluate("window.render(2.75)")
             page.screenshot(path=str(OUT/"verso-demo-poster.jpg"),type="jpeg",quality=94)
             for i,scene in enumerate(timeline):

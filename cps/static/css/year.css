@@ -12,10 +12,20 @@
 .yr .icon { width: 20px; height: 20px; }
 
 .yr-stage { position: fixed; inset: 0; display: flex; justify-content: center; }
-.yr-slides { position: relative; width: min(520px, 100vw); height: 100%; overflow: hidden; }
-@media (min-width: 640px) {
-  .yr-slides { height: min(100%, 940px); margin: auto 0; border-radius: 28px; box-shadow: 0 30px 80px rgb(0 0 0 / .45); }
+.yr-landscape { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: #eee3d1; }
+.yr-landscape img {
+  display: block; width: 118%; max-width: none; height: 100%; margin-left: -18%; object-fit: cover;
+  transform: translateX(var(--yr-landscape-shift, 0%));
+  transition: transform .8s var(--yr-ease);
 }
+.yr-landscape::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, #102e20dd, #102e20a6 28%, #102e20bd 65%, #102e20ee);
+}
+@media (prefers-reduced-motion: reduce) {
+  .yr-landscape img { transition: none; transform: none; }
+}
+.yr-slides { position: relative; width: 100%; height: 100%; overflow: hidden; }
 
 /* Progress, top bar, tap zones */
 .yr-progress { position: fixed; z-index: 5; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
@@ -47,11 +57,12 @@
 .yr-slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px;
   padding: 96px 28px 56px; opacity: 0; visibility: hidden; transform: scale(1.04); transition: opacity .5s var(--yr-ease), transform .7s var(--yr-ease), visibility 0s .5s;
   background: var(--bg, var(--ink)); overflow: hidden; isolation: isolate; }
+.yr-slide { background: none; }
 .yr-slide.is-active { opacity: 1; visibility: visible; transform: none; transition: opacity .5s var(--yr-ease), transform .7s var(--yr-ease); z-index: 1; }
 .yr-slide::before { content: ""; position: absolute; inset: -20%; z-index: -1; pointer-events: none; opacity: .9;
   background: radial-gradient(40% 30% at var(--gx, 20%) var(--gy, 15%), var(--g1, transparent), transparent 70%),
               radial-gradient(45% 35% at var(--hx, 85%) var(--hy, 85%), var(--g2, transparent), transparent 70%); }
-.yr-slide.is-active::before { animation: yr-drift 14s ease-in-out infinite alternate; }
+.yr-slide.is-active::before { animation: yr-drift 14s ease-in-out infinite alternate; opacity: .13; }
 .yr-slide::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .07; mix-blend-mode: overlay;
   background-image: repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, #000 0 1px, transparent 1px 4px); }
 @keyframes yr-drift { to { transform: translate(4%, -3%) rotate(6deg) scale(1.08); } }
@@ -81,15 +92,39 @@
 .yr-shelf::after { content: ""; position: absolute; left: -10px; right: -10px; bottom: 0; height: 10px; border-radius: 2px;
   background: linear-gradient(#7A4E2D, #4A2E1A); box-shadow: 0 8px 18px rgb(0 0 0 / .35); }
 .yr-spine { position: relative; flex: 1 1 0; min-width: 0; max-width: 34px; height: var(--h); border-radius: 3px 3px 1px 1px;
-  background: linear-gradient(90deg, rgb(0 0 0 / .18), transparent 18%, rgb(255 255 255 / .12) 40%, transparent 60%, rgb(0 0 0 / .22)), var(--c);
+  background: linear-gradient(90deg, rgb(0 0 0 / .18), transparent 18%, rgb(255 255 255 / .12) 40%, transparent 60%, rgb(0 0 0 / .22)), var(--yr-spine-color, #355746);
   box-shadow: inset 0 6px 0 rgb(255 255 255 / .12), inset 0 -8px 0 rgb(0 0 0 / .12);
   transform-origin: bottom; transform: scaleY(0); }
-.yr-spine::before, .yr-spine::after { content: ""; position: absolute; left: 3px; right: 3px; height: 2px; background: rgb(255 255 255 / .35); }
+.yr-spine:nth-child(5n+2) { --yr-spine-color: #5b6251; }
+.yr-spine:nth-child(5n+3) { --yr-spine-color: #80683f; }
+.yr-spine:nth-child(5n+4) { --yr-spine-color: color-mix(in srgb, var(--yr-instance-accent, #a23e2a) 72%, #30261e); }
+.yr-spine:nth-child(5n) { --yr-spine-color: #243e35; }
+.yr-spine::before, .yr-spine::after { content: ""; position: absolute; left: 3px; right: 3px; height: 2px; background: rgb(248 233 197 / .42); }
 .yr-spine::before { top: 12%; } .yr-spine::after { bottom: 14%; }
 .is-active .yr-spine { animation: yr-spine .7s var(--yr-ease) forwards; animation-delay: calc(.25s + var(--i) * 45ms); }
 @keyframes yr-spine { to { transform: scaleY(1); } }
 .yr-shelf--intro { position: absolute; left: 28px; right: 28px; top: 110px; opacity: .95; }
 .yr-s-intro { justify-content: flex-end; padding-bottom: 72px; }
+@media (min-width: 820px) {
+  .yr-stage { --yr-gutter: clamp(64px, 9vw, 180px); --yr-column: min(46vw, 600px); }
+  .yr-landscape::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, #102e20f7, #102e20e6 31%, #102e2066 63%, transparent 92%);
+  }
+  .yr-progress, .yr-top {
+    left: var(--yr-gutter); width: var(--yr-column); transform: none;
+  }
+  .yr-progress { top: 27px; }
+  .yr-top { top: 42px; }
+  .yr-slide { padding-inline: var(--yr-gutter); background: none; }
+  .yr-slide::before, .yr-slide::after { display: none; }
+  .yr-slide > * { max-width: var(--yr-column); }
+  .yr-slide .yr-lead { max-width: min(26ch, var(--yr-column)); }
+  .yr-slide .yr-sub { max-width: min(32ch, var(--yr-column)); }
+  .yr-slide .yr-clock { margin-inline: 0; }
+  .yr-s-intro { justify-content: center; }
+  .yr-shelf--intro { position: relative; inset: auto; margin-bottom: 30px; }
+}
 .yr-shelf--titles { height: 220px; margin-top: 10px; }
 .yr-spine--title { max-width: 40px; }
 .yr-spine--title > span { position: absolute; inset: 18% 0 18%; writing-mode: vertical-rl; transform: rotate(180deg); display: flex; align-items: center;

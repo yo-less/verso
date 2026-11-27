@@ -1,14 +1,18 @@
-# Verso demo video V7
+# Verso demo video
 
-Run **Generate Verso demo video** on the preview branch. It uses a disposable fictional library, real browser captures and explicitly illustrated import and device synchronization. V3 is exactly 47.5 seconds, 1920×1080, 30 fps. It restores the deployment-code scene, introduces an illustrated landscape reveal, slows theme transitions, and uses distinct year-review slides, single-window theme changes, original varied cover designs and a consistent safe framing. The final soundtrack is music alone; synthetic sound effects are removed. Scene transitions use longer eased dissolves.
+The **Generate Verso demo video** workflow builds the checked-out Verso source, seeds a disposable library, and records the interface. It runs on changes to `demo-video-preview` and can also be started manually from the Actions tab. Open the completed run and download **verso-demo-video** under **Artifacts** for the MP4. Review frames, the timeline manifest and logs are in **verso-demo-review**. The production image workflow uses the main branch.
 
-## Music
+## Add a section
 
-Selected track: [Keys of Time (No AI) — Good_B_Music](https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/), under the [Pixabay Content License](https://pixabay.com/service/license-summary/). The music is Content ID registered; retain the download certificate. Do not commit or distribute the standalone MP3. For a local render set `DEMO_MUSIC` to the legally downloaded file and optionally `DEMO_MUSIC_OFFSET` in seconds (default 28.5, before the fuller arrangement enters). The default GitHub Actions preview is silent until the soundtrack is supplied. The final music excerpt should be auditioned against the cuts before publication.
+1. Capture any new interface views in `capture.py` and register their filenames in the asset list near the start of `motion.js`. Use the seeded library so the captures are reproducible.
+2. Draw the section in a function that takes time in seconds relative to the start of the section. Reuse helpers such as `browser`, `title` and `step` for framing, typography and easing.
+3. Insert an entry in the `scenes` array with a unique `id`, the duration in `len` and the drawing function in `draw`. Add optional `review` offsets to export particular frames. The default entry is a dissolve. Use `entry: "wipe"` for an incoming reveal or `entry: "continuous"` when the drawing function carries a composition forward from the previous section.
+4. Run the preview workflow and inspect the MP4 and review frames. The renderer derives the duration, review timestamps, and manifest directly from the scene entries.
 
-Review the exported MP4, poster, scene images, checkmark checks and manifest before publishing. The workflow does not replace the inherited README video or push production changes.
+## Local render
 
+Follow the seed, capture and render order in `.github/workflows/demo-video.yml`. Set `DEMO_ROOT` to the isolated library directory, `DEMO_URL` to the local Verso instance, `DEMO_OUT` to the capture directory, and `VIDEO_OUT` to the export directory.
 
-The CI artifact is explicitly named `verso-demo-SILENT-RENDER.mp4` when no licensed music file is supplied. It is an intermediate, not the finished demo. The final review/export must contain an AAC audio stream. Do not publish a silent render. Music excerpt starts at 28.5 seconds; no foley.
+Use English Chromium for the capture run. The Branding captures leave native file controls intact, so their labels use the browser's UI language. The Year in Books carousel uses portrait screenshots of the actual Verso page. The page itself controls the layout, instance artwork, palette and swipe behavior. The video compositor provides the phone frames and forest-green backdrop.
 
-V7 draws a single import browser shell and restores only the target card, uses a dedicated footer safe area, animates the return scroll before search, and slows the theme and annual-review transitions.
+The default MP4 is a silent preview. To render with the licensed [Keys of Time by Good_B_Music](https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/), set `DEMO_MUSIC` to your local copy and optionally set `DEMO_MUSIC_OFFSET` in seconds. The default offset is 28.5 seconds. Keep the download certificate and the standalone music file out of the repository.
