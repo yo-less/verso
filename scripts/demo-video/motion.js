@@ -1,8 +1,8 @@
-/* Verso demo V22: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V23: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
-const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
-names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
+const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","branding-viewport","mobile-home","login","login-background"];
+names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),...Array.from({length:49},(_,i)=>"custom-colour-"+i),"custom-library");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -61,8 +61,8 @@ function automation(t){
  const center=step(t,5.05,5.85);
  fade(1-step(t,5.05,5.43),()=>title("From file to bookshelf",960,85,false,76));
  fade(step(t,5.43,5.85),()=>title("Fully automated import",960,85,false,76));
- const reflow=clamp((t-3.55)/1.15);
- const k=t<3.55?"import-empty":t>=5.60?"import-library":"import-space-"+Math.round(reflow*30);
+ const reflow=clamp((t-4.10)/1.10);
+ const k=t<4.10?"import-empty":t>=5.60?"import-library":"import-space-"+Math.round(reflow*30);
  const box=browser(k,mix(720,310,center),mix(210,155,center),mix(1120,1300,center));
  const b=window.data.importCover,card=window.data.importCard,count=window.data.importCount,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
@@ -329,17 +329,23 @@ function year(t){
 }
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
- const seq=["theme-light","theme-dark","theme-sunset","theme-ocean","branding-viewport"];
- const labels=["Light","Dark","Sunset","Ocean","Instance branding"];
- const starts=[0,1.15,2.30,3.45,4.75];
- const i=Math.max(0,starts.filter(s=>t>=s).length-1),q=t-starts[i],x=380,y=150,w=1160;
- ctx.save();ctx.beginPath();ctx.rect(350,130,1220,790);ctx.clip();
- const p=i===0?1:step(q,0,.48);
- if(i>0&&p<1)browser(seq[i-1],x-1220*p,y,w,1,.5,.5,false);
- browser(seq[i],x+1220*(1-p),y,w,1,.5,.5,false);
- ctx.restore();
- rect(630,936,660,58,29,C.forest);text(labels[i],960,965,29,C.ivory,"Geist",550,"center");
- if(i<4)return;
+ const q=t-4.75,x=380,y=150,w=1160;
+ // One continuous, actual Customize page: two range controls are
+ // changed independently and their live preview responds immediately.
+ // The final state is then saved and shown in the real library.
+ if(t<4.75){
+  const n=Math.min(48,Math.round(48*clamp((t-.16)/3.35)));
+  const p=step(t,3.55,4.04);
+  browser("custom-colour-"+n,x,y,w);
+  if(p>0)fade(p,()=>browser("custom-library",x,y,w));
+  rect(630,936,660,58,29,C.forest);
+  text(p>.5?"Your own palette":"Choose your own colours",960,965,29,C.ivory,"Geist",550,"center");
+  return;
+ }
+ // Keep the existing instance branding segment and its timing.
+ browser("branding-viewport",x,y,w);
+ if(q<.48)fade(1-step(q,0,.48),()=>browser("custom-library",x,y,w));
+ rect(630,936,660,58,29,C.forest);text("Instance branding",960,965,29,C.ivory,"Geist",550,"center");
  // One last slide: the real admin page stays put while its actual
  // controls are lifted into a readable foreground inset.
  const label=["Site name","Your own logo","Custom colours","Custom favicon","Login artwork"];
@@ -405,14 +411,14 @@ function close(t){
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
- {id:"automation",len:7.1,draw:automation,review:[.26,.8,1.5,2.2,2.55,3.15,4.4,5.30,5.45,5.60,6.05,6.95]},
+ {id:"automation",len:7.1,draw:automation,review:[.26,.8,1.5,2.2,2.55,3.15,4.18,4.52,4.90,5.30,5.45,5.60,6.05,6.95]},
  {id:"library",len:5.8,draw:library,review:[1.6,2.5,3.6,4.55,4.85,5.3]},
  {id:"details",len:5.0,draw:details,review:[.4,1.2,2,2.85,3.15,3.48,4.98]},
  {id:"devices",len:5.35+syncHandoff,draw:devices,entry:"continuous",review:[0,1.42,2.08,2.95,3.42,4.13,4.65,5.85,6.75]},
  {id:"statistics",len:statisticsEnd,draw:statistics,review:[.8,1.7,2.8,4,5.39]},
  {id:"highlights",len:3+highlightsHandoff,draw:highlights,entry:"continuous",review:[0,.32,.78,1.65,2.8]},
  {id:"year",len:8,draw:year,review:[.75,1.9,2.75,4.35,5.25,7.7]},
- {id:"personalize",len:13.1,draw:personalize,review:[4.5,5.7,7.2,8.75,10.3,11.85,12.8]},
+ {id:"personalize",len:13.1,draw:personalize,review:[.4,1.2,2.1,3.3,4.5,5.7,7.2,8.75,10.3,11.85,12.8]},
  {id:"install",len:6.25,draw:install,review:[3.6,4.8,5.8]},
  {id:"close",len:3.8,draw:close,entry:"continuous",review:[0,.25,.55,.85,3.3]}
 ];

@@ -18,3 +18,10 @@ Use English Chromium for the capture run. The Branding captures show the native,
 The Actions preview is 1080p at 30 fps. The renderer feeds lossless PNG frames to the H.264 encoder at CRF 17. The artifact size varies with the footage.
 
 The default MP4 is a silent preview. To render with the licensed [Keys of Time by Good_B_Music](https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/), set `DEMO_MUSIC` to your local copy and optionally set `DEMO_MUSIC_OFFSET` in seconds. The final edit uses a 28.5-second offset, a 0.9-second curved fade-in and a four-second smooth fade-out with a short silent tail, aligned to the source music decay. Keep the download certificate and the standalone music file out of the repository.
+
+
+### Music in GitHub Actions
+
+For automatic soundtrack mixing, set the repository Actions secret `DEMO_MUSIC_URL` to an HTTPS download URL for the licensed original Keys of Time MP3. The URL must return the exact file (not a sharing or playback page). If it is a private GitHub repository contents API URL, also set `DEMO_MUSIC_TOKEN` to a fine-grained token with read-only Contents access to that private repository. Never put the standalone soundtrack into the public Verso repository or workflow artifacts.
+
+The workflow verifies the SHA-256 of the original licensed MP3, stores it in runner-temporary storage, and passes it to the renderer. The resulting artifact is `verso-demo.mp4` with integrated stereo AAC. If the secret is absent, the workflow explicitly warns and emits only the named silent review render. A wrong or inaccessible download fails the job rather than silently using another track.

@@ -187,31 +187,58 @@ def additional():
         page.screenshot(path=str(base.OUT/"import-empty.png"), animations="disabled")
         try:
             page.evaluate("""() => {
-                const {el,others} = window.importReflow;
+                const state = window.importReflow;
+                const {el,grid,others,before,after} = state;
                 el.style.display = '';
                 el.style.visibility = 'hidden';
-                for (const c of others) c.style.transition = 'none';
+                grid.style.position = 'relative';
+                // The same horizontal movement is applied to every row.
+                // At a row boundary two clipped copies wrap through the
+                // edges of the grid; no fading, diagonal jumps or overlaps.
+                grid.style.clipPath = 'inset(-16px 0 -16px 0)';
+                const origin=grid.getBoundingClientRect();
+                state.clones=[];
+                for (let i=0;i<others.length;i++) {
+                    const c=others[i], a=before[i], b=after[i];
+                    c.style.transition='none';
+                    if (Math.abs(b.y-a.y)>a.height*.5 && Math.abs(b.x-a.x)>a.width) {
+                        const clone=c.cloneNode(true);
+                        clone.removeAttribute('id');
+                        clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
+                        clone.setAttribute('aria-hidden','true');
+                        clone.inert=true;
+                        Object.assign(clone.style,{position:'absolute',left:(a.x-origin.x)+'px',
+                            top:(a.y-origin.y)+'px',width:a.width+'px',height:a.height+'px',
+                            margin:'0',pointerEvents:'none',transition:'none'});
+                        grid.appendChild(clone);
+                        const stride=after.find((r,j)=>j>0 && Math.abs(r.y-b.y)<2 && r.x>b.x);
+                        const step=stride?stride.x-b.x:a.width+20;
+                        state.clones.push({i,clone,step});
+                    }
+                }
             }""")
             for i in range(31):
                 page.evaluate("""p => {
-                    const {others,before,after} = window.importReflow;
-                    const ease = n => n*n*(3-2*n), t = ease(p);
+                    const {others,before,after,clones} = window.importReflow;
+                    const t=p*p*(3-2*p);
+                    const wrapped=new Map(clones.map(r=>[r.i,r]));
                     others.forEach((c,i) => {
-                        const a=before[i], b=after[i], dx=a.x-b.x, dy=a.y-b.y;
-                        if (Math.abs(dy)>a.height*.5 && Math.abs(dx)>a.width) {
-                            const q=ease(p<.5?p*2:(p-.5)*2);
-                            c.style.transform=p<.5?'translate('+(dx+16*q)+'px,'+dy+'px)':'translate('+(-16*(1-q))+'px,0px)';
-                            c.style.opacity=String(p<.5?1-q:q);
-                        } else {
-                            c.style.transform='translate('+(dx*(1-t))+'px,'+(dy*(1-t))+'px)';
-                            c.style.opacity='1';
+                        const a=before[i], b=after[i], wrap=wrapped.get(i);
+                        if(wrap){
+                            wrap.clone.style.transform='translateX('+(wrap.step*t)+'px)';
+                            c.style.transform='translateX('+(-wrap.step*(1-t))+'px)';
+                        }else{
+                            c.style.transform='translate('+((a.x-b.x)*(1-t))+'px,'+((a.y-b.y)*(1-t))+'px)';
                         }
                     });
                 }""", i/30)
                 page.screenshot(path=str(base.OUT / f"import-space-{i}.png"), animations="disabled")
         finally:
             page.evaluate("""() => {
-                const {el,grid,others,count} = window.importReflow;
+                const {el,grid,others,count,clones} = window.importReflow;
+                for (const r of clones || []) r.clone.remove();
+                grid.style.position = '';
+                grid.style.clipPath = '';
                 el.style.visibility = '';
                 for (const c of others) {
                     c.style.transform = ''; c.style.opacity = ''; c.style.transition = '';
@@ -355,17 +382,46 @@ def additional():
         stats_content = {"x":sidebar["x"] + sidebar["width"],"y":topbar["y"] + topbar["height"]}
         base.shot(page,"stats-detail.png")
         branding_focus = capture_branding(page)
-        base.set_theme(page,"dark")
-        base.open_page(page,"/")
-        base.shot(page,"theme-dark.png",".book-card")
+        # Demonstrate the real live controls, not a carousel of presets.
         base.set_theme(page,"light")
-        base.preset(page,"sunset")
+        base.preset(page,"stock")
+        base.open_page(page,"/me/appearance")
+        page.evaluate("""() => {
+            const form=document.getElementById('ap-form');
+            const set=(name,value)=>{
+                const input=form.querySelector('input[name="'+name+'"][value="'+value+'"]');
+                if(!input) throw Error('missing appearance option '+name);
+                input.checked=true;
+                input.dispatchEvent(new Event('input',{bubbles:true}));
+            };
+            for(const [name,value] of Object.entries({header:'gradient',sidebar:'tinted',
+                surface:'tinted',buttons:'gradient',vibrancy:'soft'})) set(name,value);
+        }""")
+        colours = page.locator("section[aria-labelledby='ap-colours-h']")
+        colours.evaluate("el => el.scrollIntoView({block:'center',behavior:'instant'})")
+        expect(page.locator("#ap-hue")).to_be_visible()
+        expect(page.locator("#ap-stage")).to_be_visible()
+        for i in range(49):
+            page.evaluate("""i => {
+                const ease=n=>{n=Math.max(0,Math.min(1,n));return n*n*(3-2*n)};
+                const set=(id,v)=>{
+                    const el=document.getElementById(id);el.value=String(Math.round(v));
+                    el.dispatchEvent(new Event('input',{bubbles:true}));
+                };
+                set('ap-hue',38+(208-38)*ease((i-5)/21));
+                set('ap-hue2',22+(175-22)*ease((i-27)/18));
+            }""", i)
+            page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+            page.screenshot(path=str(base.OUT / f"custom-colour-{i}.png"), animations="disabled")
+        expect(page.locator("#ap-hue")).to_have_value("208")
+        expect(page.locator("#ap-hue2")).to_have_value("175")
+        save = page.locator("[data-ap-savebar] button[type=submit]")
+        expect(save).to_be_visible()
+        save.click()
+        page.wait_for_load_state("domcontentloaded")
         base.open_page(page,"/")
-        base.shot(page,"theme-sunset.png",".book-card")
-        base.preset(page,"ocean")
-        base.open_page(page,"/")
-        base.shot(page,"styled-ocean.png",".book-card")
-        base.shot(page,"theme-ocean.png",".book-card")
+        assert page.locator("html").evaluate("el => el.style.getPropertyValue('--ap-h').trim()") == "208"
+        base.shot(page,"custom-library.png",".book-card")
         base.preset(page,"stock")
         capture_year(browser)
         (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"importCount":import_count,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))

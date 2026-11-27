@@ -35,6 +35,23 @@ jobs:
           pip install pillow playwright
           sudo apt-get update -qq && sudo apt-get install -y fonts-dejavu-core ffmpeg
           python -m playwright install --with-deps chromium
+      - name: Resolve licensed soundtrack
+        env:
+          MUSIC_URL: ${{ secrets.DEMO_MUSIC_URL }}
+          MUSIC_TOKEN: ${{ secrets.DEMO_MUSIC_TOKEN }}
+        run: |
+          if [ -z "$MUSIC_URL" ]; then
+            echo "::warning::DEMO_MUSIC_URL is not configured; this run will produce a silent review render."
+            exit 0
+          fi
+          music="$RUNNER_TEMP/verso-demo-music.mp3"
+          args=(--fail --silent --show-error --location --retry 2 --proto '=https' --proto-redir '=https')
+          if [ -n "$MUSIC_TOKEN" ]; then
+            args+=(--header "Authorization: Bearer $MUSIC_TOKEN" --header "Accept: application/vnd.github.raw+json")
+          fi
+          curl "${args[@]}" --output "$music" "$MUSIC_URL"
+          echo "480cf9dc634e65f799fde5a0d7aa25b609c8c2b9f6bdd43a04a9809b08c27b26  $music" | sha256sum --check
+          echo "DEMO_MUSIC=$music" >> "$GITHUB_ENV"
       - name: Seed isolated library
         run: |
           python scripts/seed_screenshot_library.py "$DEMO_ROOT"
@@ -81,6 +98,7 @@ jobs:
           mkdir -p "$VIDEO_OUT"
           docker logs verso-screenshot > "$VIDEO_OUT/container.log" 2>&1 || true
           docker rm -f verso-screenshot || true
+          rm -f "$RUNNER_TEMP/verso-demo-music.mp3"
       - name: Upload preview MP4
         uses: actions/upload-artifact@v4
         with:
