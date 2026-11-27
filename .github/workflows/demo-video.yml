@@ -40,16 +40,19 @@ jobs:
           MUSIC_URL: ${{ secrets.DEMO_MUSIC_URL }}
           MUSIC_TOKEN: ${{ secrets.DEMO_MUSIC_TOKEN }}
         run: |
-          if [ -z "$MUSIC_URL" ]; then
-            echo "::warning::DEMO_MUSIC_URL is not configured; this run will produce a silent review render."
-            exit 0
-          fi
           music="$RUNNER_TEMP/verso-demo-music.mp3"
-          args=(--fail --silent --show-error --location --retry 2 --proto '=https' --proto-redir '=https')
-          if [ -n "$MUSIC_TOKEN" ]; then
-            args+=(--header "Authorization: Bearer $MUSIC_TOKEN" --header "Accept: application/vnd.github.raw+json")
+          if [ -n "$MUSIC_URL" ]; then
+            args=(--fail --silent --show-error --location --retry 2 --proto '=https' --proto-redir '=https')
+            if [ -n "$MUSIC_TOKEN" ]; then
+              args+=(--header "Authorization: Bearer $MUSIC_TOKEN" --header "Accept: application/vnd.github.raw+json")
+            fi
+            curl "${args[@]}" --output "$music" "$MUSIC_URL"
+          else
+            if ! python scripts/demo-video/resolve_music.py "$music"; then
+              echo "::warning::Pixabay did not provide the verified source MP3. The visual review will still render silently. Set DEMO_MUSIC_URL to the original direct download if needed."
+              exit 0
+            fi
           fi
-          curl "${args[@]}" --output "$music" "$MUSIC_URL"
           echo "480cf9dc634e65f799fde5a0d7aa25b609c8c2b9f6bdd43a04a9809b08c27b26  $music" | sha256sum --check
           echo "DEMO_MUSIC=$music" >> "$GITHUB_ENV"
       - name: Seed isolated library

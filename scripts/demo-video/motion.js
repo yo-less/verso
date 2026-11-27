@@ -1,8 +1,9 @@
-/* Verso demo V23: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V24: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
+ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","branding-viewport","mobile-home","login","login-background"];
-names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),...Array.from({length:49},(_,i)=>"custom-colour-"+i),"custom-library");
+names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"custom-stock","custom-library");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -330,16 +331,15 @@ function year(t){
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
  const q=t-4.75,x=380,y=150,w=1160;
- // One continuous, actual Customize page: two range controls are
- // changed independently and their live preview responds immediately.
- // The final state is then saved and shown in the real library.
+ // Show the very same library in its stock forest-and-ivory look,
+ // then in the user's saved paper/slate palette. One fixed browser.
  if(t<4.75){
-  const n=Math.min(48,Math.round(48*clamp((t-.16)/3.35)));
-  const p=step(t,3.55,4.04);
-  browser("custom-colour-"+n,x,y,w);
-  if(p>0)fade(p,()=>browser("custom-library",x,y,w));
+  const p=step(t,1.30,2.65);
+  browser("custom-stock",x,y,w,1,.5,.5,true,(bx,by,bw,bh)=>{
+   if(p>0)fade(p,()=>ctx.drawImage(assets["custom-library"],bx,by,bw,bh));
+  });
   rect(630,936,660,58,29,C.forest);
-  text(p>.5?"Your own palette":"Choose your own colours",960,965,29,C.ivory,"Geist",550,"center");
+  text("Choose your own colours",960,965,29,C.ivory,"Geist",550,"center");
   return;
  }
  // Keep the existing instance branding segment and its timing.

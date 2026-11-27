@@ -382,9 +382,21 @@ def additional():
         stats_content = {"x":sidebar["x"] + sidebar["width"],"y":topbar["y"] + topbar["height"]}
         base.shot(page,"stats-detail.png")
         branding_focus = capture_branding(page)
-        # Demonstrate the real live controls, not a carousel of presets.
+        # Two real library looks, photographed at 2x resolution. Preserve
+        # the same books and scroll position so only appearance changes.
         base.set_theme(page,"light")
         base.preset(page,"stock")
+        palette_ctx = browser.new_context(viewport={"width":1440,"height":900},
+            device_scale_factor=2,storage_state=ctx.storage_state(),
+            locale="en-US",color_scheme="light",reduced_motion="reduce",service_workers="block")
+        palette_page = palette_ctx.new_page()
+        base.open_page(palette_page,"/")
+        base.set_theme(palette_page,"light")
+        base.open_page(palette_page,"/")
+        assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
+        base.shot(palette_page,"custom-stock.png",".book-card")
+        # Use the real Customize form and save a quiet, bespoke paper and
+        # slate-blue style; no gradients, decorative patterns or random presets.
         base.open_page(page,"/me/appearance")
         page.evaluate("""() => {
             const form=document.getElementById('ap-form');
@@ -394,34 +406,35 @@ def additional():
                 input.checked=true;
                 input.dispatchEvent(new Event('input',{bubbles:true}));
             };
-            for(const [name,value] of Object.entries({header:'gradient',sidebar:'tinted',
-                surface:'tinted',buttons:'gradient',vibrancy:'soft'})) set(name,value);
+            for(const [name,value] of Object.entries({header:'tint',sidebar:'tinted',
+                surface:'paper',buttons:'accent',headings:'serif',radius:'default',
+                backdrop:'none',vibrancy:'soft'})) set(name,value);
+            for(const [id,value] of [['ap-hue',245],['ap-hue2',220]]){
+                const input=document.getElementById(id);
+                input.value=String(value);
+                input.dispatchEvent(new Event('input',{bubbles:true}));
+            }
         }""")
-        colours = page.locator("section[aria-labelledby='ap-colours-h']")
-        colours.evaluate("el => el.scrollIntoView({block:'center',behavior:'instant'})")
-        expect(page.locator("#ap-hue")).to_be_visible()
-        expect(page.locator("#ap-stage")).to_be_visible()
-        for i in range(49):
-            page.evaluate("""i => {
-                const ease=n=>{n=Math.max(0,Math.min(1,n));return n*n*(3-2*n)};
-                const set=(id,v)=>{
-                    const el=document.getElementById(id);el.value=String(Math.round(v));
-                    el.dispatchEvent(new Event('input',{bubbles:true}));
-                };
-                set('ap-hue',38+(208-38)*ease((i-5)/21));
-                set('ap-hue2',22+(175-22)*ease((i-27)/18));
-            }""", i)
-            page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
-            page.screenshot(path=str(base.OUT / f"custom-colour-{i}.png"), animations="disabled")
-        expect(page.locator("#ap-hue")).to_have_value("208")
-        expect(page.locator("#ap-hue2")).to_have_value("175")
+        expect(page.locator("#ap-hue")).to_have_value("245")
         save = page.locator("[data-ap-savebar] button[type=submit]")
         expect(save).to_be_visible()
         save.click()
         page.wait_for_load_state("domcontentloaded")
         base.open_page(page,"/")
-        assert page.locator("html").evaluate("el => el.style.getPropertyValue('--ap-h').trim()") == "208"
-        base.shot(page,"custom-library.png",".book-card")
+        assert page.locator("html").evaluate("el => el.style.getPropertyValue('--ap-h').trim()") == "245"
+        saved_attrs = page.locator("html").evaluate("""el => ({
+            attrs:[...el.attributes].filter(a=>a.name==='data-ap'||a.name.startsWith('data-ap-')).map(a=>[a.name,a.value]),
+            hue:el.style.getPropertyValue('--ap-h'),hue2:el.style.getPropertyValue('--ap-h2')
+        })""")
+        # Use exactly the persisted appearance values on the unchanged
+        # real library DOM; avoids different randomized Discover covers.
+        palette_page.locator("html").evaluate("""(el,s)=>{
+            for(const [name,value] of s.attrs) el.setAttribute(name,value);
+            el.style.setProperty('--ap-h',s.hue);
+            el.style.setProperty('--ap-h2',s.hue2);
+        }""", saved_attrs)
+        base.shot(palette_page,"custom-library.png",".book-card")
+        palette_ctx.close()
         base.preset(page,"stock")
         capture_year(browser)
         (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"importCount":import_count,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))

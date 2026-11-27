@@ -18,7 +18,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CAPTURES = Path(os.environ["DEMO_OUT"])
 OUT = Path(os.environ["VIDEO_OUT"])
 FPS = 30
-VIDEO_CRF = 17
+VIDEO_CRF = 13
+VIDEO_PRESET = "slow"
 
 class Server(http.server.SimpleHTTPRequestHandler):
     def translate_path(self, path):
@@ -67,8 +68,8 @@ def run():
                 page.evaluate("(t)=>window.render(t)",t)
                 page.screenshot(path=str(OUT/f"scene-{i+1:02}-{scene['id']}.jpg"),type="jpeg",quality=85)
             args=["ffmpeg","-hide_banner","-loglevel","error","-y","-f","image2pipe","-framerate",str(FPS),
-                  "-vcodec","png","-i","pipe:0","-an","-c:v","libx264","-preset","fast","-crf",str(VIDEO_CRF),
-                  "-pix_fmt","yuv420p","-movflags","+faststart",str(target)]
+                  "-vcodec","png","-i","pipe:0","-an","-c:v","libx264","-preset",VIDEO_PRESET,"-crf",str(VIDEO_CRF),
+                  "-pix_fmt","yuv420p","-color_primaries","bt709","-color_trc","bt709","-colorspace","bt709","-movflags","+faststart",str(target)]
             proc=subprocess.Popen(args,stdin=subprocess.PIPE)
             try:
                 for frame in range(round(duration*FPS)):
@@ -91,7 +92,7 @@ def run():
             subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(target),
                             "-ss",str(offset),"-i",music,"-map","0:v:0","-map","1:a:0",
                             "-af",f"atrim=duration={duration},asetpts=PTS-STARTPTS,loudnorm=I=-17:TP=-1.5:LRA=9,aresample=48000,afade=t=in:d=0.9:curve=qsin,afade=t=out:st={duration-4.15}:d=4:curve=hsin",
-                            "-ac","2","-c:v","copy","-c:a","aac","-b:a","160k","-t",str(duration),
+                            "-ac","2","-c:v","copy","-c:a","aac","-b:a","256k","-t",str(duration),
                             "-movflags","+faststart",str(mixed)],check=True)
             mixed.replace(target)
         probe=json.loads(subprocess.check_output(["ffprobe","-v","error","-show_format","-show_streams","-of","json",str(target)]))
@@ -102,7 +103,7 @@ def run():
         assert video.get("field_order") == "progressive", video.get("field_order")
         assert abs(float(probe["format"]["duration"])-duration)<.1
         (OUT/"manifest.json").write_text(json.dumps({"commit":os.getenv("GITHUB_SHA"),"seconds":duration,"fps":FPS,"bytes":target.stat().st_size,"timeline":timeline,
-            "encoding":{"codec":"h264","crf":VIDEO_CRF,"frame_format":"png"},
+            "encoding":{"codec":"h264","crf":VIDEO_CRF,"preset":VIDEO_PRESET,"frame_format":"png","pixel_format":"yuv420p"},
             "music_offset_seconds":offset if music else None,"music_fade_in_seconds":0.9 if music else None,"music_fade_out_seconds":4.0 if music else None,"music_silent_tail_seconds":0.15 if music else None,
             "soundtrack":"Keys of Time (user-supplied licensed file)" if music else "SILENT INTERMEDIATE — not for review or publication","source":"actual browser captures of fictional demo library; conceptual import and e-reader animation"},indent=2))
     finally:
