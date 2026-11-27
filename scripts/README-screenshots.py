@@ -43,7 +43,7 @@ def login(page):
     page.locator("#username").fill(USER)
     page.locator("#password").fill(PASSWORD)
     page.locator("button[name=submit]").click()
-    expect(page.locator(".brand img:visible")).to_have_attribute("alt", "Verso", timeout=30000)
+    expect(page.locator('.brand img[alt="Verso"]:visible').first).to_be_visible(timeout=30000)
     open_page(page, "/")
 
 
@@ -53,7 +53,7 @@ def setup(browser):
     page.locator("#name").fill(USER)
     page.locator("#password").fill(PASSWORD)
     page.locator("[data-setup-submit]").click()
-    expect(page.locator(".brand img:visible")).to_have_attribute("alt", "Verso", timeout=30000)
+    expect(page.locator('.brand img[alt="Verso"]:visible').first).to_be_visible(timeout=30000)
     page.close()
 
 
