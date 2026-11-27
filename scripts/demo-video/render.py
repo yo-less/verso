@@ -46,14 +46,14 @@ def run():
             page.evaluate("window.ready")
             duration=page.evaluate("window.duration")
             timeline=page.evaluate("window.timeline")
-            assert duration == 34, duration
+            assert duration == 41, duration
             checks = page.evaluate("window.verifyChecks()")
             assert all(row['ok'] for row in checks), checks
             (OUT/"checkmarks.json").write_text(json.dumps(checks,indent=2))
             for n,t in enumerate((.9,1.6,2.3,3.2,3.85)):
-                page.evaluate("(t)=>window.render(t+1.5)",t)
+                page.evaluate("(t)=>window.render(t+3.5)",t)
                 page.screenshot(path=str(OUT/f"import-step-{n+1}.jpg"),type="jpeg",quality=90)
-            page.evaluate("window.render(0.75)")
+            page.evaluate("window.render(2.75)")
             page.screenshot(path=str(OUT/"verso-demo-poster.jpg"),type="jpeg",quality=94)
             for i,scene in enumerate(timeline):
                 t=sum(x["seconds"] for x in timeline[:i])+scene["seconds"]*.65
@@ -78,7 +78,7 @@ def run():
         if target.stat().st_size>9_100_000:
             # Two-pass bitrate cap provides predictable size; retain 1080p/30 fps.
             tmp=OUT/"bounded.mp4"
-            bitrate=int(8_700_000*8/duration)
+            bitrate=int(8_650_000*8/duration)
             cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(target),"-an","-c:v","libx264","-preset","slow",
                  "-b:v",str(bitrate),"-pix_fmt","yuv420p","-passlogfile",str(OUT/"encode-pass")]
             subprocess.run(cmd+["-pass","1","-f","null",os.devnull],check=True)
@@ -89,22 +89,35 @@ def run():
         sr=48000
         rng=random.Random(412)
         samples=[0.0]*round(duration*sr)
+        # Derive cues from actual scene start times so edits cannot desynchronize them.
+        starts={}
+        cursor=0
+        for scene in timeline:
+            starts[scene["id"]]=cursor
+            cursor+=scene["seconds"]
         def effect(at,length,kind,gain):
             prev=0.0
+            smooth=0.0
             for n in range(round(length*sr)):
                 t=n/sr
-                env=math.sin(math.pi*t/length)**2
+                u=t/length
                 noise=rng.uniform(-1,1)
-                prev=.87*prev+.13*noise
+                prev=.92*prev+.08*noise
+                smooth=.64*smooth+.36*(noise-prev)
                 if kind=="chime":
-                    sound=(math.sin(2*math.pi*660*t)+.45*math.sin(2*math.pi*990*t))*math.exp(-8*t)
+                    env=min(1,t/.025)*math.exp(-5.4*t)*min(1,(length-t)/.12)
+                    sound=(math.sin(2*math.pi*660*t)+.35*math.sin(2*math.pi*990*t))
                 else:
-                    sound=(noise-prev)*(.6+.4*math.sin(2*math.pi*11*t))
+                    env=math.sin(math.pi*u)**1.4
+                    sound=(smooth+.25*(noise-prev))*(.68+.32*math.sin(2*math.pi*(8*t+5*t*t)))
+                    if kind=="page":
+                        sound*=.55+.45*math.sin(math.pi*u*2)**2
                 i=round(at*sr)+n
                 if i<len(samples): samples[i]+=gain*env*sound
-        effect(1.8,.42,"paper",.045)
-        effect(14.35,.5,"chime",.045)
-        effect(24.15,.40,"page",.038)
+        effect(starts["automation"]+.25,.48,"paper",.38)
+        effect(starts["devices"]+2.85,.55,"chime",.26)
+        effect(starts["year"]+1.5,.44,"page",.40)
+
         foley=OUT/"foley-temp.wav"
         with wave.open(str(foley),"wb") as w:
             w.setparams((1,2,sr,0,"NONE","not compressed"))
@@ -114,9 +127,9 @@ def run():
         cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(target),"-i",str(foley)]
         if music:
             assert Path(music).is_file(),"DEMO_MUSIC must point to a licensed local file"
-            offset=float(os.environ.get("DEMO_MUSIC_OFFSET","0"))
+            offset=float(os.environ.get("DEMO_MUSIC_OFFSET","28.5"))
             cmd+=["-ss",str(offset),"-i",music,"-filter_complex",
-                  f"[2:a]aresample=48000,atrim=duration={duration},asetpts=PTS-STARTPTS,volume=0.55,afade=t=in:d=0.35,afade=t=out:st={duration-1.2}:d=1.2,apad=whole_dur={duration}[m];[1:a][m]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.92[a]","-map","0:v:0","-map","[a]"]
+                  f"[2:a]aresample=48000,atrim=duration={duration},asetpts=PTS-STARTPTS,volume=0.48,afade=t=in:d=0.20,afade=t=out:st={duration-1.7}:d=1.7,apad=whole_dur={duration}[m];[1:a][m]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.92[a]","-map","0:v:0","-map","[a]"]
         else:
             cmd+=["-map","0:v:0","-map","1:a:0"]
         subprocess.run(cmd+["-c:v","copy","-c:a","aac","-b:a","128k","-t",str(duration),"-movflags","+faststart",str(mixed)],check=True)

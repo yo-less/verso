@@ -1,4 +1,4 @@
-/* Verso demo V3: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V4: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home"];
@@ -23,10 +23,20 @@ function reveal(t,a,b,fn,dy=26){let p=step(t,a,b);ctx.save();ctx.translate(0,(1-
 const tickRows=[{y:428,start:.65,label:"Import"},{y:522,start:1.35,label:"Convert if needed"},{y:616,start:2.05,label:"Metadata & cover"},{y:710,start:2.75,label:"Organize"}];
 function tick(cx,cy,p){rect(cx-24,cy-24,48,48,24,C.gold);ctx.save();ctx.strokeStyle=C.forest;ctx.lineWidth=5;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(cx-11,cy);let a=clamp(p*2),b=clamp(p*2-1);ctx.lineTo(cx-11+8*a,cy+8*a);if(b>0)ctx.lineTo(cx-3+15*b,cy+8-19*b);if(p>0)ctx.stroke();ctx.restore()}
 function brand(t,opening){
- let z=1+.02*clamp(t/(opening?1.5:2.5));img("landscape",-(z-1)*W/2,-(z-1)*H/2,W*z,H*z,"cover");
- img("logo",625,opening?254:205,670,224);
- text(opening?"Your personal library":"Self-hosted  ·  Open source  ·  Docker-ready",960,opening?550:506,opening?46:36,C.forest,opening?"Newsreader":"Geist",500,"center");
- if(!opening)text("github.com/yo-less/verso",960,575,33,C.forest,"Geist",550,"center");
+ if(opening){
+  // Let the artwork establish itself before the wordmark arrives.
+  rect(0,0,W,H,0,C.paper);
+  const z=1.075-.075*step(t,0,3.5);
+  fade(step(t,0,.85),()=>img("landscape",-(z-1)*W/2,-(z-1)*H/2,W*z,H*z,"cover"));
+  const p=step(t,.65,1.75);ctx.save();ctx.translate(0,14*(1-p));
+  fade(p,()=>img("logo",625,254,670,224));ctx.restore();
+  fade(step(t,1.55,2.28),()=>text("Your personal library",960,550,46,C.forest,"Newsreader",500,"center"));
+ }else{
+  const z=1+.018*step(t,0,2.5);img("landscape",-(z-1)*W/2,-(z-1)*H/2,W*z,H*z,"cover");
+  img("logo",625,220,670,224);
+  text("Self-hosted  ·  Open source",960,526,36,C.forest,"Geist",500,"center");
+  text("github.com/yo-less/verso",960,588,33,C.forest,"Geist",550,"center");
+ }
 }
 function automation(t){
  bg(false,t);title("From file to bookshelf",90,110,false,76,"left");
@@ -89,21 +99,29 @@ function year(t){
  // Each of the five captures appears in exactly one phone/slot.
  phone("story-rhythm",mix(730,535,p),609,342,-.10*p);
  phone("story-summary",mix(1190,1385,p),609,342,.10*p);
- const seq=["story-intro","story-finished","story-authors"],i=Math.min(2,Math.floor(t/1.5));
+ const seq=["story-intro","story-finished","story-authors"],i=Math.min(2,Math.floor(t/1.5)),q=t-i*1.5;
  phone(seq[i],960,603,420,0);
+ if(i>0&&q<.24)fade(1-step(q,0,.24),()=>phone(seq[i-1],960,603,420,0));
 }
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
- const seq=["library-light","library-dark","styled-sunset-light","styled-ocean"];
- const i=Math.min(3,Math.floor(t/.73)),q=t-i*.73;
+ const seq=["library-light","library-dark","styled-sunset-light","styled-ocean","branding-viewport"];
+ const starts=[0,1.03,2.06,3.09,4.12];
+ let i=starts.filter(s=>t>=s).length-1;i=Math.max(0,i);
+ const q=t-starts[i];
  browser(seq[i],330,150,1260);
- if(i>0&&q<.15)fade(1-step(q,0,.15),()=>browser(seq[i-1],330,150,1260));
- const p=step(t,2.95,3.18);
- fade(p,()=>{browser("branding-viewport",330,150,1260);rect(630,967,660,61,30,C.forest);text("Custom logos & instance branding",960,998,29,C.ivory,"Geist",550,"center");});
+ if(i>0&&q<.28)fade(1-step(q,0,.28),()=>browser(seq[i-1],330,150,1260));
+ if(i===4)fade(step(q,.1,.4),()=>{rect(630,967,660,61,30,C.forest);text("Custom logos & instance branding",960,998,29,C.ivory,"Geist",550,"center");});
 }
-
+function install(t){
+ bg(true,t);title("Run Verso yourself",960,105,true,76);
+ shadow(230,250,1460,610,22,"#0b1913");rect(230,250,1460,61,21,"#2a4838");["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(259+i*30,272,16,16,8,c));text("Terminal",960,280,28,C.ivory,"Geist",500,"center");
+ let lines=["$ git clone https://github.com/yo-less/verso.git verso","$ cd verso","$ docker compose up -d"];
+ lines.forEach((s,i)=>{let p=clamp((t-.12-i*.72)/.52);text(s.slice(0,Math.ceil(s.length*p)),280,405+i*106,37,C.ivory,"monospace",500)});
+ reveal(t,2.0,2.35,()=>text("http://localhost:8083",280,766,34,"#d0aa65","Geist",600));
+}
 const scenes=[
- {id:"intro",len:1.5,draw:t=>brand(t,true)},
+ {id:"intro",len:3.5,draw:t=>brand(t,true)},
  {id:"automation",len:4,draw:automation},
  {id:"library",len:3,draw:library},
  {id:"details",len:4,draw:details},
@@ -111,12 +129,13 @@ const scenes=[
  {id:"statistics",len:3.5,draw:statistics},
  {id:"highlights",len:3,draw:highlights},
  {id:"year",len:4.5,draw:year},
- {id:"personalize",len:4,draw:personalize},
+ {id:"personalize",len:5.5,draw:personalize},
+ {id:"install",len:3.5,draw:install},
  {id:"close",len:2.5,draw:t=>brand(t,false)}
 ];
 window.timeline=scenes.map(s=>({id:s.id,seconds:s.len}));window.duration=scenes.reduce((n,s)=>n+s.len,0);
 function drawScene(i,t){ctx.save();scenes[i].draw(Math.max(0,t));ctx.restore()}
-window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);if(i>0&&t<.17)fade(1-step(t,0,.17),()=>drawScene(i-1,scenes[i-1].len-.001))};
+window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);if(i>0&&t<.25)fade(1-step(t,0,.25),()=>drawScene(i-1,scenes[i-1].len-.001))};
 // Test the actual rendered pixels at each circle, before and after its own reveal.
 // The check is dark forest against a solid gold circle; test only its inner square.
 window.verifyChecks=function(){function darkPixels(x,y){let d=ctx.getImageData(x-13,y-13,28,28).data,n=0;for(let i=0;i<d.length;i+=4)if(d[i]<45&&d[i+1]<95&&d[i+2]<65)n++;return n}
