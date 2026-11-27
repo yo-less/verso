@@ -1,5 +1,8 @@
 <h1 align="center">
-  <img src="cps/static/verso-wordmark.svg" width="460" alt="Verso">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="cps/static/verso-wordmark-dark.svg">
+    <img src="cps/static/verso-wordmark.svg" width="460" alt="Verso">
+  </picture>
 </h1>
 
 <p align="center">
@@ -25,8 +28,8 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/hero.png" alt="Scriptorium on an e-reader, a desktop and a phone: Moby-Dick open at 38% on the e-reader, the same book at 38% in Continue reading on the desktop, and the Highlights page on the phone" width="100%">
-  <br><sub>Upstream Scriptorium interface preview; Verso retains this library interface.</sub>
+  <img src="docs/screenshots/hero.png" alt="Verso login on mobile and the desktop library with the forest and parchment design" width="100%">
+  <br><sub>Actual browser captures from a fictional Verso demonstration library.</sub>
 </p>
 
 ---
@@ -201,6 +204,11 @@ time. Nothing is locked in.
 ## Screenshots
 
 <p align="center">
+  <img src="docs/screenshots/login.png" alt="Verso sign-in with its painted landscape" width="100%">
+  <br><sub><b>Login</b> — the default Verso identity; custom instance branding remains supported.</sub>
+</p>
+
+<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/library-dark.png">
     <img src="docs/screenshots/library-light.png" alt="Library home: Continue reading with Kobo progress, Discover, and the full library grid" width="100%">
@@ -213,7 +221,7 @@ time. Nothing is locked in.
     <td width="50%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/book-dark.png">
-        <img src="docs/screenshots/book-light.png" alt="Book page for Dune: cover, rating, actions, Kobo progress and description">
+        <img src="docs/screenshots/book-light.png" alt="Book detail: cover, rating, actions, reading progress and description">
       </picture>
       <p align="center"><sub><b>Book page</b> — read, download, send or shelve in one click</sub></p>
     </td>
@@ -238,7 +246,7 @@ time. Nothing is locked in.
 </table>
 
 <p align="center">
-  <img src="docs/screenshots/year.png" alt="Your year in books: five story slides with a shelf of spines, books finished, a podium of authors, reading days per month and the shareable poster" width="100%">
+  <img src="docs/screenshots/year.png" alt="Your year in books: four story slides showing reading progress and the shareable summary poster" width="100%">
   <br><sub><b>Your year in books</b> — tap through your reading year, then save the poster</sub>
 </p>
 
@@ -251,7 +259,7 @@ time. Nothing is locked in.
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/mobile.png" alt="Scriptorium on a phone: home in light mode, a book page in dark mode, and the Sunset style" width="85%">
+  <img src="docs/screenshots/mobile.png" alt="Verso on a phone: home in light mode, book details and highlights in dark mode" width="85%">
   <br><sub><b>On your phone</b> — the same library, built for one hand</sub>
 </p>
 

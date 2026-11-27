@@ -121,6 +121,23 @@
   --cover-shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 24px -10px rgba(0,0,0,.8);
 }
 
+/* Verso stock edition. Customized scopes keep their own appearance tokens. */
+:root:not([data-ap]), .ap-reset {
+  --bg:#f8f1e5; --bg-sunken:#eee4d3; --surface:#fffbf4; --surface-2:#f7efe1;
+  --surface-hover:#f0e6d8; --surface-active:#e6dac8; --border:#e5d9c7; --border-strong:#cbbda8;
+  --text:#172b22; --text-2:#37463b; --text-muted:#616455; --text-faint:#756f61;
+  --accent:#a23e2a; --accent-hover:#803020; --accent-soft:#f1ddd3; --accent-text:#8c3324; --on-accent:#fff;
+  --primary:#923622; --primary-hover:#762819; --on-primary:#fff; --focus:#a23e2a; --star:#9b6d22;
+  --ap-heading-font:var(--font-serif); --radius:9px; --radius-lg:13px; --sidebar-w:240px;
+}
+:root[data-theme="dark"]:not([data-ap]), [data-theme="dark"] .ap-reset {
+  --bg:#101e19; --bg-sunken:#0b1712; --surface:#182b23; --surface-2:#14251e;
+  --surface-hover:#223a2e; --surface-active:#2c4738; --border:#30463a; --border-strong:#476051;
+  --text:#f3e8d7; --text-2:#ddd5c7; --text-muted:#b2b8a8; --text-faint:#9da99a;
+  --accent:#e5a18a; --accent-hover:#f2b5a0; --accent-soft:#432d27; --accent-text:#f1b09c; --on-accent:#241610;
+  --primary:#a9432d; --primary-hover:#bb5037; --on-primary:#fff; --focus:#e5a18a; --star:#d0aa65;
+}
+
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }

@@ -344,3 +344,42 @@
   /* stay above the bottom navigation */
   .ap-savebar { bottom: calc(80px + env(safe-area-inset-bottom)); }
 }
+
+/* Verso stock edition: a permanent forest navigation rail and warm paper canvas. */
+:root:not([data-ap]) .sidebar, .ap-reset .ap-mock-side {
+  --ap-side-bg:#102e20; --ap-side-border:#284738; --ap-side-text:#fff1dc;
+  --ap-side-text-2:#f4eadc; --ap-side-muted:#d7e0d2; --ap-side-faint:#a8bcaa;
+  --ap-side-hover:#254a36; --ap-side-active:#345744; --ap-side-active-text:#fff7e8;
+  --ap-side-active-icon:#fff7e8;
+}
+:root:not([data-ap]) .sidebar .brand { justify-content:center; padding:15px 12px 12px; }
+.sidebar .instance-wordmark--dark { display:none; }
+:root:not([data-ap]) .sidebar .instance-wordmark--light,
+:root[data-theme="dark"] .sidebar .instance-wordmark--light,
+:root[data-ap-sidebar="art"] .sidebar .instance-wordmark--light { display:none; }
+:root:not([data-ap]) .sidebar .instance-wordmark--dark,
+:root[data-theme="dark"] .sidebar .instance-wordmark--dark,
+:root[data-ap-sidebar="art"] .sidebar .instance-wordmark--dark { display:block; }
+.sidebar .instance-wordmark { height:auto; max-height:64px; }
+:root:not([data-ap]) .page-title { font-family:var(--font-serif); font-size:clamp(28px,3.4vw,42px); font-weight:600; line-height:1.06; }
+:root:not([data-ap]) .section-header h2 { font-family:var(--font-serif); font-size:24px; }
+:root:not([data-ap]) .search-box { border-radius:10px; }
+:root:not([data-ap]) .book-card .cover { border-radius:8px; }
+:root:not([data-ap]) .cover-progress span { background:var(--accent); }
+:root:not([data-ap]) .sidebar .nav-swatch { background:var(--ap-side-faint); }
+:root:not([data-ap]) .sidebar .btn-ghost { --btn-fg:var(--ap-side-muted); --btn-hover:var(--ap-side-hover); }
+[data-ap][data-ap-headings="sans"] { --ap-heading-font:var(--font-sans); }
+@media(max-width:860px) {
+  :root:not([data-ap]) .page-title { font-size:30px; }
+  :root:not([data-ap]) .section-header h2 { font-size:22px; }
+}
+
+/* Custom wordmarks without a dark asset retain a light rail in light mode. */
+:root[data-theme="light"]:not([data-ap]) body.verso-custom-light-wordmark .sidebar {
+  --ap-side-bg:#f7efe1; --ap-side-border:#e5d9c7; --ap-side-text:#172b22;
+  --ap-side-text-2:#37463b; --ap-side-muted:#616455; --ap-side-faint:#756f61;
+  --ap-side-hover:#f0e6d8; --ap-side-active:#e6dac8; --ap-side-active-text:#172b22; --ap-side-active-icon:#172b22;
+}
+:root[data-theme="dark"]:not([data-ap]) body.verso-custom-light-wordmark .sidebar .brand {
+  background:#f8f1e5; border-radius:9px;
+}

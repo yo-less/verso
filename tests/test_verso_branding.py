@@ -91,9 +91,26 @@ def test_logo_layouts_and_no_embedded_raster():
     from pathlib import Path
     static = Path(branding.__file__).parent / "static"
     ns = "{http://www.w3.org/2000/svg}"
-    for name, direction in (("wordmark", "wide"), ("login", "tall"), ("favicon", "square"), ("background", "square")):
+    for name, direction in (("wordmark", "wide"), ("wordmark-dark", "wide"), ("login", "wide"), ("login-dark", "wide"), ("favicon", "square"), ("background", "wide")):
         root = ET.parse(static / ("verso-" + name + ".svg")).getroot()
         _, _, width, height = map(float, root.attrib["viewBox"].split())
         assert (width > height if direction == "wide" else height > width if direction == "tall" else width == height)
         assert not list(root.iter(ns + "image"))
         assert not list(root.iter(ns + "text"))
+
+
+def test_old_stock_colors_migrate_without_touching_custom_settings(tmp_path, monkeypatch):
+    import json
+    path = tmp_path / "branding.json"
+    monkeypatch.setattr(branding, "settings_path", lambda: path)
+    path.write_text(json.dumps(branding.OLD_DEFAULT))
+    assert branding.load() == branding.DEFAULT
+    custom = {**branding.OLD_DEFAULT, "accent": "#123456"}
+    path.write_text(json.dumps(custom))
+    assert branding.load() == custom
+
+
+def test_custom_dark_asset_falls_back_to_custom_light(monkeypatch):
+    custom = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L10 10"/></svg>'
+    monkeypatch.setattr(branding, "load", lambda: {**branding.DEFAULT, "assets": {"wordmark": custom}})
+    assert branding.svg_asset("wordmark-dark") == custom

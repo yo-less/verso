@@ -169,7 +169,7 @@
     Promise.all([doc.fonts ? doc.fonts.ready : Promise.resolve()].concat(covers.map(loadImage)).concat([loadImage(logo ? logo.src : "")]))
       .then(function (loaded) {
         var images = loaded.slice(1, 1 + covers.length).filter(Boolean);
-        var icon = loaded[loaded.length - 1];
+        var wordmark = loaded[loaded.length - 1];
         // Background
         var g = ctx.createLinearGradient(0, 0, W, H);
         g.addColorStop(0, "#1B1530"); g.addColorStop(.55, "#3B1E2B"); g.addColorStop(1, "#151022");
@@ -189,10 +189,18 @@
         }
         ctx.fillStyle = "#6B4426"; ctx.fillRect(70, 360, W - 140, 14);
         // Header
-        if (icon) { ctx.save(); roundRect(ctx, 90, 110, 64, 64, 14); ctx.clip(); ctx.drawImage(icon, 90, 110, 64, 64); ctx.restore(); }
-        ctx.fillStyle = "#F6EEDD"; ctx.font = "600 34px " + sans; ctx.textBaseline = "middle";
-        ctx.fillText("Scriptorium", 172, 143);
-        ctx.textBaseline = "alphabetic";
+        if (wordmark && wordmark.width && wordmark.height) {
+          var logoScale = Math.min(260 / wordmark.width, 90 / wordmark.height);
+          var logoW = wordmark.width * logoScale, logoH = wordmark.height * logoScale;
+          if (doc.querySelector(".yr-brand--custom-light")) {
+            ctx.fillStyle = "#F8F1E5"; roundRect(ctx, 80, 88, logoW + 20, logoH + 20, 12); ctx.fill();
+          }
+          ctx.drawImage(wordmark, 90, 98, logoW, logoH);
+        } else {
+          ctx.fillStyle = "#F6EEDD"; ctx.font = "600 34px " + sans; ctx.textBaseline = "middle";
+          ctx.fillText(T.brand || "Verso", 90, 143, 780);
+        }
+        ctx.fillStyle = "#F6EEDD"; ctx.textBaseline = "alphabetic";
         fitText(ctx, T.title || "", W - 180, 92, "600", serif);
         ctx.fillText(T.title || "", 90, 500);
         ctx.font = "500 40px " + sans; ctx.globalAlpha = .75; ctx.fillText(DATA.name || "", 90, 560); ctx.globalAlpha = 1;
@@ -232,7 +240,7 @@
         }
         canvas.toBlob(function (blob) {
           if (!blob) return;
-          var file = new File([blob], T.file || "scriptorium-year.png", { type: "image/png" });
+          var file = new File([blob], T.file || "year-in-books.png", { type: "image/png" });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({ files: [file], title: T.title }).catch(function () { download(blob); });
           } else {
@@ -244,7 +252,7 @@
   function download(blob) {
     var a = doc.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = T.file || "scriptorium-year.png";
+    a.download = T.file || "year-in-books.png";
     doc.body.appendChild(a); a.click(); a.remove();
     window.setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }

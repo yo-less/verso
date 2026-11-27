@@ -11,8 +11,9 @@ import zipfile
 from flask import Response, current_app
 from . import cli_param, config
 
-ASSETS = {"favicon": "favicon", "wordmark": "wordmark", "login": "login", "background": "background"}
-DEFAULT = {"name": "Verso", "background": "#f4e9d6", "accent": "#1b3a2e", "decoration": "watermark", "assets": {}}
+ASSETS = {kind: kind for kind in ("favicon", "wordmark", "wordmark-dark", "login", "login-dark", "background")}
+OLD_DEFAULT = {"name": "Verso", "background": "#f4e9d6", "accent": "#1b3a2e", "decoration": "watermark", "assets": {}}
+DEFAULT = {"name": "Verso", "background": "#f8f1e5", "accent": "#a23e2a", "decoration": "watermark", "assets": {}}
 MAX_SVG = 128 * 1024
 COLOR = re.compile(r"#[0-9a-fA-F]{6}\Z")
 NS = "{http://www.w3.org/2000/svg}"
@@ -28,6 +29,9 @@ def load():
         if not isinstance(data, dict):
             return dict(DEFAULT)
         result = {**DEFAULT, **{key: data[key] for key in DEFAULT if key in data}}
+        # Migrate untouched stock settings, never a customized installation.
+        if result == OLD_DEFAULT:
+            return dict(DEFAULT)
         return result
     except (OSError, ValueError):
         return dict(DEFAULT)
@@ -114,6 +118,8 @@ def svg_asset(kind):
         return None
     if kind in state["assets"]:
         return state["assets"][kind]
+    if kind.endswith("-dark") and kind[:-5] in state["assets"]:
+        return state["assets"][kind[:-5]]
     filename = "verso-" + kind + ".svg"
     return (Path(current_app.static_folder) / filename).read_text(encoding="utf-8")
 
@@ -143,7 +149,8 @@ def stylesheet():
     button_ink = "#000000" if lum(accent) > .179 else "#ffffff"
     contrast = (max(lum(bg),lum(accent))+.05)/(min(lum(bg),lum(accent))+.05)
     detail = accent if contrast >= 4.5 else ink
-    response = Response(".auth:has(.instance-login){--brand-bg:"+bg+";--brand-accent:"+accent+";--brand-ink:"+ink+";--brand-button-ink:"+button_ink+";--brand-detail:"+detail+";color-scheme:"+("light" if lum(bg) > .179 else "dark")+";}", mimetype="text/css")
+    dark_logo = ".instance-login .login-logo-light{display:none}.instance-login .login-logo-dark{display:block}" if lum(bg) <= .179 else ""
+    response = Response(dark_logo + ".auth:has(.instance-login){--brand-bg:"+bg+";--brand-accent:"+accent+";--brand-ink:"+ink+";--brand-button-ink:"+button_ink+";--brand-detail:"+detail+";color-scheme:"+("light" if lum(bg) > .179 else "dark")+";}", mimetype="text/css")
     response.headers["Cache-Control"] = "no-store"
     return response
 

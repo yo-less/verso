@@ -26,7 +26,12 @@
 .yr-top { position: fixed; z-index: 6; top: calc(max(10px, env(safe-area-inset-top)) + 10px); left: 50%; transform: translateX(-50%);
   width: min(496px, calc(100vw - 24px)); display: flex; align-items: center; gap: 6px; }
 .yr-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--cream); font-weight: 600; font-size: 14px; text-decoration: none; }
-.yr-brand img { border-radius: 7px; }
+.yr-brand { flex: 0 1 108px; min-width: 65px; }
+.yr-brand img { display:block; width:100%; height:36px; object-fit:contain; object-position:left center; }
+.yr-brand--custom-light { background:#f8f1e5; padding:3px 6px; border-radius:6px; }
+.yr-top .grow { min-width:0; }
+.yr-years { min-width:0; overflow-x:auto; scrollbar-width:none; }
+.yr-years a, .yr-icon { flex-shrink:0; }
 .yr-years { display: flex; gap: 2px; margin-right: 4px; }
 .yr-years a { color: rgb(255 255 255 / .7); font-size: 12.5px; font-weight: 600; padding: 4px 8px; border-radius: 999px; text-decoration: none; }
 .yr-years a[aria-current] { background: rgb(255 255 255 / .18); color: #fff; }
@@ -205,7 +210,8 @@
   background: radial-gradient(70% 50% at 0% 0%, #F2CC8F, transparent 70%), radial-gradient(60% 60% at 100% 100%, #E07A5F55, transparent 70%), var(--cream);
   box-shadow: 0 30px 70px rgb(0 0 0 / .5); }
 .yr-poster header { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
-.yr-poster header img { border-radius: 8px; }
+.yr-poster header .yr-poster-wordmark { width:96px; height:36px; object-fit:contain; flex:none; }
+.yr-poster header span { min-width:0; overflow-wrap:anywhere; }
 .yr-poster-covers { display: flex; justify-content: center; height: 130px; padding: 4px 18px; }
 .yr-poster-covers img { height: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 4px; margin: 0 -10px; min-width: 0;
   transform: rotate(calc((var(--i) - 2) * 6deg)) translateY(calc(var(--i) * (4 - var(--i)) * -4px)); box-shadow: 0 10px 24px rgb(0 0 0 / .3); }

@@ -3152,6 +3152,20 @@ def branding_settings():
 def branding_asset(kind):
     return instance_branding.asset_response(kind)
 
+@admi.route("/static/instance-branding/landscape")
+def branding_landscape():
+    from pathlib import Path
+    state = instance_branding.load()
+    if ("background" not in state["assets"] and
+            (Path(current_app.static_folder) / "verso-login-landscape.webp").is_file()):
+        response = send_from_directory(current_app.static_folder, "verso-login-landscape.webp",
+                                       mimetype="image/webp")
+        response.headers["Cache-Control"] = "no-cache"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+    return instance_branding.asset_response("background")
+
+
 @admi.route("/static/instance-branding/login.css")
 def branding_css():
     return instance_branding.stylesheet()

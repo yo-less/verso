@@ -5,11 +5,15 @@
 <link rel="stylesheet" href="{{ url_for('admin.branding_css') }}">
 {% endblock %}
 {% block body %}
-<div class="auth-card instance-login decoration-{{ branding.decoration }}">
-  {% if branding.decoration == "watermark" %}<img class="login-decoration" src="{{ url_for('admin.branding_asset', kind='background') }}" alt="" aria-hidden="true">{% endif %}
-  <h1 class="instance-login-wordmark{% if 'login' not in branding.assets %} instance-login-wordmark--stacked{% endif %}">
-    <img src="{{ url_for('admin.branding_asset', kind='login') }}" alt="{{ branding.name }}" width="{{ 300 if 'login' in branding.assets else 958 }}" height="{{ 100 if 'login' in branding.assets else 1226 }}">
+{% set landscape = branding.name == 'Verso' and 'background' not in branding.assets and branding.decoration == 'watermark' %}
+{% if landscape %}<img class="login-landscape-background" src="{{ url_for('admin.branding_landscape') }}" alt="" aria-hidden="true">{% endif %}
+<div class="auth-card instance-login decoration-{{ branding.decoration }}{% if landscape %} login-landscape{% endif %}">
+  {% if branding.decoration == "watermark" and not landscape %}<img class="login-decoration" src="{{ url_for('admin.branding_asset', kind='background') }}" alt="" aria-hidden="true">{% endif %}
+  <h1 class="instance-login-wordmark">
+    <img class="login-logo-light" src="{{ url_for('admin.branding_asset', kind='login') }}" alt="{{ branding.name }}" width="524" height="175">
+    <img class="login-logo-dark" src="{{ url_for('admin.branding_asset', kind='login-dark') }}" alt="{{ branding.name }}" width="524" height="175">
   </h1>
+  {% if branding.name == 'Verso' and not branding.assets %}<p class="instance-login-subtitle">{{ _('Your personal library') }}</p>{% endif %}
 
   {%- for category, message in get_flashed_messages(with_categories=True) %}
   <div class="alert alert--{{ 'danger' if category == 'error' else ('success' if category == 'success' else ('warning' if category == 'warning' else 'info')) }}" role="{{ 'alert' if category == 'error' else 'status' }}">
@@ -26,11 +30,13 @@
     <input type="hidden" name="next" value="{{ next_url }}">
     {%- if not config.config_disable_standard_login %}
     <div class="instance-login-field">
+      {{ ui.icon('user', 'login-field-icon') }}
       <input class="input" type="text" id="username" name="username" value="{{ username }}" required
              placeholder=" " autocapitalize="off" autocorrect="off" autocomplete="username" spellcheck="false">
       <label for="username">{{ _('Username') }}</label>
     </div>
     <div class="password-field instance-login-field">
+      {{ ui.icon('lock', 'login-field-icon') }}
       <input class="input" type="password" id="password" name="password" value="{{ password }}"
              placeholder=" " autocomplete="current-password">
       <label for="password">{{ _('Password') }}</label>

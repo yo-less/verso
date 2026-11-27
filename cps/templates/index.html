@@ -9,7 +9,7 @@
   <button class="btn btn-link status-line update-trigger" type="button" data-dialog-open="update-dialog"
           data-update-seen-url="{{ url_for('whats_new.dismiss_update') }}">
     <span class="status-dot status-dot--warn" aria-hidden="true"></span>
-    {{ _('Scriptorium %(version)s released', version=update_notice.version) }}
+    {{ _('%(name)s %(version)s released', name=branding.name, version=update_notice.version) }}
   </button>
 </div>
 {%- endif %}

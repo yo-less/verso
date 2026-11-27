@@ -15,8 +15,8 @@
   <title>{% if title %}{{ title }} · {% endif %}{{ instance }}</title>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#F6F6F4" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#121214" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F8F1E5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101E19" media="(prefers-color-scheme: dark)">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="{{ instance }}">
   {%- if g.google_site_verification|length > 0 %}
@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
   {% block header %}{% endblock %}
 </head>
-<body class="page-{{ page or 'none' }}{% if bodyClass %} {{ bodyClass }}{% endif %}"
+<body class="page-{{ page or 'none' }}{% if bodyClass %} {{ bodyClass }}{% endif %}{% if branding.name == 'Verso' and not branding.assets %} verso-stock-brand{% endif %}{% if 'wordmark' in branding.assets and 'wordmark-dark' not in branding.assets %} verso-custom-light-wordmark{% endif %}"
       data-icon-sprite="{{ url_for('static', filename='img/icons.svg') }}"
       {%- if current_user.is_authenticated %} data-view-url="{{ url_for('web.update_view') }}"{% endif %}
       {%- if current_user.is_authenticated and not current_user.is_anonymous %}
@@ -51,7 +51,8 @@
 <div class="app">
   <aside class="sidebar" id="sidebar" aria-label="{{ _('Library navigation') }}">
     <a class="brand" href="{{ url_for('web.index') }}">
-      <img src="{{ url_for('admin.branding_asset', kind='wordmark') }}" alt="{{ branding.name }}" width="177" height="{{ 32 if 'wordmark' in branding.assets else 73 }}" class="instance-wordmark">
+      <img src="{{ url_for('admin.branding_asset', kind='wordmark') }}" alt="{{ branding.name }}" width="177" height="{{ 32 if 'wordmark' in branding.assets else 59 }}" class="instance-wordmark instance-wordmark--light">
+      <img src="{{ url_for('admin.branding_asset', kind='wordmark-dark') }}" alt="{{ branding.name }}" width="177" height="{{ 32 if 'wordmark' in branding.assets else 59 }}" class="instance-wordmark instance-wordmark--dark">
     </a>
 
     <nav class="nav-group" aria-label="{{ _('Library') }}">

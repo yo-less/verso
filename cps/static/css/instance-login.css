@@ -50,3 +50,40 @@
 @media (prefers-reduced-motion: reduce) { .instance-login-field label { transition: none; } }
 
 @media (max-width: 600px) { .decoration-ribbon .login-decoration { right: 0; width: 38px; opacity: .42; } }
+
+/* Shared geometry and the typography-only Verso lockup. */
+.auth-card.instance-login { width:min(430px,100%); --login-control-height:52px; --login-control-radius:10px; }
+.instance-login-wordmark { width:min(280px,80%); margin:0 auto 0; }
+.instance-login-wordmark img { max-height:23svh; object-fit:contain; }
+.instance-login-wordmark .login-logo-dark { display:none; }
+.instance-login-subtitle { font:italic 20px/1.35 var(--font-serif); text-align:center; color:var(--brand-ink); margin:0 0 12px; }
+.instance-login-field input.input,
+.instance-login .auth-panel .btn-primary {
+  height:var(--login-control-height); min-height:var(--login-control-height);
+  border-radius:var(--login-control-radius); width:100%;
+}
+.instance-login-field input.input { padding:19px 42px 5px; background:color-mix(in srgb,var(--brand-bg) 98%,var(--brand-ink)); box-shadow:none; }
+.instance-login-field label { left:42px; }
+.instance-login-field .input:focus + label,
+.instance-login-field .input:not(:placeholder-shown) + label { top:5px; }
+.login-field-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--brand-ink); opacity:.72; pointer-events:none; }
+.instance-login .auth-panel .btn-primary { padding:0 18px; font:600 20px/1 var(--font-serif); }
+.instance-login .auth-panel .btn-primary:hover { background:color-mix(in srgb,var(--brand-accent) 85%,black); }
+.instance-login-options .check input[type="checkbox"] { accent-color:var(--brand-accent); width:18px; height:18px; }
+.instance-login-options .check { color:var(--brand-ink); }
+.instance-login.login-landscape {
+  background:color-mix(in srgb,var(--brand-bg) 97%,white);
+  padding:40px 34px 36px; border:1px solid color-mix(in srgb,var(--brand-ink) 12%,transparent);
+  border-radius:18px; box-shadow:0 24px 64px rgb(35 45 30 / .13); isolation:isolate;
+}
+.auth:has(.login-landscape) { background:linear-gradient(180deg,var(--brand-bg),color-mix(in srgb,var(--brand-bg) 80%,#c9b79b)); }
+.login-landscape-background {
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; object-position:61% bottom; z-index:0; pointer-events:none;
+}
+.instance-login.login-landscape { z-index:1; }
+@media(max-width:480px) { .instance-login.login-landscape { padding:30px 22px; } }
+@media(max-height:550px) { .instance-login.login-landscape { padding-block:24px; } .instance-login-wordmark { width:220px; } }
+
+/* Keep the form readable even when the landscape is cropped on portrait screens. */
+.instance-login.login-landscape { background:color-mix(in srgb,var(--brand-bg) 97%,white); }

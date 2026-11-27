@@ -17,7 +17,7 @@
   <div class="field"><label for="background">Login background colour</label><input id="background" name="background" type="color" value="{{ branding.background }}"></div>
   <div class="field"><label for="accent">Accent colour</label><input id="accent" name="accent" type="color" value="{{ branding.accent }}"></div>
   <div class="field"><label for="decoration">Login decoration</label><select class="input" id="decoration" name="decoration">{% for value,label in [('watermark','Watermark'),('ribbon','Hanging bookmark'),('none','None')] %}<option value="{{ value }}"{% if branding.decoration == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-  {% for kind,label in [('favicon','Favicon'),('wordmark','Navigation wordmark'),('login','Login wordmark'),('background','Login decoration')] %}
+  {% for kind,label in [('favicon','Favicon'),('wordmark','Navigation wordmark'),('wordmark-dark','Navigation wordmark — dark background'),('login','Login wordmark'),('login-dark','Login wordmark — dark background'),('background','Login decoration')] %}
   <div class="field">
     <label for="asset-{{ kind }}">{{ label }}</label>
     <div><img src="{{ url_for('admin.branding_asset', kind=kind) }}" alt="{{ label }}" width="{{ 48 if kind in ['favicon','background'] else 180 }}" height="48"></div>
@@ -25,7 +25,7 @@
     {% if kind in branding.assets %}<label class="check"><input type="checkbox" name="reset_{{ kind }}" value="1"> Restore default asset</label>{% endif %}
   </div>
   {% endfor %}
-  <p class="muted small">SVG only, up to 128 KiB per asset. Simple paths, shapes and styles are supported. To use a hanging bookmark, upload a decoration SVG and choose that layout. Scripts, external references and embedded HTML are not allowed.</p>
+  <p class="muted small">If no dark variant is uploaded, the custom light logo is reused. SVG only, up to 128 KiB per asset. Simple paths, shapes and styles are supported. To use a hanging bookmark, upload a decoration SVG and choose that layout. Scripts, external references and embedded HTML are not allowed.</p>
   <button class="btn btn-primary" type="submit" name="action" value="save">Save branding</button>
 </form>
 {% endblock %}
