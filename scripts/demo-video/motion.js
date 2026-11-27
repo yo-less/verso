@@ -1,8 +1,8 @@
-/* Verso demo V19: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V20: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
-names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
+names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -195,14 +195,18 @@ function devices(handoff){
  const move=step(handoff,0,.88),t=handoff-syncHandoff;
  // The capture strip is already eased. Run it backward within the same
  // browser to return to the book's reading progress.
- const frame=60-Math.round(60*clamp((handoff-.54)/.83));
+ const frame=Math.round(48*clamp((handoff-.54)/.92));
  bg(false,detailsHold);
  fade(move,()=>bg(true,Math.max(0,t)));
  fade(1-step(handoff,0,.38),()=>title("Discover related titles",960,84,false,76));
  fade(step(t,0,.44),()=>title("Pick up where you left off",960,85,true,76));
- const box=detailPlate(frame,mix(detailBrowser.x,96,move),
-  mix(detailBrowser.y,180,move),mix(detailBrowser.w,1090,move));
  const a=step(t,3.66,4.25),b=step(t,1.45,1.98),progress=38+9*b,synced=38+9*a;
+ const x=mix(detailBrowser.x,96,move),y=mix(detailBrowser.y,180,move),w=mix(detailBrowser.w,1090,move);
+ const key=handoff<=.54?"detail-scroll-60":handoff<syncHandoff?"sync-scroll-"+frame:"sync-progress-"+Math.round(synced);
+ const box=browser(key,x,y,w,1,.5,.5,true,(bx,by,bw)=>{
+  const b=window.data.detailSidebar,im=assets["detail-scroll-60"],s=bw/im.width;
+  ctx.drawImage(im,b.x,b.y,b.width,b.height,bx+b.x*s,by+b.y*s,b.width*s,b.height*s);
+ });
  const device=step(t,.68,1.27);
  fade(device,()=>{
   ctx.translate(92*(1-device),22*(1-device));
@@ -246,10 +250,17 @@ function devices(handoff){
   }
   ctx.restore();
  });
- // Conceptual progress indicator, explicitly distinct from the captured UI.
- fade(step(t,2.48,2.73),()=>{
-  rect(96,875,1090,86,14,"#274739");text("Moby-Dick  ·  Reading progress",125,901,26,C.ivory,"Geist",550);line(125,936,950,936,"#637a6c",6);line(125,936,125+825*synced/100,936,C.gold,6);text(Math.round(synced)+"%",1100,936,32,C.ivory,"Geist",600,"right");
- });
+ // Briefly lift the authentic reading-progress card, then settle back
+ // into exactly the same position as the 47% screenshot.
+ const lift=step(t,3.40,3.86)*(1-step(t,4.25,4.95));
+ if(lift>0){
+  const r=window.data.syncBox,im=assets["sync-progress-"+Math.round(synced)],s=box.w/im.width;
+  const iw=r.width*s,ih=r.height*s,cx=box.x+(r.x+r.width/2)*s,cy=box.y+(r.y+r.height/2)*s;
+  const z=1+.13*lift,ww=iw*z,hh=ih*z,xx=cx-ww/2,yy=cy-hh/2-11*lift;
+  fade(lift,()=>shadow(xx,yy,ww,hh,12,C.paper,20));
+  ctx.save();ctx.beginPath();ctx.roundRect(xx,yy,ww,hh,8);ctx.clip();
+  ctx.drawImage(im,r.x,r.y,r.width,r.height,xx,yy,ww,hh);ctx.restore();
+ }
  fade(step(t,4.25,4.57),()=>text("Progress synchronized",640,990,25,C.muted,"Geist",500,"center"));
 }
 function statistics(t){

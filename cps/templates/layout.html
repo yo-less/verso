@@ -64,7 +64,7 @@
     <nav class="nav-group" aria-label="{{ _('Library') }}">
       {%- for element in sidebar %}
         {%- if element['id'] in library_ids and current_user.check_visibility(element['visibility']) and element['public'] %}
-          {%- set active = page == element['page'] or (element['id'] == 'new' and page == 'newest') %}
+          {%- set active = page == element['page'] or (element['id'] == 'new' and page in ['newest', 'search']) %}
       <a class="nav-link" href="{{ url_for(element['link'], data=element['page'], sort_param='stored') }}"{% if active %} aria-current="page"{% endif %}>
         {{ ui.icon(nav_icons.get(element['id'], 'book')) }}<span class="nav-label">{{ _(element['text']) }}</span>
         {%- if element['id'] == 'duplicates' %}

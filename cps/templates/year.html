@@ -32,7 +32,10 @@
   <div class="yr-landscape" aria-hidden="true"><img src="{{ url_for('admin.branding_landscape') }}" alt=""></div>
   <div class="yr-progress" aria-hidden="true"></div>
   <header class="yr-top">
-    <a class="yr-brand{% if 'wordmark' in branding.assets and 'wordmark-dark' not in branding.assets %} yr-brand--custom-light{% endif %}" href="{{ url_for('web.index') }}"><img src="{{ url_for('admin.branding_asset', kind='wordmark-dark') }}" alt="{{ branding.name }}" width="108" height="36"></a>
+    <a class="yr-brand{% if 'wordmark' in branding.assets and 'wordmark-dark' not in branding.assets %} yr-brand--custom-light{% endif %}" href="{{ url_for('web.index') }}"><picture>
+      <source media="(max-width: 819px)" srcset="{{ url_for('admin.branding_asset', kind='wordmark') if 'wordmark' in branding.assets else url_for('static', filename='verso-story-wordmark.svg') }}">
+      <img src="{{ url_for('admin.branding_asset', kind='wordmark-dark') }}" alt="{{ branding.name }}" width="108" height="36">
+    </picture></a>
     <span class="grow"></span>
     {%- if years|length > 1 %}
     <nav class="yr-years" aria-label="{{ _('Year') }}">

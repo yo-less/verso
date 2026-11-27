@@ -246,20 +246,30 @@
   background: rgb(255 255 255 / .08); color: #fff; font: 600 15px "Geist", sans-serif; cursor: pointer; text-decoration: none; }
 .yr-btn--primary { background: #fff; color: var(--ink); border-color: #fff; }
 
-/* Keep the illustration visible while ensuring the mobile story's text
-   and data graphics sit on a stable, readable paper-toned surface.
-   The summary poster deliberately keeps its original layout and artwork. */
+/* Mobile stories use the original landscape as the stage, forest-green
+   typography, and a soft paper-coloured contrast veil rather than white text.
+   The shareable summary poster is intentionally unchanged. */
+.yr-brand picture { display: block; width: 100%; min-width: 0; }
 @media (max-width: 819px) {
-  .yr-top { top: calc(max(10px, env(safe-area-inset-top)) + 20px); }
-  .yr-brand { flex-basis: 112px; }
-  .yr-brand img { height: 32px; }
-  .yr-tap { top: 80px; }
-  .yr-slide { padding-top: max(106px, calc(env(safe-area-inset-top) + 96px)); text-shadow: none; }
-  .yr-slide:not(.yr-s-summary)::before {
-    content: ""; position: absolute; inset: 75px 0 10px; z-index: -2; pointer-events: none;
-    background: linear-gradient(180deg, transparent 0%, #f8f1e5e6 10%, #f8f1e5c9 26%, #f8f1e5c9 76%, #f8f1e5e6 92%, transparent 100%);
+  .yr-landscape::after {
+    background: linear-gradient(180deg, #f8f1e5ed 0%, #f8f1e5bd 12%, #f8f1e56b 24%, #f8f1e533 80%, #f8f1e5a6 100%);
   }
-  .yr-eyebrow, .yr-sub, .yr-hint, .yr-bar small, .yr-cover figcaption span { opacity: .9; }
+  .yr-top { top: calc(max(10px, env(safe-area-inset-top)) + 20px); }
+  .yr-brand { flex-basis: 112px; color: #102e20; }
+  .yr-brand img { height: 29px; }
+  .yr-brand--custom-light { background: transparent; padding: 0; }
+  .yr-progress span { background: #102e2033; }
+  .yr-progress span i { background: #102e20; }
+  .yr-years a { color: #102e20; }
+  .yr-years a[aria-current] { color: #102e20; background: #102e2020; }
+  .yr-icon { background: #f8f1e5e6; color: #102e20; border: 1px solid #102e2033; }
+  .yr-tap { top: 80px; }
+  .yr-slide { color: #102e20; padding-top: max(106px, calc(env(safe-area-inset-top) + 96px)); text-shadow: none; }
+  .yr-slide:not(.yr-s-summary)::before {
+    content: ""; position: absolute; inset: 84px 0 16px; z-index: -2; pointer-events: none;
+    background: radial-gradient(ellipse at 43% 50%, #f8f1e5ef 0%, #f8f1e5e6 49%, #f8f1e5b3 69%, transparent 100%);
+  }
+  .yr-eyebrow, .yr-sub, .yr-hint, .yr-bar small, .yr-cover figcaption span { opacity: 1; }
   .yr-clock-face { fill: #102e2015; stroke: #102e204d; }
   .yr-clock-ray { stroke: #315b48; }
   .yr-clock-ray.is-peak { stroke: #926a2e; }
@@ -269,8 +279,8 @@
   .yr-fact-icon { background: #102e201a; }
   .yr-calendar i { background: #102e202b; }
   .yr-calendar i.is-on { background: #926a2e; }
-  .yr-podium-bar { background: linear-gradient(#315b48, #1d3d2d); color: #fff1dc; text-shadow: none; }
-  .yr-btn:not(.yr-btn--primary) { background: #102e20ee; border-color: #102e20; color: #fff1dc; }
+  .yr-podium-bar { background: linear-gradient(#eee0c4, #d6bd8d); color: #102e20; text-shadow: none; }
+  .yr-btn:not(.yr-btn--primary) { background: #f8f1e5ed; border-color: #102e20; color: #102e20; }
 }
 
 /* Per-slide colours */

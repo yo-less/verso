@@ -20,8 +20,17 @@ spec.loader.exec_module(base)
 def seed_stats(root):
     # Run only against a disposable, seeded demo while the container is stopped.
     assert (root / ".verso-screenshot-demo").is_file()
+    with sqlite3.connect(root / "library" / "metadata.db") as library:
+        moby_id = library.execute("SELECT id FROM books WHERE title='Moby-Dick'").fetchone()[0]
     with sqlite3.connect(root / "config/app.db") as db:
         uid = db.execute("SELECT id FROM user WHERE name='Alex'").fetchone()[0]
+        # The real detail view identifies KOReader by its stored book-id
+        # record; keep the existing 38% Kobo bookmark consistent.
+        db.execute("""INSERT INTO kosync_progress
+                    (user_id,document,progress,percentage,device,device_id,timestamp)
+                    VALUES(?,?,?,?,?,?,?)""",
+                   (uid,str(moby_id),"/body/DocFragment[1]/body/p[1]",38,"Kobo","demo-koreader",
+                    datetime.utcnow().replace(microsecond=0).isoformat(" ")))
     target = root / "config/reading_stats" / f"{uid}-web.sqlite3"
     target.parent.mkdir(exist_ok=True)
     assert not target.exists()
@@ -191,6 +200,7 @@ def additional():
         expect(page.locator(".book-card").first).to_be_visible()
         base.shot(page,"search.png",".book-card")
         base.shot(page,"browse-results.png",".book-card")
+        expect(page.locator("#sidebar .nav-link[aria-current='page']").filter(has_text="Books")).to_have_count(1)
         results_box = page.locator("#main").bounding_box()
         assert results_box and 0 <= results_box["y"] < 900, results_box
         base.open_page(page,"/")
@@ -240,6 +250,31 @@ def additional():
             im.crop((4*x,4*y,4*end_x,4*end_y)).save(base.OUT/"related-focus.png")
         (base.OUT/"related-sharp-viewport.png").unlink()
         sharp.close()
+        # Return from the recommendations to the real progress component.
+        progress_card = page.locator(".kobo-card").filter(has=page.locator("#progress-heading"))
+        expect(progress_card).to_contain_text("KOReader")
+        expect(progress_card).to_contain_text("38%")
+        progress_y = progress_card.evaluate("""el => Math.max(0, Math.min(
+            document.scrollingElement.scrollHeight-innerHeight,
+            el.getBoundingClientRect().top+scrollY-innerHeight*.40))""")
+        scroll_strip(page,"sync-scroll",progress_y,frames=49)
+        sync_box = progress_card.bounding_box()
+        assert sync_box and sync_box["y"] >= 0 and sync_box["y"] + sync_box["height"] <= 900, sync_box
+        # Capture the authentic component at each percentage. Only its
+        # progress value is simulated, not the visual design of the card.
+        for percent in range(38,48):
+            progress_card.evaluate("""(el, n) => {
+                el.querySelector(".progress > span").style.width = n + "%";
+                const label = el.querySelector(".progress").nextElementSibling;
+                for (const child of label.childNodes) {
+                    if (child.nodeType === Node.TEXT_NODE && /\d+%/.test(child.textContent)) {
+                        child.textContent = child.textContent.replace(/\d+%/, n + "%");
+                        break;
+                    }
+                }
+            }""", percent)
+            expect(progress_card).to_contain_text(f"{percent}%")
+            page.screenshot(path=str(base.OUT / f"sync-progress-{percent}.png"), animations="disabled")
         # The Moby-Dick artwork was already extracted from its image URL.
         base.open_page(page,"/reading-stats")
         expect(page.locator(".rs-heatmap")).to_be_visible()
@@ -275,7 +310,7 @@ def additional():
         base.shot(page,"theme-ocean.png",".book-card")
         base.preset(page,"stock")
         capture_year(browser)
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus,"detailSidebar":detail_sidebar}))
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))
         ctx.close()
         browser.close()
 
