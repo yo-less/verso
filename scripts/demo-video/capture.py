@@ -29,7 +29,7 @@ def seed_stats(root):
         db.execute("""INSERT INTO kosync_progress
                     (user_id,document,progress,percentage,device,device_id,timestamp)
                     VALUES(?,?,?,?,?,?,?)""",
-                   (uid,str(moby_id),"/body/DocFragment[1]/body/p[1]",38,"Kindle","demo-koreader",
+                   (uid,str(moby_id),"/body/DocFragment[1]/body/p[1]",38,"Kindle Colorsoft","demo-koreader",
                     datetime.utcnow().replace(microsecond=0).isoformat(" ")))
     target = root / "config/reading_stats" / f"{uid}-web.sqlite3"
     target.parent.mkdir(exist_ok=True)
@@ -256,7 +256,7 @@ def additional():
         sharp.close()
         # Return from the recommendations to the real progress component.
         progress_card = page.locator(".kobo-card").filter(has=page.locator("#progress-heading"))
-        expect(progress_card).to_contain_text("KOReader on Kindle")
+        expect(progress_card).to_contain_text("KOReader on Kindle Colorsoft")
         expect(progress_card).to_contain_text("38%")
         progress_y = progress_card.evaluate("""el => Math.max(0, Math.min(
             document.scrollingElement.scrollHeight-innerHeight,
