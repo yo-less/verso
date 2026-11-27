@@ -155,7 +155,7 @@ function library(t){
  // Explanation lives with the title; the area below the window stays clear.
 }
 const detailBrowser={x:350,y:155,w:1220};
-const detailsHold=4.90;
+const detailsHold=2.85; // Freeze the backdrop when the recommendation lift begins.
 function detailPlate(frame,x,y,w){
  // Reuse one pixel-exact sidebar from the real final viewport throughout
  // the detail scroll and inset. The surrounding UI never reflows.
@@ -419,12 +419,23 @@ window.verifyDetailSidebar=function(){
  const b=window.data.detailSidebar,s=detailBrowser.w/assets["detail-scroll-60"].width;
  const x=Math.ceil(detailBrowser.x+b.x*s)+3;
  const y=Math.ceil(detailBrowser.y+detailBrowser.w*.025+b.y*s)+3;
+ // Exclude the browser shell's rounded bottom-left corner, where
+ // antialiasing mixes sidebar pixels with the exterior backdrop.
+ // All actual navigation pixels remain subject to exact comparison.
  const w=Math.floor(b.width*s)-6,h=Math.floor(b.height*s)-6;
  ctx.save();details(2.85);ctx.restore();
  const before=ctx.getImageData(x,y,w,h).data;
- ctx.save();details(3.48);ctx.restore();
- const after=ctx.getImageData(x,y,w,h).data;
- let changed=0;
- for(let i=0;i<before.length;i+=4)if(before[i]!==after[i]||before[i+1]!==after[i+1]||before[i+2]!==after[i+2]||before[i+3]!==after[i+3])changed++;
- return {width:w,height:h,changed,ok:changed===0};
+ const frames=[];
+ for(const t of [3.0,3.16,3.32,3.48,4.90]){
+  ctx.save();details(t);ctx.restore();
+  const after=ctx.getImageData(x,y,w,h).data;
+  let changed=0,cornerChanged=0;
+  for(let i=0;i<before.length;i+=4){
+   if(before[i]===after[i]&&before[i+1]===after[i+1]&&before[i+2]===after[i+2]&&before[i+3]===after[i+3])continue;
+   const px=(i/4)%w,py=Math.floor(i/4/w);
+   if(px<20&&py>=h-20)cornerChanged++;else changed++;
+  }
+  frames.push({t,changed,cornerChanged});
+ }
+ return {width:w,height:h,frames,ok:frames.every(f=>f.changed===0)};
 };

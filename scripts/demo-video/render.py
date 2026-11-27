@@ -50,8 +50,8 @@ def run():
             assert timeline and len({s["id"] for s in timeline}) == len(timeline), timeline
             assert duration > 0 and math.isclose(duration, sum(s["seconds"] for s in timeline)), duration
             sidebar_check = page.evaluate("window.verifyDetailSidebar()")
-            assert sidebar_check["ok"], sidebar_check
             (OUT/"sidebar-check.json").write_text(json.dumps(sidebar_check,indent=2))
+            assert sidebar_check["ok"], sidebar_check
             start = 0
             for scene in timeline:
                 scene_id = scene["id"]
