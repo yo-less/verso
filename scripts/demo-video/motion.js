@@ -1,8 +1,8 @@
-/* Verso demo V8: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V9: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
-const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home"];
-names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:25},(_,i)=>"browse-scroll-"+i),...Array.from({length:25},(_,i)=>"detail-scroll-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
+const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login"];
+names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:85},(_,i)=>"detail-scroll-"+i),...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -21,7 +21,7 @@ function shadow(x,y,w,h,r,c,blur=48){ctx.save();ctx.shadowColor="#00000050";ctx.
 function browser(k,x,y,w,zoom=1,focusX=.5,focusY=.5,withShadow=true){let im=assets[k],bar=w*.025,h=w*im.height/im.width;if(withShadow)shadow(x,y,w,h+bar,19,C.paper);else rect(x,y,w,h+bar,19,C.paper);ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();rect(x,y,w,bar,0,"#213c30");["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+bar*.45+i*bar*.52,y+bar*.36,bar*.24,bar*.24,bar*.12,c));ctx.save();ctx.beginPath();ctx.rect(x,y+bar,w,h);ctx.clip();let sw=im.width/zoom,sh=im.height/zoom;ctx.drawImage(im,clamp(focusX)*(im.width-sw),clamp(focusY)*(im.height-sh),sw,sh,x,y+bar,w,h);ctx.restore();ctx.restore();return {x,y:y+bar,w,h}}
 function phone(k,cx,cy,w,angle=0){let im=assets[k],bezel=12,iw=w-2*bezel,ih=iw*im.height/im.width,h=ih+2*bezel;ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);shadow(-w/2,-h/2,w,h,38,"#0d1410",32);ctx.strokeStyle="#818b80";ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,38);ctx.stroke();ctx.save();ctx.beginPath();ctx.roundRect(-iw/2,-ih/2,iw,ih,26);ctx.clip();img(k,-iw/2,-ih/2,iw,ih);ctx.restore();ctx.restore()}
 function reveal(t,a,b,fn,dy=26){let p=step(t,a,b);ctx.save();ctx.translate(0,(1-p)*dy);fade(p,fn);ctx.restore()}
-const tickRows=[{y:428,start:.65,label:"Import"},{y:522,start:1.35,label:"Convert if needed"},{y:616,start:2.05,label:"Metadata & cover"},{y:710,start:2.75,label:"Organize"}];
+const tickRows=[{y:428,start:1.35,label:"Import"},{y:522,start:2.05,label:"Convert if needed"},{y:616,start:2.75,label:"Metadata & cover"},{y:710,start:3.45,label:"Organize"}];
 function tick(cx,cy,p){rect(cx-24,cy-24,48,48,24,C.gold);ctx.save();ctx.strokeStyle=C.forest;ctx.lineWidth=5;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(cx-11,cy);let a=clamp(p*2),b=clamp(p*2-1);ctx.lineTo(cx-11+8*a,cy+8*a);if(b>0)ctx.lineTo(cx-3+15*b,cy+8-19*b);if(p>0)ctx.stroke();ctx.restore()}
 function brand(t,opening){
  if(opening){
@@ -41,27 +41,30 @@ function brand(t,opening){
 }
 function automation(t){
  bg(false,t);title("From file to bookshelf",90,110,false,76,"left");
- text("Automatic import",94,225,35,C.rust,"Geist",600);
- // Draw exactly one browser shell; restore only the hidden card when the cover lands.
  const box=browser("import-empty",770,220,1050),b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
- const flight=step(t,2.25,3.95),morph=step(t,1.25,1.95),lift=step(t,.2,.8),land=step(t,3.95,4.25);
+ const flight=step(t,3.60,5.25),land=step(t,5.25,5.52);
  const im=assets["import-library"],ratio=im.width/1440;
  fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
- tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,36,C.forest,"Geist",500)});
- const x=mix(540,target.x,flight),y=mix(820-32*lift,target.y,flight)-85*Math.sin(Math.PI*flight);
- const w=mix(140,target.w,flight),h=mix(202,target.h,flight);
- fade(step(t,.05,.35)*(1-land),()=>{
-  ctx.save();ctx.translate(x,y);ctx.rotate(-.06*(1-flight));
-  // The EPUB graphic fully disappears before the art begins its flight.
-  if(morph<1)fade(1-morph,()=>{
-   shadow(-w/2,-h/2,w,h,8,C.paper,14);
-   text("EPUB",0,-7,w*.24,C.rust,"Geist",700,"center");
-   line(-w*.28,h*.22,w*.28,h*.22,C.gold,3);
-  });
-  fade(morph,()=>img("moby-cover",-w/2,-h/2,w,h,"cover"));
-  ctx.restore();
+ // A watched ingest folder, with a file visibly dropped into it.
+ const drop=step(t,.22,1.18),fx=510,fy=270;
+ rect(fx-103,fy-43,88,27,8,"#b58a40");
+ rect(fx-103,fy-25,206,102,10,"#b58a40");
+ fade(1-step(t,1.00,1.30),()=>{
+  const x=mix(195,fx,drop),y=mix(282,fy+35,drop)-72*Math.sin(Math.PI*drop);
+  shadow(x-40,y-53,80,106,6,C.paper,8);
+  text("EPUB",x,y-5,21,C.rust,"Geist",700,"center");
+  line(x-24,y+23,x+24,y+23,C.gold,3);
  });
+ rect(fx-108,fy+4,216,77,9,"#d0aa65");
+ text("Watched import folder",fx,fy+110,24,C.forest,"Geist",500,"center");
+ fade(1-step(t,.65,1.15),()=>text("Moby-Dick.epub",195,365,21,C.forest,"Geist",500,"center"));
+ fade(step(t,1.18,1.5)*(1-step(t,3.15,3.55)),()=>{rect(fx+75,fy-45,26,26,13,C.forest);text("↓",fx+88,fy-32,19,C.ivory,"Geist",600,"center")});
+ tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,36,C.forest,"Geist",500)});
+ const x=mix(fx,target.x,flight),y=mix(fy-14,target.y,flight)-85*Math.sin(Math.PI*flight);
+ const w=mix(116,target.w,flight),h=mix(166,target.h,flight);
+ // Only cover pixels are drawn during flight; no window or EPUB shell.
+ fade(step(t,3.2,3.55)*(1-land),()=>{ctx.save();ctx.translate(x,y);ctx.rotate(-.045*(1-flight));img("moby-cover",-w/2,-h/2,w,h,"cover");ctx.restore()});
  text("Illustrated import sequence",95,973,23,"#6b6f60");
 }
 function footer(s,dark=true){
@@ -71,28 +74,27 @@ function footer(s,dark=true){
 function library(t){
  bg(true,t);title("Browse your library",960,84,true,76);
  const w=1160,x=(W-w)/2,y=150;
- if(t<1.35){
-  browser("browse-scroll-"+Math.round(clamp((t-.12)/1.15)*24),x,y,w);
- }else if(t<2.05){
-  browser("browse-scroll-"+Math.round((1-step(t,1.35,2.05))*24),x,y,w);
- }else if(t<3.95){
-  const n=Math.min(11,Math.floor(clamp((t-2.35)/1.15)*12));
-  const k="browse-type-"+n;
+ if(t<1.72){
+  browser("browse-scroll-"+Math.round(clamp((t-.12)/1.60)*48),x,y,w);
+ }else if(t<4.55){
+  const n=Math.min(11,Math.floor(clamp((t-2.15)/1.55)*12)),k="browse-type-"+n;
   browser(k,x,y,w);
-  // Magnify the real captured field, anchored to its original position.
-  const b=window.data.searchBox,p=step(t,2.05,2.36)*(1-step(t,3.65,3.95)),im=assets[k];
-  const crop={x:Math.max(0,b.x-12),y:Math.max(0,b.y-8),w:Math.min(1440-b.x+12,b.width+24),h:b.height+16};
-  const scale=w/1440,ww=mix(crop.w*scale,1040,p),hh=ww*crop.h/crop.w;
-  const cx=mix(x+(crop.x+crop.w/2)*scale,960,p),cy=mix(y+w*.025+(crop.y+crop.h/2)*scale,405,p);
+  const b=window.data.searchBox,p=step(t,1.72,2.12)*(1-step(t,4.13,4.55)),im=assets["search-sharp-"+n];
+  const scale=w/1440,ww=mix(b.width*scale,Math.min(1000,im.width),p),hh=ww*im.height/im.width;
+  const cx=mix(x+(b.x+b.width/2)*scale,960,p),cy=mix(y+w*.025+(b.y+b.height/2)*scale,355,p);
   fade(p,()=>{shadow(cx-ww/2-9,cy-hh/2-9,ww+18,hh+18,16,C.paper,25);
-   ctx.drawImage(im,crop.x,crop.y,crop.w,crop.h,cx-ww/2,cy-hh/2,ww,hh);
+   ctx.drawImage(im,cx-ww/2,cy-hh/2,ww,hh);
   });
  }else browser("browse-results",x,y,w);
- footer(t<2.05?"Explore the shelves":t<3.95?"Search by author":"Jane Austen · matching books");
+ footer(t<1.72?"Explore the shelves":t<4.55?"Search by author":"Jane Austen · matching books");
 }
 function details(t){
- bg(false,t);title(t<1.45?"Explore a book":"Discover related titles",960,84,false,76);
- const i=Math.min(24,Math.floor(clamp((t-.55)/1.75)*24+.5));
+ bg(false,t);
+ const p=step(t,1.15,1.55);
+ fade(1-p,()=>title("Explore a book",960,84,false,76));
+ fade(p,()=>title("Discover related titles",960,84,false,76));
+ // One sampled real browser position per 30fps output frame.
+ const i=Math.min(84,Math.round(clamp((t-.55)/2.8)*84));
  browser("detail-scroll-"+i,350,155,1220);
 }
 function devices(t){
@@ -177,34 +179,62 @@ function personalize(t){
 }
 function branding(t){
  bg(false,t);title("Give your library its own identity",960,85,false,72);
- browser("branding-viewport",620,160,1210);
- reveal(t,.12,.55,()=>text("Instance branding",90,275,47,C.forest,"Newsreader",600));
- const rows=["Custom library name","Your own logo","Custom colours","Favicon & login artwork"];
- rows.forEach((s,i)=>reveal(t,.32+i*.24,.62+i*.24,()=>{
-  rect(95,386+i*89,12,12,6,C.rust);
-  text(s,125,392+i*89,31,C.forest,"Geist",500);
- }));
- reveal(t,1.3,1.8,()=>text("New in Verso",90,820,31,C.rust,"Newsreader",600));
+ const labels=["Custom library name","Your own logo","Custom colours","Custom favicon","Login artwork"];
+ const descriptions=["Choose the name of your instance","Upload a navigation wordmark","Set background and accent colours","Use your own browser icon","Customize the login wordmark"];
+ const i=Math.min(4,Math.floor(t/1.55)),q=t-i*1.55;
+ const x=585,y=160,w=1245,scale=w/1440;
+ const p=i===0?1:step(q,0,.22);
+ const draw=(j,alpha)=>fade(alpha,()=>{
+  const box=browser("branding-focus-"+j,x,y,w,1,.5,.5,false);
+  const strength=step(j===i?q:1,0,.20);
+  window.data.brandingFocus[j].forEach(b=>{
+   const pad=6,xx=box.x+b.x*scale-pad,yy=box.y+b.y*scale-pad,ww=b.width*scale+2*pad,hh=b.height*scale+2*pad;
+   ctx.save();ctx.globalAlpha*=strength;ctx.strokeStyle=C.rust;ctx.lineWidth=3;
+   ctx.beginPath();ctx.roundRect(xx,yy,ww,hh,8);ctx.stroke();ctx.restore();
+  });
+ });
+ if(i>0&&p<1)draw(i-1,1);
+ draw(i,p);
+ labels.forEach((s,j)=>{
+  const a=j<i?0.7:j===i?1:0;
+  fade(a,()=>{rect(90,280+j*108,12,12,6,j===i?C.rust:C.gold);text(s,116,285+j*108,31,C.forest,"Geist",j===i?650:500)});
+ });
+ reveal(q,.14,.46,()=>text(descriptions[i],90,855,25,C.rust,"Newsreader",550),10);
 }
 function install(t){
  bg(true,t);title("Run Verso yourself",960,105,true,76);
- shadow(230,250,1460,610,22,"#0b1913");rect(230,250,1460,61,21,"#2a4838");["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(259+i*30,272,16,16,8,c));text("Terminal",960,280,28,C.ivory,"Geist",500,"center");
- let lines=["$ git clone https://github.com/yo-less/verso.git verso","$ cd verso","$ docker compose up -d"];
- lines.forEach((s,i)=>{let p=clamp((t-.12-i*.72)/.52);text(s.slice(0,Math.ceil(s.length*p)),280,405+i*106,37,C.ivory,"monospace",500)});
- reveal(t,2.0,2.35,()=>text("http://localhost:8083",280,766,34,"#d0aa65","Geist",600));
+ const p=step(t,2.65,3.10);
+ fade(1-p,()=>{
+  shadow(230,250,1460,610,22,"#0b1913");rect(230,250,1460,61,21,"#2a4838");["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(259+i*30,272,16,16,8,c));text("Terminal",960,280,28,C.ivory,"Geist",500,"center");
+  let lines=["$ git clone https://github.com/yo-less/verso.git verso","$ cd verso","$ docker compose up -d"];
+  lines.forEach((s,i)=>{let a=clamp((t-.12-i*.72)/.52);text(s.slice(0,Math.ceil(s.length*a)),280,405+i*106,37,C.ivory,"monospace",500)});
+ });
+ fade(p,()=>{
+  const x=365,y=150,w=1190,bar=78,h=w*assets.login.height/assets.login.width;
+  shadow(x,y,w,h+bar,19,C.paper,32);
+  ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();
+  rect(x,y,w,bar,0,"#213c30");
+  ["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+19+i*24,y+15,12,12,6,c));
+  rect(x+110,y+14,w-134,49,12,C.paper);
+  const url="http://localhost:8083",n=Math.min(url.length,Math.floor(clamp((t-3.04)/1.02)*(url.length+1)));
+  text(url.slice(0,n),x+132,y+39,27,C.forest,"Geist",500);
+  if(n<url.length)line(x+132+ctx.measureText(url.slice(0,n)).width,y+25,x+132+ctx.measureText(url.slice(0,n)).width,y+53,C.forest,2);
+  rect(x,y+bar,w,h,0,"#f8f1e5");
+  fade(step(t,4.20,4.55),()=>img("login",x,y+bar,w,h,"cover"));ctx.restore();
+ });
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
- {id:"automation",len:5,draw:automation},
- {id:"library",len:5.1,draw:library},
- {id:"details",len:4,draw:details},
+ {id:"automation",len:6.1,draw:automation},
+ {id:"library",len:5.8,draw:library},
+ {id:"details",len:4.4,draw:details},
  {id:"devices",len:4,draw:devices},
  {id:"statistics",len:3.5,draw:statistics},
  {id:"highlights",len:3,draw:highlights},
  {id:"year",len:6,draw:year},
  {id:"personalize",len:4.75,draw:personalize},
- {id:"branding",len:2.9,draw:branding},
- {id:"install",len:3.5,draw:install},
+ {id:"branding",len:7.75,draw:branding},
+ {id:"install",len:6.25,draw:install},
  {id:"close",len:3,draw:t=>brand(t,false)}
 ];
 window.timeline=scenes.map(s=>({id:s.id,seconds:s.len}));window.duration=scenes.reduce((n,s)=>n+s.len,0);

@@ -41,11 +41,11 @@ def seed_stats(root):
                            (i%4+1, (i*19+page)%320+1, int(day.timestamp())+page*75, 60+i%15,320))
     # The reading history is fictional, like the rest of the demo seed.
 
-def scroll_strip(page, prefix, destination):
+def scroll_strip(page, prefix, destination, frames=25):
     """Capture actual browser scrolling, not a dissolve between unrelated pages."""
     start = page.evaluate("window.scrollY")
-    for i in range(25):
-        progress = i / 24
+    for i in range(frames):
+        progress = i / (frames - 1)
         progress = progress * progress * (3 - 2 * progress)
         page.evaluate("(y) => window.scrollTo(0,y)", start + (destination-start)*progress)
         page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
@@ -94,16 +94,30 @@ def additional():
         page.evaluate("window.scrollTo(0,0)")
         base.shot(page,"theme-light.png",".book-card")
         destination = page.evaluate("Math.max(0,document.getElementById('books-heading').getBoundingClientRect().top + scrollY - 88)")
-        scroll_strip(page,"browse-scroll",destination)
-        page.evaluate("window.scrollTo(0,0)")
+        scroll_strip(page,"browse-scroll",destination,frames=49)
         query = page.locator("#query")
         query.click()
         search_box = query.bounding_box()
-        assert search_box and search_box["width"] > 100, search_box
+        assert search_box and search_box["width"] > 100 and 0 <= search_box["y"] < 900, search_box
+        # Preserve the scrolled shelf; the sticky search bar remains available.
         for i in range(len("Jane Austen") + 1):
             query.fill("Jane Austen"[:i])
             page.screenshot(path=str(base.OUT / f"browse-type-{i}.png"), animations="disabled")
         base.shot(page,"browse-typed.png","#query")
+        # Capture the real search control at 4x device resolution, so the
+        # emphasis shot never enlarges low-resolution raster text.
+        sharp = browser.new_context(viewport={"width":1440,"height":900},device_scale_factor=4,
+                                    storage_state=ctx.storage_state(),locale="en-US",
+                                    color_scheme="light",reduced_motion="reduce",service_workers="block")
+        sharp_page = sharp.new_page()
+        base.open_page(sharp_page,"/")
+        sharp_page.evaluate("(y) => window.scrollTo(0,y)", destination)
+        sharp_query = sharp_page.locator("#query")
+        sharp_query.click()
+        for i in range(len("Jane Austen") + 1):
+            sharp_query.fill("Jane Austen"[:i])
+            sharp_query.screenshot(path=str(base.OUT / f"search-sharp-{i}.png"),animations="disabled")
+        sharp.close()
         page.locator("#query").press("Enter")
         page.wait_for_load_state("domcontentloaded")
         expect(page.locator(".book-card").first).to_be_visible()
@@ -117,7 +131,7 @@ def additional():
         page.evaluate("window.scrollTo(0,0)")
         base.shot(page,"detail-scroll-0.png","h1")
         destination = related.evaluate("el => Math.min(document.scrollingElement.scrollHeight-innerHeight, Math.max(0,el.getBoundingClientRect().top+scrollY-110))")
-        scroll_strip(page,"detail-scroll",destination)
+        scroll_strip(page,"detail-scroll",destination,frames=85)
         related.scroll_into_view_if_needed()
         page.wait_for_timeout(400)
         related.screenshot(path=str(base.OUT/"related.png"),animations="disabled")
@@ -131,6 +145,16 @@ def additional():
         base.shot(page,"stats-detail.png","#rs-30-h")
         base.open_page(page,"/admin/branding")
         base.shot(page,"branding-viewport.png","#name")
+        branding_focus = []
+        for i, selectors in enumerate((("#name",),("#asset-wordmark",),("#background","#accent"),
+                                       ("#asset-favicon",),("#asset-login",))):
+            fields = [page.locator(sel).locator("xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' field ')][1]") for sel in selectors]
+            fields[0].evaluate("el => el.scrollIntoView({block:'center', behavior:'instant'})")
+            page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+            boxes = [f.bounding_box() for f in fields]
+            assert all(b and b["y"] >= 0 and b["y"] + b["height"] <= 900 for b in boxes), (selectors,boxes)
+            base.shot(page,f"branding-focus-{i}.png",selectors[0])
+            branding_focus.append(boxes)
         base.set_theme(page,"dark")
         base.open_page(page,"/")
         base.shot(page,"theme-dark.png",".book-card")
@@ -164,7 +188,7 @@ def additional():
             story.wait_for_timeout(450)
         assert found == targets, (found, targets)
         portrait.close()
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card,"importCover":import_cover,"searchBox":search_box}))
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"brandingFocus":branding_focus}))
         ctx.close()
         browser.close()
 
