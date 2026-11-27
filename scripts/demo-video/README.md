@@ -17,4 +17,4 @@ Use English Chromium for the capture run. The Branding captures show the native,
 
 The Actions preview is 1080p at 30 fps. The renderer feeds lossless PNG frames to the H.264 encoder at CRF 17. The artifact size varies with the footage.
 
-The default MP4 is a silent preview. To render with the licensed [Keys of Time by Good_B_Music](https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/), set `DEMO_MUSIC` to your local copy and optionally set `DEMO_MUSIC_OFFSET` in seconds. The default offset is 29 seconds, with a 2.2-second fade-in from the start of the video. Keep the download certificate and the standalone music file out of the repository.
+The default MP4 is a silent preview. To render with the licensed [Keys of Time by Good_B_Music](https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/), set `DEMO_MUSIC` to your local copy and optionally set `DEMO_MUSIC_OFFSET` in seconds. The final edit uses a 28.5-second offset, a 0.9-second curved fade-in and a four-second smooth fade-out with a short silent tail, aligned to the source music decay. Keep the download certificate and the standalone music file out of the repository.

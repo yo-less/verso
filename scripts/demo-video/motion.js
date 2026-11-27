@@ -1,8 +1,8 @@
-/* Verso demo V21: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V22: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
-names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
+names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -61,13 +61,19 @@ function automation(t){
  const center=step(t,5.05,5.85);
  fade(1-step(t,5.05,5.43),()=>title("From file to bookshelf",960,85,false,76));
  fade(step(t,5.43,5.85),()=>title("Fully automated import",960,85,false,76));
- const box=browser("import-empty",mix(720,310,center),mix(210,155,center),mix(1120,1300,center));
- const b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
+ const reflow=clamp((t-3.55)/1.15);
+ const k=t<3.55?"import-empty":t>=5.60?"import-library":"import-space-"+Math.round(reflow*30);
+ const box=browser(k,mix(720,310,center),mix(210,155,center),mix(1120,1300,center));
+ const b=window.data.importCover,card=window.data.importCard,count=window.data.importCount,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
  const dissolve=step(t,3.45,4.13),flight=step(t,3.45,5.35),land=step(t,5.35,5.60);
  const shelfArtwork=step(t,4.62,5.30);
  const im=assets["import-library"],ratio=im.width/1440;
- fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
+ if(t>=5.35 && t<5.60){
+  const pad=4;
+  ctx.drawImage(im,(count.x-pad)*ratio,(count.y-pad)*ratio,(count.width+2*pad)*ratio,(count.height+2*pad)*ratio,box.x+(count.x-pad)*s,box.y+(count.y-pad)*s,(count.width+2*pad)*s,(count.height+2*pad)*s);
+  fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
+ }
  const drop=step(t,.17,1.32),fx=460,fy=326;
  const converted=step(t,1.97,2.52),cover=step(t,2.75,3.25);
  const fold=Math.sin(Math.PI*converted);

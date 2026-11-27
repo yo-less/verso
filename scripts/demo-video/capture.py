@@ -168,11 +168,59 @@ def additional():
         import_cover = cover.bounding_box()
         assert import_card and import_card["y"] >= 0 and import_card["y"] + import_card["height"] <= 900, import_card
         assert import_cover and import_cover["y"] >= 0 and import_cover["y"] + import_cover["height"] <= 900, import_cover
+        count = page.locator('[aria-labelledby="books-heading"] .page-subtitle')
+        expect(count).to_have_text("20 books")
+        import_count = count.bounding_box()
+        assert import_count and import_count["y"] >= 0
+        card.evaluate("""el => {
+            const grid = el.parentElement;
+            const others = [...grid.querySelectorAll('.book-card')].filter(c => c !== el);
+            const after = others.map(c => c.getBoundingClientRect().toJSON());
+            grid.style.minHeight = grid.getBoundingClientRect().height + 'px';
+            el.style.display = 'none';
+            const count = document.querySelector('[aria-labelledby="books-heading"] .page-subtitle');
+            count.textContent = '19 books';
+            const before = others.map(c => c.getBoundingClientRect().toJSON());
+            window.importReflow = {el,grid,others,before,after,count};
+        }""")
+        expect(count).to_have_text("19 books")
+        page.screenshot(path=str(base.OUT/"import-empty.png"), animations="disabled")
         try:
-            card.evaluate("el => el.style.visibility = 'hidden'")
-            page.screenshot(path=str(base.OUT/"import-empty.png"), animations="disabled")
+            page.evaluate("""() => {
+                const {el,others} = window.importReflow;
+                el.style.display = '';
+                el.style.visibility = 'hidden';
+                for (const c of others) c.style.transition = 'none';
+            }""")
+            for i in range(31):
+                page.evaluate("""p => {
+                    const {others,before,after} = window.importReflow;
+                    const ease = n => n*n*(3-2*n), t = ease(p);
+                    others.forEach((c,i) => {
+                        const a=before[i], b=after[i], dx=a.x-b.x, dy=a.y-b.y;
+                        if (Math.abs(dy)>a.height*.5 && Math.abs(dx)>a.width) {
+                            const q=ease(p<.5?p*2:(p-.5)*2);
+                            c.style.transform=p<.5?'translate('+(dx+16*q)+'px,'+dy+'px)':'translate('+(-16*(1-q))+'px,0px)';
+                            c.style.opacity=String(p<.5?1-q:q);
+                        } else {
+                            c.style.transform='translate('+(dx*(1-t))+'px,'+(dy*(1-t))+'px)';
+                            c.style.opacity='1';
+                        }
+                    });
+                }""", i/30)
+                page.screenshot(path=str(base.OUT / f"import-space-{i}.png"), animations="disabled")
         finally:
-            card.evaluate("el => el.style.visibility = ''")
+            page.evaluate("""() => {
+                const {el,grid,others,count} = window.importReflow;
+                el.style.visibility = '';
+                for (const c of others) {
+                    c.style.transform = ''; c.style.opacity = ''; c.style.transition = '';
+                }
+                count.textContent = '20 books';
+                grid.style.minHeight = '';
+                delete window.importReflow;
+            }""")
+            expect(count).to_have_text("20 books")
             import_shelves.evaluate("el => el.remove()")
         for title, filename in (("Pride and Prejudice","pride-cover.png"),("Frankenstein","frankenstein-cover.png")):
             cover = page.locator(".book-card").filter(has_text=title).first.locator(".cover img")
@@ -320,7 +368,7 @@ def additional():
         base.shot(page,"theme-ocean.png",".book-card")
         base.preset(page,"stock")
         capture_year(browser)
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"importCount":import_count,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))
         ctx.close()
         browser.close()
 
