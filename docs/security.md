@@ -1,6 +1,6 @@
 # Security
 
-Scriptorium holds your library, your users' passwords and tokens that can download every book. This page
+Verso holds your library, your users' passwords and tokens that can download every book. This page
 explains how the application protects them and what you should do when you deploy it.
 
 ## Deploying safely
@@ -13,7 +13,7 @@ explains how the application protects them and what you should do when you deplo
   [Remote access](remote-access.md) compares the options. With HTTPS working, enable
   *Settings → Server & features → Security → Use via HTTPS* so session cookies are marked `Secure`.
 - **Do not expose the container port directly** when you use reverse-proxy authentication: anyone
-  who reaches Scriptorium without the proxy could send the `Remote-User` header and log in as anyone.
+  who reaches Verso without the proxy could send the `Remote-User` header and log in as anyone.
 - **Keep the Kobo sync address private.** It works like a password for your books. Regenerate it
   from your profile if it leaks, and revoke it when a device is lost.
 - **Give people only the permissions they need**, and keep *Anonymous Browsing* and *Public

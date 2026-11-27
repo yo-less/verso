@@ -2,9 +2,7 @@
 
 ## Updating
 
-When a new release is out, administrators see a download button in the top bar. It opens the
-highlights of the new version and the command to run. Scriptorium checks GitHub for new releases
-every twelve hours.
+The container image is published from successful builds of the main branch. Check the project's Actions page for the latest build; an in-app release notification is not a substitute for checking image availability.
 
 Update in three steps, from the folder with your `docker-compose.yml`:
 
@@ -15,8 +13,8 @@ Update in three steps, from the folder with your `docker-compose.yml`:
    docker compose pull && docker compose up -d
    ```
 
-3. Open Scriptorium. It takes a minute or two to start, and every user sees a short *What's new*.
-4. If you use KOReader, check whether the release needs a newer plugin: Scriptorium shows *Update
+3. Open Verso after the container has started. Check that your library and devices work.
+4. If you use KOReader, check whether the release needs a newer plugin: Verso shows *Update
    the KOReader plugin* on the home page when one of your devices is behind. See
    [Keeping the plugin up to date](koreader.md#keeping-the-plugin-up-to-date).
 
@@ -37,35 +35,19 @@ To turn the check off, untick *Automatically check for new updates* in the updat
 
 ## Choosing a version
 
-The tag after the image name decides what you get.
+The [Build Verso image workflow](../.github/workflows/publish.yml) publishes `ghcr.io/yo-less/verso:latest` and a tag containing the full Git commit SHA of each successfully built main-branch image.
 
-| Image tag | You get | Good for |
-| --- | --- | --- |
-| `:latest` | The newest release | Most home users |
-| `:v1` | The newest `1.x.x` | Features and fixes, no breaking changes |
-| `:v1.1` | The newest `1.1.x` | Fixes only |
-| `:v1.1.0` | Exactly this version, forever | Servers you want to change only by hand |
-
-Pre-releases such as `v1.2.0-rc.1` have their own tag, and never move the others.
-
-All release tags are listed on the
-[releases page](https://github.com/MrColoo/scriptorium-library/releases).
+Use `:latest` for ordinary updates, or a published commit SHA tag to pin a known build. Find successful builds in [GitHub Actions](https://github.com/yo-less/verso/actions/workflows/publish.yml). The current publishing workflow does not promise upstream-style semantic-version tags.
 
 ## Going back to an earlier version
 
-Set the image to the version you want, then run the same command:
-
-```yaml
-image: ghcr.io/mrcoloo/scriptorium-library:v1.0.0
-```
+Replace the image tag in your Compose file with a previously published full commit SHA, then run:
 
 ```bash
 docker compose pull && docker compose up -d
 ```
 
-Scriptorium has not changed its existing database tables so far, so this normally just works. If a
-version does change them, the release notes will say so. Restoring the backup you took before
-updating is always the safest way back.
+Restoring the backup taken before updating is the safest rollback if the database format changed. Do not assume every newer build can be downgraded without restoring data.
 
 ## Backups
 
@@ -74,7 +56,7 @@ consistent copy of the databases:
 
 ```bash
 docker compose stop
-tar czf scriptorium-backup-$(date +%F).tar.gz config library
+tar czf verso-backup-$(date +%F).tar.gz config library
 docker compose start
 ```
 
@@ -93,24 +75,24 @@ it out, add `--exclude=config/processed_books` to the `tar` command.
 ### Automatic backups
 
 On Linux, a small script and a scheduled job do it for you. Save this as `backup.sh` in your
-`scriptorium` folder, adjusting the two paths:
+Verso installation folder, adjusting the two paths:
 
 ```bash
 #!/bin/sh
-cd /path/to/scriptorium || exit 1
+cd /path/to/verso || exit 1
 docker compose stop
-tar czf "/path/to/backups/scriptorium-$(date +%F).tar.gz" --exclude=config/processed_books config library
+tar czf "/path/to/backups/verso-$(date +%F).tar.gz" --exclude=config/processed_books config library
 docker compose start
 
 # Keep the last 8 archives
-ls -1t /path/to/backups/scriptorium-*.tar.gz | tail -n +9 | xargs -r rm --
+ls -1t /path/to/backups/verso-*.tar.gz | tail -n +9 | xargs -r rm --
 ```
 
 Make it executable with `chmod +x backup.sh`, and run `crontab -e` to add a line that runs it every
 Sunday at 3:00:
 
 ```cron
-0 3 * * 0 /path/to/scriptorium/backup.sh
+0 3 * * 0 /path/to/verso/backup.sh
 ```
 
 For large libraries, tools such as [restic](https://restic.net) or
@@ -123,7 +105,7 @@ backup apps, such as Hyper Backup on Synology.
 docker compose down
 mv config config.old
 mv library library.old
-tar xzf scriptorium-backup-2026-11-01.tar.gz
+tar xzf verso-backup-2026-11-01.tar.gz
 docker compose up -d
 ```
 
@@ -132,7 +114,7 @@ a backup you have never restored is only a hope.
 
 ## Moving to a new server
 
-1. Stop Scriptorium on the old server and make a [backup](#backups).
+1. Stop Verso on the old server and make a [backup](#backups).
 2. Install Docker on the new server.
 3. Copy the archive and `docker-compose.yml` across, and extract the archive.
 4. Check `PUID` and `PGID`, then run `docker compose up -d`.

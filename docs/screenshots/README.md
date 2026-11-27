@@ -20,8 +20,8 @@ names when you replace an image.
 
 ## Demo video
 
-`docs/media/scriptorium-demo.mp4` (1920×1080, 30 fps, one minute) and its cover
-`docs/media/scriptorium-demo-poster.jpg` are linked from the project README. The video is built from
+The inherited Scriptorium demonstration, `docs/media/scriptorium-demo.mp4` (1920×1080, 30 fps), and its cover
+`docs/media/scriptorium-demo-poster.jpg` are linked from the project README. The upstream video was built from
 screenshots of a demo library like these, animated in a browser page and encoded with H.264. Keep it
 under 10 MB, so it can also be uploaded to GitHub and played inline in the README.
 
@@ -36,5 +36,4 @@ EPUBs are short synthetic samples, not redistributions of the named works.
 
 On the preview branch, when the approved landscape is present and the capture succeeds, the workflow stages the allowlisted PNGs in this directory. Review the results before merging into main. The hero is a composition
 of actual desktop library and mobile login captures, not a claim of a hardware sync test. Kobo setup is
-captured before generating a token. The original upstream images and video remain until
-replacement captures have been reviewed. The preview branch triggers the same workflow.
+captured before generating a token. The README screenshots now show Verso. The credited upstream video remains until a replacement has been reviewed. The preview branch triggers the same workflow.

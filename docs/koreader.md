@@ -41,8 +41,8 @@ confirmation strategy still asks before moving to another device's position.
 
 ## Keeping the plugin up to date
 
-New Scriptorium releases sometimes need a newer plugin. Since version 1.2 the plugin tells the server
-its version, so Scriptorium knows when a device is behind: *Update the KOReader plugin* then appears
+New Verso releases sometimes need a newer plugin. Since version 1.2 the plugin tells the server
+its version, so Verso knows when a device is behind: *Update the KOReader plugin* then appears
 next to *Continue reading* on the home page, and *Profile → Devices → KOReader* lists the devices to
 update, with the download button.
 
@@ -76,7 +76,7 @@ from the library:
 - The percentage is also shared with Kobo sync, so a Kobo using its own reader picks it up.
 - The built-in reader takes part too. Read a few pages in the browser and KOReader offers to continue
   from there, as it does for another device: the position comes from the device called
-  *Scriptorium*. Both directions are exact to the paragraph when KOReader reads the same file as the
+  *Verso* (or your custom instance name). Both directions are exact to the paragraph when KOReader reads the same file as the
   browser. With another copy, such as a KEPUB on a Kobo, plugin 1.3 or later goes to the same
   percentage instead.
 
@@ -84,7 +84,7 @@ from the library:
 
 Version 1.1 of the plugin also sends your highlights and notes, together with your progress. They
 appear under *Highlights* in the sidebar, grouped by book, and can be exported as Markdown.
-Deleting a highlight in KOReader deletes it in Scriptorium at the next sync. If you installed the
+Deleting a highlight in KOReader deletes it in Verso at the next sync. If you installed the
 plugin before, download it again from *Profile → Devices → KOReader* and replace the old folder.
 
 With KOReader on more than one device, for example a Kobo and a phone, each device's highlights are
@@ -106,7 +106,7 @@ devices of the same model apart too.
 
 ## Reading statistics
 
-KOReader measures how long you read every page. Scriptorium can share those statistics between all
+KOReader measures how long you read every page. Verso can share those statistics between all
 your KOReader devices and show them on the **Reading statistics** page in the sidebar: time read
 today and this week, your current and best streak, a calendar of your reading year, the hours and
 days you read most, your pace, and the time spent on each book with an estimate of the time left.
@@ -115,7 +115,7 @@ Turn it on once on each device: *Tools → Verso Sync → Sync reading statistic
 plugin 1.2 or later, and KOReader's own *Reading statistics* and *Cloud storage* plugins, which are
 on by default.
 
-- The plugin points KOReader's statistics sync at your Scriptorium server, using the same sign-in.
+- The plugin points KOReader's statistics sync at your Verso server, using the same sign-in.
   KOReader merges the statistics of every device on the device itself, so each one ends up with the
   same totals and streaks, and anything that shows KOReader's statistics on the device sees them too.
 - Statistics sync when you open a book, every ten minutes or so while you read with the network on,
@@ -129,7 +129,7 @@ on by default.
 <summary><b>Setting it up by hand</b></summary>
 
 Without the plugin, or to check the setup: in KOReader, add a WebDAV server under *Cloud storage*
-with the address `https://your-server/kosync/webdav`, your Scriptorium username and password, then
+with the address `https://your-server/kosync/webdav`, your Verso username and password, then
 pick it in *Reading statistics → Settings → Cloud sync*.
 </details>
 
@@ -163,3 +163,7 @@ network on. The page shows when the statistics were last updated.
 the device can reach your server. Away from home you need [remote access](remote-access.md).
 
 More help: [Troubleshooting](troubleshooting.md).
+
+## Instance branding
+
+The downloadable plugin uses the configured instance name. After changing it in **Settings → Branding**, download and reinstall the plugin ZIP on each device to update its displayed name. Existing endpoints and reading data are unchanged.

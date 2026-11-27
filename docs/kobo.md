@@ -1,6 +1,6 @@
 # Kobo
 
-Scriptorium can stand in for the Kobo Store as your device's sync server. After a one-time setup,
+Verso can stand in for the Kobo Store as your device's sync server. After a one-time setup,
 tapping **Sync** on the Kobo downloads new books, removes the ones you take off, creates collections
 from your shelves and sends your reading progress and highlights back to the library. No cables and
 no Calibre.
@@ -24,10 +24,10 @@ Open *Settings → Server & features → Kobo* and turn on **Enable Kobo sync**.
 
 Two more options live here:
 
-- **Proxy unknown requests to Kobo Store** passes everything Scriptorium does not handle on to
+- **Proxy unknown requests to Kobo Store** passes everything Verso does not handle on to
   Kobo, which keeps the store working on the device: recommendations, purchases and your Kobo
   account. It is off by default. Turn it on if you still buy from Kobo.
-- **Server External Port** is only needed when the Kobo reaches Scriptorium on a different port than
+- **Server External Port** is only needed when the Kobo reaches Verso on a different port than
   your browser does, for example through a port forward.
 
 For the best experience, also set *Settings → Automation → Conversion → target format* to **KEPUB**.
@@ -40,7 +40,7 @@ Open *Profile → Devices*, make sure **Kobo** is on, and press **Create sync ad
 
 > [!IMPORTANT]
 > Open this page from an address the Kobo can reach, such as your server's LAN IP or domain, **not**
-> `localhost`. The sync address is built from the one in your browser. Scriptorium warns you if it
+> `localhost`. The sync address is built from the one in your browser. Verso warns you if it
 > looks wrong.
 
 The address is personal: anyone who has it can download your books. If it leaks, press
@@ -77,7 +77,7 @@ library.
 
 ## Reading progress
 
-Your position, the read/unread status and the time spent reading flow from the Kobo to Scriptorium at
+Your position, the read/unread status and the time spent reading flow from the Kobo to Verso at
 every sync. The book page shows them under *Reading progress*, and the home page lists what you are
 reading under *Continue reading*.
 
@@ -90,9 +90,9 @@ same for highlights.
 
 ## Highlights
 
-Highlights and notes you make in the Kobo's own reader reach Scriptorium when the Kobo syncs. They
+Highlights and notes you make in the Kobo's own reader reach Verso when the Kobo syncs. They
 appear under *Highlights* in the sidebar and on each book page, and can be exported as Markdown.
-Highlights made before you updated Scriptorium may only appear once the Kobo sends them again, for
+Highlights made before you updated Verso may only appear once the Kobo sends them again, for
 example after you edit them.
 
 ## No Kobo, or moving to KOReader

@@ -1,4 +1,4 @@
-# Using Scriptorium
+# Using Verso
 
 A tour of everything a reader can do, whether you run the server or someone set it up for you.
 
@@ -9,7 +9,7 @@ A tour of everything a reader can do, whether you run the server or someone set 
 - **Account menu** (your picture): *Profile*, *Devices*, *Customize*, *Install app*, *What's new*,
   *About*, *Appearance* and *Logout*.
 
-Scriptorium is available in 28 languages. Pick yours under *Profile → Preferences → Interface
+Verso is available in 28 languages. Pick yours under *Profile → Preferences → Interface
 Language*.
 
 ## The home page
@@ -150,7 +150,7 @@ and from the built-in reader:
 
 The built-in reader counts on its own. For KOReader, turn it on once on each device, as explained in
 [KOReader](koreader.md#reading-statistics); its statistics then appear in KOReader on all your devices
-too. Time spent in the built-in reader shows only in Scriptorium.
+too. Time spent in the built-in reader shows only in Verso.
 
 ## Your year in books
 
@@ -175,7 +175,7 @@ Bring your reading history instead of starting from zero.
 1. Export a CSV:
    - **Goodreads**: *My Books → Import and export → Export Library*.
    - **The StoryGraph**: *Manage Account → Export StoryGraph Library*.
-2. In Scriptorium, open *Profile → Reading history → Import* and choose the file.
+2. In Verso, open *Profile → Reading history → Import* and choose the file.
 3. Check the preview. Nothing changes until you confirm.
 
 Books are matched to your library by ISBN, then by title and author. Finished books are marked as
@@ -195,7 +195,7 @@ Styles belong to your account, so they follow you to every device.
 
 ## Install it as an app
 
-Scriptorium can be installed like a regular app. It opens full screen, has shortcuts to *Continue
+Verso can be installed like a regular app. It opens full screen, has shortcuts to *Continue
 reading*, *Highlights* and *Search*, and shows a friendly page when your server is out of reach.
 
 | Device | How |
@@ -209,7 +209,7 @@ reading*, *Highlights* and *Search*, and shows a friendly page when your server 
 > *Install app* will not work. See [Remote access](remote-access.md).
 
 On Android, an installed app also appears in the system share menu. In any app or file manager,
-choose *Share → Scriptorium* to send an ebook to the library. Your account needs the upload
+choose *Share → Verso* to send an ebook to the library. Your account needs the upload
 permission.
 
 ## Your profile
@@ -227,3 +227,11 @@ permission.
 
 After every update, a short *What's new* shows what changed. You can read it again at any time from
 the account menu.
+
+## Cover quality
+
+In **Customize → Cover quality**, choose Optimized, High (default), or Original. Book-detail pages always use original-quality artwork; the preference affects browser library thumbnails, not device synchronization.
+
+## Instance branding
+
+Administrators can change the instance name, light and dark SVG wordmarks, favicon, login colours and decoration in **Settings → Branding**. Restore the defaults to use the Verso identity and painted landscape. Existing uploaded artwork stays in the installation configuration.

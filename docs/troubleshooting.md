@@ -8,7 +8,7 @@ Device problems are in the [Kobo](kobo.md#troubleshooting) and
 
 ## Look at the logs
 
-Logs tell you what actually happened, so this is always a good first step. From your `scriptorium`
+Logs tell you what actually happened, so this is always a good first step. From your Verso installation
 folder:
 
 ```bash
@@ -65,7 +65,7 @@ Work through this list:
    while testing.
 5. Is the firewall blocking it? On Ubuntu with `ufw`, run `sudo ufw allow 8083/tcp`. On Windows,
    allow Docker Desktop through the firewall when asked.
-6. Are you on `http://`, not `https://`? Without a proxy, Scriptorium only speaks plain HTTP.
+6. Are you on `http://`, not `https://`? Without a proxy, Verso only speaks plain HTTP.
 
 ### The address stopped working after a restart
 
@@ -74,7 +74,7 @@ Your router gave the server a new address. Find the new one and
 
 ### I keep getting logged out
 
-Usually a proxy setting. Set `TRUSTED_PROXY_COUNT` to the number of proxies in front of Scriptorium.
+Usually a proxy setting. Set `TRUSTED_PROXY_COUNT` to the number of proxies in front of Verso.
 See [More than one proxy](remote-access.md#more-than-one-proxy).
 
 ### I cannot sign in, and the password is right
@@ -125,7 +125,7 @@ or use *Edit → Fetch Metadata* on the book.
 
 Something else is writing to the same database, usually Calibre desktop or a network share.
 
-- Close Calibre desktop while Scriptorium is working.
+- Close Calibre desktop while Verso is working.
 - If your library is on NFS or SMB, set `NETWORK_SHARE_MODE=true`.
 - Temporary locks during large operations are normal, and clear on their own.
 
@@ -206,14 +206,14 @@ telemetry, and no account with this project.
 bulk operations, such as a full conversion or duplicate scan, take longer.
 
 **Can two people share a Kobo?** A Kobo syncs with one sync address, so each device belongs to one
-Scriptorium user. Everyone can have their own device.
+Verso user. Everyone can have their own device.
 
 ## Getting help
 
-Search the [issues](https://github.com/MrColoo/scriptorium-library/issues) first. If yours is new,
+Search the [issues](https://github.com/yo-less/verso/issues) first. If yours is new,
 open one with:
 
-- your Scriptorium version, from *About*;
+- your Verso version, from *About*;
 - what you did, what you expected and what happened;
 - how you run it: host system, reverse proxy, network shares;
 - the relevant part of `docker compose logs`, and the *Download Debug Package* file if asked for it.

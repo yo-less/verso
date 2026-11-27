@@ -43,6 +43,8 @@ and shows a link to do so. See [Tailscale's guide](https://tailscale.com/kb/1242
 
 ## Reverse proxy with Caddy
 
+The examples use `scriptorium`, the service name in Verso's supplied Compose file. Substitute your actual service name if different.
+
 [Caddy](https://caddyserver.com) is the simplest proxy to start with: it gets and renews HTTPS
 certificates on its own.
 
@@ -154,7 +156,7 @@ Limits to keep in mind:
 
 Once your HTTPS address works:
 
-1. Open Scriptorium **from the HTTPS address** and turn on *Settings → Server & features → Security →
+1. Open Verso **from the HTTPS address** and turn on *Settings → Server & features → Security →
    Use via HTTPS*. Session cookies are then marked `Secure`.
 
    > [!WARNING]
@@ -170,13 +172,13 @@ Once your HTTPS address works:
 
 ## More than one proxy
 
-Scriptorium trusts one proxy by default, which covers everything above.
+Verso trusts one proxy by default, which covers everything above.
 
-If there is more than one hop in front of it, for example Cloudflare Tunnel → nginx → Scriptorium,
-set `TRUSTED_PROXY_COUNT` to the number of proxies. If it is too low, Scriptorium sees a different
+If there is more than one hop in front of it, for example Cloudflare Tunnel → nginx → Verso,
+set `TRUSTED_PROXY_COUNT` to the number of proxies. If it is too low, Verso sees a different
 client address on each request, and session protection logs users out.
 
-Scriptorium reads `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host` and
+Verso reads `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host` and
 `X-Forwarded-Prefix` from the proxy.
 
 ## Serving from a sub-path

@@ -8,7 +8,7 @@ Already comfortable with Docker? The [installation reference](installation.md) i
 
 ## What you are building
 
-Scriptorium is a program that runs on a computer you control and looks after your ebooks. You open
+Verso is a program that runs on a computer you control and looks after your ebooks. You open
 it from a web browser, on the same machine or on any phone, tablet or e-reader in your home.
 
 "Self-hosting" just means that: the app runs on your own hardware instead of on a company's
@@ -17,9 +17,9 @@ servers. Your books and reading history stay with you, and there is no subscript
 You will install two things:
 
 - **Docker**, a free tool that runs apps in a sealed box called a *container*. It means you do not
-  have to install Scriptorium's many dependencies by hand, and nothing gets scattered around your
+  have to install Verso's many dependencies by hand, and nothing gets scattered around your
   system.
-- **Scriptorium**, which Docker downloads for you.
+- **Verso**, which Docker downloads for you.
 
 New words are explained in the [glossary](glossary.md).
 
@@ -67,7 +67,7 @@ you prefer them.
 2. Restart if asked, then open Docker Desktop and wait until it says it is running.
 3. Open **PowerShell** for the commands below.
 
-Docker Desktop has to be running for Scriptorium to work. Turn on *Start Docker Desktop when you
+Docker Desktop has to be running for Verso to work. Turn on *Start Docker Desktop when you
 sign in* in its settings.
 </details>
 
@@ -79,7 +79,7 @@ sign in* in its settings.
 2. Open Docker Desktop and wait until it says it is running.
 3. Open the **Terminal** app for the commands below.
 
-Docker Desktop has to be running for Scriptorium to work. Turn on *Start Docker Desktop when you
+Docker Desktop has to be running for Verso to work. Turn on *Start Docker Desktop when you
 sign in* in its settings.
 </details>
 
@@ -92,14 +92,14 @@ docker compose version
 You should see a version number. If you get "command not found", Docker is not installed yet, or
 on Linux you may need to log out and back in.
 
-## Step 2: Make a home for Scriptorium
+## Step 2: Make a home for Verso
 
 Create a folder and three folders inside it. This keeps everything in one place, which also makes
 backups easy.
 
 ```bash
-mkdir scriptorium
-cd scriptorium
+mkdir verso
+cd verso
 mkdir config ingest library
 ```
 
@@ -110,15 +110,15 @@ mkdir config ingest library
 | `library` | Your finished, organised library. |
 
 > [!NOTE]
-> Stay inside the `scriptorium` folder for all the commands below. If you close the terminal, go
-> back with `cd scriptorium` first.
+> Stay inside the `verso` folder for all the commands below. If you close the terminal, go
+> back with `cd verso` first.
 
 ## Step 3: Get the configuration file
 
 A file called `docker-compose.yml` tells Docker what to run. Download it:
 
 ```bash
-curl -O https://raw.githubusercontent.com/MrColoo/scriptorium-library/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/yo-less/verso/main/docker-compose.yml
 ```
 
 Open it in a text editor. Only the first few settings matter for now:
@@ -132,7 +132,7 @@ Open it in a text editor. Only the first few settings matter for now:
 - **`TZ`** is your time zone, used for schedules and dates. Pick yours from
   [this list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), for example
   `Europe/Rome` or `America/New_York`.
-- **`PUID` and `PGID`** say which user owns the files Scriptorium creates. On Linux and macOS, run
+- **`PUID` and `PGID`** say which user owns the files Verso creates. On Linux and macOS, run
   `id` to see your own numbers (`uid` and `gid`) and put them here. On Windows, leave them as they are.
 
 > [!TIP]
@@ -144,7 +144,7 @@ Open it in a text editor. Only the first few settings matter for now:
 docker compose up -d
 ```
 
-Docker downloads Scriptorium (about 600 MB) and starts it. `-d` means "in the background", so you
+Docker downloads Verso and starts it. `-d` means "in the background", so you
 get your terminal back. The first start takes a couple of minutes while the library is prepared.
 
 To see how it is doing:
@@ -157,10 +157,10 @@ When the status says `healthy`, it is ready.
 
 ## Step 5: Create your account
 
-Open **http://localhost:8083** in a browser on the same computer. If Scriptorium runs on another
+Open **http://localhost:8083** in a browser on the same computer. If Verso runs on another
 machine, use that machine's address instead (see [Step 7](#step-7-reach-it-from-your-other-devices)).
 
-The first time, Scriptorium asks you to create your account:
+The first time, Verso asks you to create your account:
 
 - **Username**: the name you will sign in with.
 - **Password**: at least 8 characters, with a number, a lowercase and an uppercase letter, and a
@@ -183,7 +183,7 @@ You can also upload from the browser, once uploads are turned on. See
 [First steps](first-steps.md#turn-on-uploads).
 
 > [!TIP]
-> Already have a Calibre library? Stop Scriptorium with `docker compose down`, copy your library
+> Already have a Calibre library? Stop Verso with `docker compose down`, copy your library
 > into the `library` folder so that `metadata.db` sits directly inside it, and run
 > `docker compose up -d` again. See [Using an existing Calibre library](installation.md#using-an-existing-calibre-library).
 
@@ -229,14 +229,14 @@ If the page does not load from your phone, see [Troubleshooting](troubleshooting
 
 ## You did it
 
-Scriptorium restarts on its own after a reboot, as long as Docker starts too. On Linux it does by
+Verso restarts on its own after a reboot, as long as Docker starts too. On Linux it does by
 default; with Docker Desktop, turn on the option mentioned in Step 1.
 
-Three commands are worth remembering, all run from the `scriptorium` folder:
+Three commands are worth remembering, all run from the `verso` folder:
 
 | To | Run |
 | --- | --- |
-| Stop Scriptorium | `docker compose stop` |
+| Stop Verso | `docker compose stop` |
 | Start it again | `docker compose start` |
 | See what it is doing | `docker compose logs -f` (press Ctrl+C to leave) |
 
