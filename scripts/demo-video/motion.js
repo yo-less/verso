@@ -1,4 +1,4 @@
-/* Verso demo V20: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V21: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
@@ -210,17 +210,20 @@ function devices(handoff){
  const device=step(t,.68,1.27);
  fade(device,()=>{
   ctx.translate(92*(1-device),22*(1-device));
-  ctx.translate(1585,535);ctx.scale(.96+.04*device,.96+.04*device);ctx.translate(-1585,-535);
-  shadow(1395,180,380,715,38,"#202722");rect(1418,203,334,640,14,"#ecebe1");
+  // Keep the original reader proportions. Its outer frame aligns exactly
+  // with the browser shell, from the title bar to the bottom edge.
+  const readerScale=(box.h+w*.025)/715,scale=readerScale*(.96+.04*device);
+  ctx.translate(1585,y+(box.h+w*.025)/2);ctx.scale(scale,scale);ctx.translate(-1585,-537.5);
+  shadow(1395,180,380,715,38,"#202722");rect(1418,203,334,640,14,"#e8e5d8");
   text("My books",1441,238,25,C.forest,"Geist",600);
   [["Moby-Dick","moby-cover",progress],["Pride and Prejudice","pride-cover",64],["Frankenstein","frankenstein-cover",21]].forEach(([s,k,v],i)=>{
-   const y=300+i*163;ctx.save();ctx.filter="saturate(.62)";img(k,1437,y,73,110);ctx.restore();
+   const y=300+i*163;ctx.save();ctx.filter="saturate(.48) contrast(.86) brightness(1.035)";img(k,1437,y,73,110);ctx.restore();
    text(s,1523,y+20,17,C.forest,"Newsreader",600);
    line(1523,y+66,1728,y+66,"#b2b6aa",5);line(1523,y+66,1523+205*v/100,y+66,C.forest,5);text(Math.round(v)+"%",1523,y+89,18,C.forest);
   });
   const opened=step(t,2.0,2.48);
   fade(opened,()=>{
-   rect(1418,203,334,640,14,"#ecebe1");
+   rect(1418,203,334,640,14,"#e8e5d8");
    text("Moby-Dick",1585,245,25,C.forest,"Newsreader",600,"center");
    line(1440,274,1730,274,"#a1a59a",1);
    text("The Whiteness of the Whale",1585,317,20,C.forest,"Newsreader",600,"center");
@@ -231,7 +234,7 @@ function devices(handoff){
    text(Math.round(progress)+"%",1585,815,17,C.forest,"Geist",500,"center");
   });
   rect(1520,865,130,6,3,"#6a7469");
-  text("KOReader on Kindle Colorsoft",1585,932,25,C.ivory,"Geist",550,"center");
+  // The device remains unlabelled; the real website names the sync source.
  });
  relatedInset(box,1-step(handoff,0,.54));
  fade(step(t,2.75,3.04),()=>{

@@ -23,7 +23,7 @@ def seed_stats(root):
     with sqlite3.connect(root / "library" / "metadata.db") as library:
         moby_id = library.execute("SELECT id FROM books WHERE title='Moby-Dick'").fetchone()[0]
     with sqlite3.connect(root / "config/app.db") as db:
-        uid = db.execute("SELECT id FROM user WHERE name='Alex'").fetchone()[0]
+        uid = db.execute("SELECT id FROM user WHERE name='Jonas'").fetchone()[0]
         # The real detail view identifies KOReader by its stored book-id
         # record; keep the existing 38% Kobo bookmark consistent.
         db.execute("""INSERT INTO kosync_progress
@@ -68,6 +68,12 @@ def scroll_strip(page, prefix, destination, frames=25):
 
 def capture_branding(page):
     base.open_page(page,"/admin/branding")
+    # Check the real, styled input; the screenshot is never retouched.
+    file_input = page.locator("#asset-wordmark")
+    assert file_input.evaluate("""el => {
+        const button = getComputedStyle(el, '::file-selector-button');
+        return parseFloat(button.borderRadius) > 0 && parseFloat(button.minHeight) >= 34;
+    }""")
     base.shot(page,"branding-viewport.png","#name")
     branding_focus = []
     for i, selectors in enumerate((("#name",),("#asset-wordmark",),("#background","#accent"),

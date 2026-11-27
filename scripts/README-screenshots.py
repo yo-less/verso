@@ -11,7 +11,7 @@ from playwright.sync_api import sync_playwright, expect
 
 BASE = os.environ["DEMO_URL"].rstrip("/")
 OUT = Path(os.environ["DEMO_OUT"])
-USER = "Alex"
+USER = "Jonas"
 # Deliberately disposable and never usable on a production server.
 PASSWORD = "Demo-only-Read!2026"
 assert urlparse(BASE).hostname in ("127.0.0.1", "localhost"), "Loopback only"

@@ -141,7 +141,7 @@ def history(root):
         ids = dict(library.execute("SELECT title, id FROM books"))
     app = root / "config" / "app.db"
     with sqlite3.connect(app) as conn:
-        uid, settings = conn.execute("SELECT id, view_settings FROM user WHERE name = ?", ("Alex",)).fetchone()
+        uid, settings = conn.execute("SELECT id, view_settings FROM user WHERE name = ?", ("Jonas",)).fetchone()
         data = json.loads(settings or "{}")
         data.update({"welcome_tour": "done", "devices": {"kobo": True, "koreader": True}})
         conn.execute("UPDATE user SET view_settings = ?, locale = 'en' WHERE id = ?", (json.dumps(data), uid))

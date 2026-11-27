@@ -86,11 +86,11 @@ def run():
         music=os.environ.get("DEMO_MUSIC")
         if music:
             assert Path(music).is_file(),"DEMO_MUSIC must point to a licensed local file"
-            offset=float(os.environ.get("DEMO_MUSIC_OFFSET","28.5"))
+            offset=float(os.environ.get("DEMO_MUSIC_OFFSET","29.0"))
             mixed=OUT/"mixed.mp4"
             subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(target),
                             "-ss",str(offset),"-i",music,"-map","0:v:0","-map","1:a:0",
-                            "-af",f"atrim=duration={duration},asetpts=PTS-STARTPTS,loudnorm=I=-17:TP=-1.5:LRA=9,aresample=48000,afade=t=in:d=0.35,afade=t=out:st={duration-2}:d=2",
+                            "-af",f"atrim=duration={duration},asetpts=PTS-STARTPTS,loudnorm=I=-17:TP=-1.5:LRA=9,aresample=48000,afade=t=in:d=2.2,afade=t=out:st={duration-2}:d=2",
                             "-ac","2","-c:v","copy","-c:a","aac","-b:a","160k","-t",str(duration),
                             "-movflags","+faststart",str(mixed)],check=True)
             mixed.replace(target)
@@ -103,6 +103,7 @@ def run():
         assert abs(float(probe["format"]["duration"])-duration)<.1
         (OUT/"manifest.json").write_text(json.dumps({"commit":os.getenv("GITHUB_SHA"),"seconds":duration,"fps":FPS,"bytes":target.stat().st_size,"timeline":timeline,
             "encoding":{"codec":"h264","crf":VIDEO_CRF,"frame_format":"png"},
+            "music_offset_seconds":offset if music else None,"music_fade_in_seconds":2.2 if music else None,
             "soundtrack":"Keys of Time (user-supplied licensed file)" if music else "SILENT INTERMEDIATE — not for review or publication","source":"actual browser captures of fictional demo library; conceptual import and e-reader animation"},indent=2))
     finally:
         server.shutdown()
