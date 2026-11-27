@@ -59,17 +59,25 @@ def additional():
         base.login(page)
         base.set_theme(page,"light")
         base.open_page(page,"/")
-        page.evaluate("window.scrollTo(0, document.getElementById('books-heading').getBoundingClientRect().top + scrollY - 88)")
         card = page.locator(".book-card").filter(has_text="Moby-Dick").first
         expect(card).to_be_visible()
+        cover = card.locator(".cover img")
+        expect(cover).to_be_visible()
+        cover.evaluate("img => img.decode()")
+        # Center the actual target card, not the books heading, which may
+        # appear after it depending on the seeded shelf layout.
+        card.evaluate("el => el.scrollIntoView({block:'center', inline:'nearest', behavior:'instant'})")
+        page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
         base.shot(page,"import-library.png",".book-card")
         import_card = card.bounding_box()
-        import_cover = card.locator(".cover img").bounding_box()
-        assert import_cover and import_cover["height"] > 0
-        card.evaluate("el => el.style.visibility = 'hidden'")
-        page.screenshot(path=str(base.OUT/"import-empty.png"), animations="disabled")
-        card.evaluate("el => el.style.visibility = ''")
+        import_cover = cover.bounding_box()
         assert import_card and import_card["y"] >= 0 and import_card["y"] + import_card["height"] <= 900, import_card
+        assert import_cover and import_cover["y"] >= 0 and import_cover["y"] + import_cover["height"] <= 900, import_cover
+        try:
+            card.evaluate("el => el.style.visibility = 'hidden'")
+            page.screenshot(path=str(base.OUT/"import-empty.png"), animations="disabled")
+        finally:
+            card.evaluate("el => el.style.visibility = ''")
         for title, filename in (("Pride and Prejudice","pride-cover.png"),("Frankenstein","frankenstein-cover.png")):
             cover = page.locator(".book-card").filter(has_text=title).first.locator(".cover img")
             expect(cover).to_be_visible()
