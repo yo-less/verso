@@ -55,6 +55,11 @@ def additional():
         base.shot(page,"import-library.png",".book-card")
         import_card = card.bounding_box()
         assert import_card and import_card["y"] >= 0 and import_card["y"] + import_card["height"] <= 900, import_card
+        for title, filename in (("Pride and Prejudice","pride-cover.png"),("Frankenstein","frankenstein-cover.png")):
+            cover = page.locator(".book-card").filter(has_text=title).first.locator(".cover img")
+            expect(cover).to_be_visible()
+            cover.evaluate("img => img.decode()")
+            cover.screenshot(path=str(base.OUT/filename), animations="disabled")
         page.evaluate("window.scrollTo(0,0)")
         page.locator("#query").fill("Jane Austen")
         page.locator("#query").press("Enter")

@@ -1,7 +1,7 @@
 /* Verso demo V2: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
-const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home"];
+const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home"];
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -53,7 +53,7 @@ function devices(t){
  bg(true,t);title("Pick up where you left off",960,85,true,78);
  const p=step(t,0,.55);browser("book-light",75,232+(1-p)*80,1190,1.04,.5,0);
  let q=step(t,.2,.85);ctx.save();ctx.translate((1-q)*150,0);shadow(1370,187,420,755,39,"#202722");rect(1395,212,370,650,14,"#ecebe1");rect(1395,212,370,56,14,"#d6d9cf");text("My books",1420,241,25,C.forest,"Geist",600);
- ["Moby-Dick","Pride and Prejudice","Frankenstein"].forEach((s,i)=>{let a=step(t,1.05+i*.45,1.5+i*.45),y=290+i*174;fade(a,()=>{if(i===0){ctx.save();ctx.filter="grayscale(1)";img("moby-cover",1416,y,78,118);ctx.restore()}else{let im=assets["hero-library"];ctx.save();ctx.filter="grayscale(1)";ctx.drawImage(im,im.width*(.25+i*.09),im.height*.22,im.width*.075,im.height*.25,1416,y,78,118);ctx.restore()}text(s,1510,y+25,18,C.forest,"Newsreader",600);line(1510,y+79,1730,y+79,"#b2b6aa",5);line(1510,y+79,1510+220*[.38,.64,.21][i]*step(t,2.3,3.1),y+79,C.forest,5);text(Math.round([38,64,21][i]*step(t,2.3,3.1))+"%",1510,y+101,17,C.forest)})});
+ ["Moby-Dick","Pride and Prejudice","Frankenstein"].forEach((s,i)=>{let a=step(t,1.05+i*.45,1.5+i*.45),y=290+i*174;fade(a,()=>{ctx.save();ctx.filter="grayscale(1)";img(["moby-cover","pride-cover","frankenstein-cover"][i],1416,y,78,118);ctx.restore();text(s,1510,y+25,18,C.forest,"Newsreader",600);line(1510,y+79,1730,y+79,"#b2b6aa",5);line(1510,y+79,1510+220*[.38,.64,.21][i]*step(t,2.3,3.1),y+79,C.forest,5);text(Math.round([38,64,21][i]*step(t,2.3,3.1))+"%",1510,y+101,17,C.forest)})});
  rect(1518,897,124,6,3,"#6a7469");ctx.restore();
  const s=step(t,.55,1.1);fade(s,()=>{let x=1320,y=590;rect(x-45,y-45,90,90,45,C.gold);ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI*2*step(t,1.15,2.15));ctx.strokeStyle=C.forest;ctx.lineWidth=5;ctx.beginPath();ctx.arc(0,0,23,-2.7,.1);ctx.stroke();ctx.beginPath();ctx.arc(0,0,23,.45,3.25);ctx.stroke();line(23,2,14,-7,C.forest,5);line(23,2,29,-8,C.forest,5);line(-23,-2,-14,7,C.forest,5);line(-23,-2,-29,8,C.forest,5);ctx.restore()});
  text("Kobo  ·  KOReader",75,1017,32,C.ivory,"Geist",550);text("Illustrated device",1580,985,22,C.muted,"Geist",450,"center")
@@ -77,7 +77,7 @@ function year(t){
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
  // Four distinct themes form an uncluttered, readable grid.
- [["library-light",110,180],["library-dark",1010,180],["styled-sunset-light",110,630],["styled-ocean",1010,630]].forEach(([k,x,y],i)=>{let p=step(t,.12+i*.19,.62+i*.19);fade(p,()=>browser(k,x,y+(1-p)*85,800))});
+ [["library-light",230,160],["library-dark",1010,160],["styled-sunset-light",230,619],["styled-ocean",1010,619]].forEach(([k,x,y],i)=>{let p=step(t,.12+i*.19,.62+i*.19);fade(p,()=>browser(k,x,y+(1-p)*45,680))});
  let p=step(t,2.4,2.9);fade(p,()=>{ctx.fillStyle="#102e2088";ctx.fillRect(0,0,W,H);browser("branding-viewport",440,160,1040);rect(612,928,696,74,37,C.forest);text("Custom logos & instance branding",960,965,33,C.ivory,"Geist",550,"center")})
 }
 function install(t){
