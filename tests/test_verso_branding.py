@@ -127,3 +127,18 @@ def test_stock_tab_icons_have_native_pixel_dimensions():
     ico = (static / "favicon.ico").read_bytes()
     assert struct.unpack_from("<HHH", ico) == (0, 1, 4)
     assert [(ico[6+i*16], ico[7+i*16]) for i in range(4)] == [(16,16), (32,32), (48,48), (64,64)]
+
+
+def test_favicon_svg_sizes_share_master_geometry():
+    import xml.etree.ElementTree as ET
+    from pathlib import Path
+    static = Path(branding.__file__).parent / "static"
+    master = ET.parse(static / "verso-favicon.svg").getroot()
+    small = ET.parse(static / "verso-favicon-16.svg").getroot()
+    assert master.attrib["viewBox"] == small.attrib["viewBox"] == "0 0 192 192"
+    assert [el.attrib for el in master] == [el.attrib for el in small]
+    from PIL import Image
+    for file, size in (("verso-favicon-16.png", 16), ("verso-favicon-32.png", 32), ("img/apple-touch-icon.png", 180)):
+        with Image.open(static / file) as im:
+            assert im.size == (size, size)
+            im.verify()
