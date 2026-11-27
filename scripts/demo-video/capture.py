@@ -35,7 +35,12 @@ def seed_stats(root):
         CREATE TABLE page_stat_data(id_book integer,page integer,start_time integer,duration integer,total_pages integer);""")
         titles = [("Pride and Prejudice","Jane Austen"),("Jane Eyre","Charlotte Brontë"),
                   ("The Time Machine","H. G. Wells"),("Frankenstein","Mary Shelley")]
-        db.executemany("INSERT INTO book VALUES(?,?,?,?,?)", [(i+1,t,a,"demo-"+str(i),320) for i,(t,a) in enumerate(titles)])
+        # Use the real library IDs with the same fallback key the web reader writes.
+        # Fictional reading events, but genuine associations with local books.
+        with sqlite3.connect(root / "library" / "metadata.db") as library:
+            library_ids = dict(library.execute("SELECT title, id FROM books"))
+        db.executemany("INSERT INTO book VALUES(?,?,?,?,?)",
+                       [(i+1,t,a,f"scriptorium-{library_ids[t]}",320) for i,(t,a) in enumerate(titles)])
         for i,day in enumerate(dates):
             for page in range(16+i%15):
                 db.execute("INSERT INTO page_stat_data VALUES(?,?,?,?,?)",
@@ -78,16 +83,22 @@ def capture_year(browser):
         expect(story.locator(".yr-landscape img")).to_be_visible()
         story.locator(".yr-landscape img").evaluate("image => image.decode()")
         story.locator("[data-yr-pause]").tap()
+        brand = story.locator(".yr-brand img").bounding_box()
+        progress = story.locator(".yr-progress").bounding_box()
+        assert brand and progress and brand["y"] >= progress["y"] + progress["height"] + 8, (brand, progress)
+        review = Path(os.environ.get("VIDEO_OUT", str(base.OUT))) / "year-review"
+        review.mkdir(parents=True, exist_ok=True)
         targets = {"intro","finished","authors","rhythm","summary"}
         captured = set()
         for _ in range(story.locator(".yr-slide").count()):
             active = story.locator(".yr-slide.is-active")
             classes = set(active.get_attribute("class").split())
-            for name in targets:
-                if f"yr-s-{name}" in classes:
-                    story.wait_for_timeout(1550)
-                    base.shot(story,f"year-mobile-{name}.png",".yr-slide.is-active")
-                    captured.add(name)
+            story.wait_for_timeout(1550)
+            name = next((cls.removeprefix("yr-s-") for cls in classes if cls.startswith("yr-s-")), "unknown")
+            if name in targets:
+                base.shot(story,f"year-mobile-{name}.png",".yr-slide.is-active")
+                captured.add(name)
+            story.screenshot(path=str(review / f"mobile-{name}.png"), animations="disabled")
             if captured == targets:
                 break
             story.locator(".yr-tap--next").tap()
@@ -194,6 +205,9 @@ def additional():
         scroll_strip(page,"detail-scroll",detail_end,frames=61)
         # Give newly visible cover images time to decode for the held frame.
         base.shot(page,"detail-scroll-60.png",".similar-books")
+        detail_sidebar = page.locator("#sidebar").bounding_box()
+        detail_topbar = page.locator("header.topbar").bounding_box()
+        assert detail_sidebar and detail_topbar
         section_box = related.bounding_box()
         related_cards = related.locator(".book-card")
         assert section_box and related_cards.count() > 0
@@ -206,8 +220,8 @@ def additional():
                     max(b["x"] + b["width"] for b in [*card_boxes, header_text]) + 16)
         # Record the final viewport geometry in CSS pixels.
         with Image.open(base.OUT/"detail-scroll-60.png") as im:
-            x = max(0, math.floor(section_box["x"]))
-            y = max(0, math.floor(section_box["y"]))
+            x = max(math.ceil(detail_sidebar["x"] + detail_sidebar["width"]), math.floor(section_box["x"]))
+            y = max(math.ceil(detail_topbar["y"] + detail_topbar["height"]), math.floor(section_box["y"]))
             end_x = min(im.width, math.ceil(right))
             end_y = min(im.height, math.ceil(section_box["y"] + section_box["height"]))
             assert end_x > x and end_y > y, section_box
@@ -229,6 +243,13 @@ def additional():
         # The Moby-Dick artwork was already extracted from its image URL.
         base.open_page(page,"/reading-stats")
         expect(page.locator(".rs-heatmap")).to_be_visible()
+        covers = page.locator(".rs-books .rs-book .cover img")
+        expect(covers).to_have_count(4)
+        # Decode real covers before the scroll, not after its last frame.
+        assert covers.evaluate_all("""async imgs => {
+            await Promise.all(imgs.map(async img => { img.loading = "eager"; await img.decode(); }));
+            return imgs.every(img => img.naturalWidth > 0);
+        }""")
         base.shot(page,"stats.png",".rs-heatmap")
         stats = page.locator(".rs-tile-value").all_text_contents()
         page.evaluate("window.scrollTo(0,0)")
@@ -254,7 +275,7 @@ def additional():
         base.shot(page,"theme-ocean.png",".book-card")
         base.preset(page,"stock")
         capture_year(browser)
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus}))
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus,"detailSidebar":detail_sidebar}))
         ctx.close()
         browser.close()
 

@@ -1,4 +1,4 @@
-/* Verso demo V18: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V19: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
@@ -156,18 +156,29 @@ function library(t){
 }
 const detailBrowser={x:350,y:155,w:1220};
 const detailsHold=4.90;
+function detailPlate(frame,x,y,w){
+ // Reuse one pixel-exact sidebar from the real final viewport throughout
+ // the detail scroll and inset. The surrounding UI never reflows.
+ return browser("detail-scroll-"+frame,x,y,w,1,.5,.5,true,(bx,by,bw)=>{
+  const b=window.data.detailSidebar,im=assets["detail-scroll-60"],s=bw/im.width;
+  ctx.drawImage(im,b.x,b.y,b.width,b.height,bx+b.x*s,by+b.y*s,b.width*s,b.height*s);
+ });
+}
 function details(t){
  bg(false,Math.min(t,detailsHold));
  const heading=step(t,1.25,1.72),p=step(t,2.85,3.48);
  fade(1-heading,()=>title("Explore a book",960,84,false,76));
  fade(heading,()=>title("Discover related titles",960,84,false,76));
  const i=Math.round(clamp((t-.85)/2.0)*60);
- const box=browser("detail-scroll-"+i,detailBrowser.x,detailBrowser.y,detailBrowser.w);
+ const box=detailPlate(i,detailBrowser.x,detailBrowser.y,detailBrowser.w);
  relatedInset(box,p);
 }
 function relatedInset(box,p){
  if(p===0)return;
  const b=window.data.relatedFocus,im=assets["related-focus"],s=box.w/assets["detail-scroll-60"].width;
+ const sidebar=window.data.detailSidebar,edge=box.x+(sidebar.x+sidebar.width)*s;
+ // Neither the crop nor its expanding shadow may touch the navigation.
+ ctx.save();ctx.beginPath();ctx.rect(edge,0,W-edge,H);ctx.clip();
  const scale=Math.min(1030/b.width,475/b.height,1.65),pad=24*p;
  const w=b.width*mix(s,scale,p),h=b.height*mix(s,scale,p);
  const x=mix(box.x+b.x*s,1786-b.width*scale,p);
@@ -177,6 +188,7 @@ function relatedInset(box,p){
  const source=assets["detail-scroll-60"];
  ctx.drawImage(source,b.x,b.y,b.width,b.height,x,y,w,h);
  fade(scaleBlend,()=>ctx.drawImage(im,x,y,w,h));
+ ctx.restore();
 }
 const syncHandoff=1.55;
 function devices(handoff){
@@ -188,7 +200,7 @@ function devices(handoff){
  fade(move,()=>bg(true,Math.max(0,t)));
  fade(1-step(handoff,0,.38),()=>title("Discover related titles",960,84,false,76));
  fade(step(t,0,.44),()=>title("Pick up where you left off",960,85,true,76));
- const box=browser("detail-scroll-"+frame,mix(detailBrowser.x,96,move),
+ const box=detailPlate(frame,mix(detailBrowser.x,96,move),
   mix(detailBrowser.y,180,move),mix(detailBrowser.w,1090,move));
  const a=step(t,3.66,4.25),b=step(t,1.45,1.98),progress=38+9*b,synced=38+9*a;
  const device=step(t,.68,1.27);
@@ -351,8 +363,6 @@ function installBrowser(t,ending=0){
  // the same browser viewport. No new shell or full-screen wipe.
  fade(ending,()=>{
   img("login-background",x,y+bar,w,h,"cover");
- });
- fade(step(ending,.35,1),()=>{
   img("logo",x+w/2-255,y+bar+h*.20,510,170);
   text("Self-hosted  ·  Open source",x+w/2,y+bar+h*.47,38,C.forest,"Newsreader",550,"center");
   text("github.com/yo-less/verso",x+w/2,y+bar+h*.54,32,C.forest,"Newsreader",500,"center");
@@ -370,8 +380,9 @@ function install(t){
  fade(p,()=>installBrowser(t));
 }
 function close(t){
- bg(true,6.25);fade(1-step(t,.50,.98),()=>title("Run Verso yourself",960,105,true,76));
- installBrowser(6.25,step(t,.72,1.48));
+ const p=step(t,.05,.55);
+ bg(true,6.25);fade(1-p,()=>title("Run Verso yourself",960,105,true,76));
+ installBrowser(6.25,p);
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
@@ -384,7 +395,7 @@ const scenes=[
  {id:"year",len:8,draw:year,review:[.75,1.9,2.75,4.35,5.25,7.7]},
  {id:"personalize",len:13.1,draw:personalize,review:[4.5,5.7,7.2,8.75,10.3,11.85,12.8]},
  {id:"install",len:6.25,draw:install,review:[3.6,4.8,5.8]},
- {id:"close",len:3.8,draw:close,entry:"continuous",review:[.5,.76,1.10,1.6,3.3]}
+ {id:"close",len:3.8,draw:close,entry:"continuous",review:[0,.25,.55,.85,3.3]}
 ];
 window.timeline=scenes.map(({id,len,review=[]})=>({id,seconds:len,review}));
 window.duration=scenes.reduce((n,s)=>n+s.len,0);
@@ -402,4 +413,18 @@ window.render=function(time){
  }else if(entry==="dissolve"&&t<.52){
   fade(1-step(t,0,.52),previous);
  }
+};
+
+window.verifyDetailSidebar=function(){
+ const b=window.data.detailSidebar,s=detailBrowser.w/assets["detail-scroll-60"].width;
+ const x=Math.ceil(detailBrowser.x+b.x*s)+3;
+ const y=Math.ceil(detailBrowser.y+detailBrowser.w*.025+b.y*s)+3;
+ const w=Math.floor(b.width*s)-6,h=Math.floor(b.height*s)-6;
+ ctx.save();details(2.85);ctx.restore();
+ const before=ctx.getImageData(x,y,w,h).data;
+ ctx.save();details(3.48);ctx.restore();
+ const after=ctx.getImageData(x,y,w,h).data;
+ let changed=0;
+ for(let i=0;i<before.length;i+=4)if(before[i]!==after[i]||before[i+1]!==after[i+1]||before[i+2]!==after[i+2]||before[i+3]!==after[i+3])changed++;
+ return {width:w,height:h,changed,ok:changed===0};
 };

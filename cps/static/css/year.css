@@ -20,7 +20,7 @@
 }
 .yr-landscape::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, #101812a8, transparent 25%, transparent 55%, #101812bd);
+  background: linear-gradient(180deg, #102e20ee 0%, #102e20d9 8%, transparent 24%, transparent 65%, #101812bd 100%);
 }
 @media (prefers-reduced-motion: reduce) {
   .yr-landscape img { transition: none; transform: none; }
@@ -98,7 +98,7 @@
   .yr-stage { --yr-gutter: clamp(64px, 9vw, 180px); --yr-column: min(46vw, 600px); }
   .yr-landscape::after {
     content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, #102e20f7, #102e20e6 31%, #102e2066 63%, transparent 92%);
+    background: linear-gradient(90deg, #102e20fa, #102e20ed 34%, #102e20d9 56%, #102e2066 72%, transparent 94%);
   }
   .yr-progress, .yr-top {
     left: var(--yr-gutter); width: var(--yr-column); transform: none;
@@ -245,6 +245,33 @@
 .yr-btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 20px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .35);
   background: rgb(255 255 255 / .08); color: #fff; font: 600 15px "Geist", sans-serif; cursor: pointer; text-decoration: none; }
 .yr-btn--primary { background: #fff; color: var(--ink); border-color: #fff; }
+
+/* Keep the illustration visible while ensuring the mobile story's text
+   and data graphics sit on a stable, readable paper-toned surface.
+   The summary poster deliberately keeps its original layout and artwork. */
+@media (max-width: 819px) {
+  .yr-top { top: calc(max(10px, env(safe-area-inset-top)) + 20px); }
+  .yr-brand { flex-basis: 112px; }
+  .yr-brand img { height: 32px; }
+  .yr-tap { top: 80px; }
+  .yr-slide { padding-top: max(106px, calc(env(safe-area-inset-top) + 96px)); text-shadow: none; }
+  .yr-slide:not(.yr-s-summary)::before {
+    content: ""; position: absolute; inset: 75px 0 10px; z-index: -2; pointer-events: none;
+    background: linear-gradient(180deg, transparent 0%, #f8f1e5e6 10%, #f8f1e5c9 26%, #f8f1e5c9 76%, #f8f1e5e6 92%, transparent 100%);
+  }
+  .yr-eyebrow, .yr-sub, .yr-hint, .yr-bar small, .yr-cover figcaption span { opacity: .9; }
+  .yr-clock-face { fill: #102e2015; stroke: #102e204d; }
+  .yr-clock-ray { stroke: #315b48; }
+  .yr-clock-ray.is-peak { stroke: #926a2e; }
+  .yr-clock-mark, .yr-clock-hour { fill: #102e20; }
+  .yr-bar i { background: #315b48; }
+  .yr-bar.is-peak i { background: #926a2e; box-shadow: none; }
+  .yr-fact-icon { background: #102e201a; }
+  .yr-calendar i { background: #102e202b; }
+  .yr-calendar i.is-on { background: #926a2e; }
+  .yr-podium-bar { background: linear-gradient(#315b48, #1d3d2d); color: #fff1dc; text-shadow: none; }
+  .yr-btn:not(.yr-btn--primary) { background: #102e20ee; border-color: #102e20; color: #fff1dc; }
+}
 
 /* Per-slide colours */
 .yr-s-intro    { --bg: #1B1530; }
