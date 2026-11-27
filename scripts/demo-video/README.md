@@ -1,9 +1,9 @@
-# Verso demo video
+# Verso demo video V3
 
-Run **Generate Verso demo video** on the review branch or manually after merging. It builds the selected source in an isolated container and captures the real UI with a fictional library. Additional reading statistics are seeded only into the disposable demo. The conceptual import and e-reader animations explain features; they do not claim to record hardware synchronization or a live import.
+Run **Generate Verso demo video** on the preview branch. It uses a disposable fictional library, real browser captures and explicitly illustrated import and device synchronization. V3 is exactly 34 seconds, 1920×1080, 30 fps. It removes the terminal scene, uses distinct year-review slides, single-window theme changes, original varied cover designs and a consistent safe framing. The video includes original synthesized paper, sync and page-turn foley.
 
-V2 is exactly 40 seconds (1200 frames), with 1.5-second opening and closing, no recurring chapter furniture, and short scene crossfades. The render checks the actual pixels inside each independently timed vector checkmark, and exports intermediate import frames for review. Portrait year-review shots are captured at their actual viewport size rather than cropped from desktop screenshots.
+## Music
 
-The composition is time-driven at 30 fps, with independent scenes in `motion.js`. Chromium renders frames and FFmpeg encodes silent H.264, 1920×1080, with a size cap below 10 MB. The artifact includes an MP4, poster, scene review images and a source manifest. Review before publishing; this workflow does not replace the inherited README video or push production changes.
+Selected track: [Keys of Time (No AI) — Good_B_Music](https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/), under the [Pixabay Content License](https://pixabay.com/service/license-summary/). The music is Content ID registered; retain the download certificate. Do not commit or distribute the standalone MP3. For a local render set `DEMO_MUSIC` to the legally downloaded file and optionally `DEMO_MUSIC_OFFSET` in seconds. The default GitHub Actions preview includes foley only until the soundtrack is supplied. The final music excerpt should be auditioned against the cuts before publication.
 
-To regenerate, run the workflow against the desired commit. Edit scene lengths, layouts and text in `motion.js`; the capture script provides the real screens and statistics.
+Review the exported MP4, poster, scene images, checkmark checks and manifest before publishing. The workflow does not replace the inherited README video or push production changes.

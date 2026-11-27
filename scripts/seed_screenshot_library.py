@@ -43,52 +43,83 @@ PALETTES = [
 
 
 def make_cover(path, title, author, _colors):
+    """Original illustrative demo jackets, not scans of published editions."""
     index = next(i for i, item in enumerate(TITLES) if item[0] == title)
     bg, ink, accent = PALETTES[index % len(PALETTES)]
+    rng = random.Random(index + 100)
     image = Image.new("RGB", (600, 900), bg)
     draw = ImageDraw.Draw(image)
     serif = "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"
     sans = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    small = ImageFont.truetype(sans, 20)
-    font = ImageFont.truetype(serif, 53 if len(title) < 26 else 43)
-    draw.rectangle((27, 27, 573, 873), outline=ink, width=2)
-    draw.rectangle((39, 39, 561, 861), outline=accent, width=1)
-    draw.text((300, 85), "V E R S O   C L A S S I C S", font=small, fill=ink, anchor="mm")
-    lines, line = [], ""
-    for word in title.split():
-        candidate = (line + " " + word).strip()
-        if line and draw.textlength(candidate, font=font) > 485:
-            lines.append(line)
-            line = word
+    bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    mode = index % 5
+    if mode == 0: # dramatic landscape
+        draw.rectangle((0, 370, 600, 900), fill=accent)
+        for j in range(7):
+            y = 420 + j*65
+            pts = [(0,y)] + [(x,y+rng.randint(-48,48)) for x in range(0,601,60)] + [(600,900),(0,900)]
+            draw.polygon(pts, fill=bg if j%2 else accent)
+        if index == 0: # whale silhouette
+            draw.ellipse((100,530,445,668),fill=ink)
+            draw.polygon([(395,580),(502,512),(483,610),(529,665),(400,625)],fill=ink)
         else:
-            line = candidate
-    lines.append(line)
-    for i, line in enumerate(lines):
-        draw.text((300, 185 + i * 63), line, font=font, fill=ink, anchor="mm")
-    # Original geometric illustrations; vary each design without fetching artwork.
-    cx, cy = 300, 535
-    if index % 4 == 0:
-        for j in range(7):
-            radius = 35 + j * 18
-            draw.arc((cx-radius, cy-radius, cx+radius, cy+radius), 190+j*9, 510+j*9, fill=accent, width=4)
-        draw.ellipse((cx-21, cy-21, cx+21, cy+21), fill=ink)
-    elif index % 4 == 1:
+            draw.ellipse((410,408,510,508),fill=ink)
+        area=(42,74,558,320); author_y=828; author_bg=bg
+    elif mode == 1: # floral engraving
+        draw.rectangle((16,16,584,884),outline=ink,width=3)
+        for x in (52,548):
+            for j in range(9):
+                y=84+j*87
+                draw.line((x,y-40,x,y+40),fill=accent,width=3)
+                draw.ellipse((x-23,y-22,x+4,y+3),fill=accent)
+                draw.ellipse((x-4,y,x+22,y+23),fill=accent)
+        draw.ellipse((122,410,478,710),outline=accent,width=5)
+        for j in range(10):
+            x=180+j*26
+            draw.line((300,665,x,480+rng.randint(-40,40)),fill=accent,width=3)
+            draw.ellipse((x-17,460,x+17,494),fill=ink)
+        area=(85,115,515,365); author_y=797; author_bg=bg
+    elif mode == 2: # stark modernist split
+        draw.rectangle((0,0,600,365),fill=ink)
+        for j in range(10):
+            x=25+j*62
+            draw.line((x,790,300,418),fill=accent,width=3)
+        draw.ellipse((218,405,382,569),outline=ink,width=8)
+        area=(40,65,560,326); author_y=838; author_bg=bg
+    elif mode == 3: # abstract poster
+        draw.ellipse((90,300,510,720),fill=accent)
         for j in range(6):
-            radius = 22 + j * 21
-            draw.polygon([(cx, cy-radius), (cx+radius, cy), (cx, cy+radius), (cx-radius, cy)], outline=accent, width=3)
-    elif index % 4 == 2:
-        for j in range(7):
-            x = 174 + j*42
-            draw.line((x, cy+100, 300, cy-110), fill=accent, width=3)
-        draw.ellipse((250, 385, 350, 485), outline=ink, width=4)
-    else:
-        for j in range(5):
-            draw.arc((155+j*20, 415+j*20, 445-j*20, 655-j*20), 0, 360, fill=accent, width=3)
-        draw.line((180, 655, 420, 415), fill=ink, width=5)
-    draw.line((130, 739, 470, 739), fill=accent, width=2)
-    author_font = ImageFont.truetype(sans, 26 if len(author) < 23 else 21)
-    draw.text((300, 789), author.upper(), font=author_font, fill=ink, anchor="mm")
-    image.save(path, "JPEG", quality=94)
+            radius=42+j*26
+            draw.arc((300-radius,510-radius,300+radius,510+radius),30+j*12,315+j*12,fill=bg,width=9)
+        draw.line((80,755,520,755),fill=ink,width=3)
+        area=(40,52,560,278); author_y=817; author_bg=bg
+    else: # literary typographic jacket with an illustrated window
+        draw.rectangle((0,0,600,900),fill=ink)
+        draw.rectangle((38,320,562,722),fill=bg)
+        for j in range(11):
+            x=60+j*48
+            draw.line((x,690,300,350),fill=accent,width=5)
+        draw.ellipse((248,393,352,497),fill=accent)
+        area=(48,50,552,290); author_y=808; author_bg=ink
+    fg=bg if mode in (2,4) else ink
+    x0,y0,x1,y1=area
+    fpath=bold if mode in (2,3) else serif
+    for size in range(66,29,-1):
+        font=ImageFont.truetype(fpath,size)
+        lines=[]; line=""
+        for word in title.split():
+            trial=(line+" "+word).strip()
+            if line and draw.textlength(trial,font=font)>x1-x0:
+                lines.append(line); line=word
+            else: line=trial
+        lines.append(line)
+        if len(lines)*size*1.15<=y1-y0 and all(draw.textlength(l,font=font)<=x1-x0 for l in lines): break
+    for i,line in enumerate(lines):
+        draw.text(((x0+x1)/2,y0+size*.65+i*size*1.15),line,font=font,fill=fg,anchor="mm")
+    draw.rectangle((36,author_y-26,564,author_y+26),fill=author_bg)
+    af=ImageFont.truetype(sans,24 if len(author)<23 else 20)
+    draw.text((300,author_y),author.upper(),font=af,fill=bg if mode==4 else ink,anchor="mm")
+    image.save(path,"JPEG",quality=94)
 
 
 def seed_library(root):
