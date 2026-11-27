@@ -40,6 +40,16 @@ def seed_stats(root):
                            (i%4+1, (i*19+page)%320+1, int(day.timestamp())+page*75, 60+i%15,320))
     # The reading history is fictional, like the rest of the demo seed.
 
+def scroll_strip(page, prefix, destination):
+    """Capture actual browser scrolling, not a dissolve between unrelated pages."""
+    start = page.evaluate("window.scrollY")
+    for i in range(25):
+        progress = i / 24
+        progress = progress * progress * (3 - 2 * progress)
+        page.evaluate("(y) => window.scrollTo(0,y)", start + (destination-start)*progress)
+        page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+        page.screenshot(path=str(base.OUT / f"{prefix}-{i}.png"), animations="disabled")
+
 def additional():
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
@@ -54,6 +64,11 @@ def additional():
         expect(card).to_be_visible()
         base.shot(page,"import-library.png",".book-card")
         import_card = card.bounding_box()
+        import_cover = card.locator(".cover img").bounding_box()
+        assert import_cover and import_cover["height"] > 0
+        card.evaluate("el => el.style.visibility = 'hidden'")
+        page.screenshot(path=str(base.OUT/"import-empty.png"), animations="disabled")
+        card.evaluate("el => el.style.visibility = ''")
         assert import_card and import_card["y"] >= 0 and import_card["y"] + import_card["height"] <= 900, import_card
         for title, filename in (("Pride and Prejudice","pride-cover.png"),("Frankenstein","frankenstein-cover.png")):
             cover = page.locator(".book-card").filter(has_text=title).first.locator(".cover img")
@@ -61,16 +76,26 @@ def additional():
             cover.evaluate("img => img.decode()")
             cover.screenshot(path=str(base.OUT/filename), animations="disabled")
         page.evaluate("window.scrollTo(0,0)")
+        base.shot(page,"theme-light.png",".book-card")
+        destination = page.evaluate("Math.max(0,document.getElementById('books-heading').getBoundingClientRect().top + scrollY - 88)")
+        scroll_strip(page,"browse-scroll",destination)
+        page.evaluate("window.scrollTo(0,0)")
         page.locator("#query").fill("Jane Austen")
+        base.shot(page,"browse-typed.png","#query")
         page.locator("#query").press("Enter")
         page.wait_for_load_state("domcontentloaded")
         expect(page.locator(".book-card").first).to_be_visible()
         base.shot(page,"search.png",".book-card")
+        base.shot(page,"browse-results.png",".book-card")
         base.open_page(page,"/")
         href = page.locator(".continue-card").filter(has_text="Moby-Dick").first.get_attribute("href")
         base.open_page(page,href)
         related = page.locator(".similar-books")
         expect(related).to_be_visible()
+        page.evaluate("window.scrollTo(0,0)")
+        base.shot(page,"detail-scroll-0.png","h1")
+        destination = related.evaluate("el => Math.min(document.scrollingElement.scrollHeight-innerHeight, Math.max(0,el.getBoundingClientRect().top+scrollY-110))")
+        scroll_strip(page,"detail-scroll",destination)
         related.scroll_into_view_if_needed()
         page.wait_for_timeout(400)
         related.screenshot(path=str(base.OUT/"related.png"),animations="disabled")
@@ -86,9 +111,17 @@ def additional():
         base.shot(page,"stats-detail.png","#rs-30-h")
         base.open_page(page,"/admin/branding")
         base.shot(page,"branding-viewport.png","#name")
+        base.set_theme(page,"dark")
+        base.open_page(page,"/")
+        base.shot(page,"theme-dark.png",".book-card")
+        base.set_theme(page,"light")
+        base.preset(page,"sunset")
+        base.open_page(page,"/")
+        base.shot(page,"theme-sunset.png",".book-card")
         base.preset(page,"ocean")
         base.open_page(page,"/")
         base.shot(page,"styled-ocean.png",".book-card")
+        base.shot(page,"theme-ocean.png",".book-card")
         base.preset(page,"stock")
         # Capture actual portrait story layouts, including complete headers.
         portrait = browser.new_context(viewport={"width":420,"height":840},device_scale_factor=2,
@@ -111,7 +144,7 @@ def additional():
             story.wait_for_timeout(450)
         assert found == targets, (found, targets)
         portrait.close()
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card}))
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card,"importCover":import_cover}))
         ctx.close()
         browser.close()
 

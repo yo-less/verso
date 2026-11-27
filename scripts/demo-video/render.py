@@ -37,7 +37,7 @@ def run():
     OUT.mkdir(parents=True,exist_ok=True)
     server=http.server.ThreadingHTTPServer(("127.0.0.1",0),Server)
     threading.Thread(target=server.serve_forever,daemon=True).start()
-    target=OUT/"verso-demo.mp4"
+    target=OUT/("verso-demo.mp4" if os.environ.get("DEMO_MUSIC") else "verso-demo-SILENT-RENDER.mp4")
     try:
         with sync_playwright() as pw:
             browser=pw.chromium.launch()
@@ -46,7 +46,7 @@ def run():
             page.evaluate("window.ready")
             duration=page.evaluate("window.duration")
             timeline=page.evaluate("window.timeline")
-            assert duration == 41, duration
+            assert duration == 44, duration
             checks = page.evaluate("window.verifyChecks()")
             assert all(row['ok'] for row in checks), checks
             (OUT/"checkmarks.json").write_text(json.dumps(checks,indent=2))
@@ -105,7 +105,7 @@ def run():
         assert abs(float(probe["format"]["duration"])-duration)<.1
         assert target.stat().st_size<10_000_000
         (OUT/"manifest.json").write_text(json.dumps({"commit":os.getenv("GITHUB_SHA"),"seconds":duration,"fps":FPS,"bytes":target.stat().st_size,"timeline":timeline,
-            "soundtrack":"Keys of Time (user-supplied licensed file)" if music else "Silent preview; licensed soundtrack pending","source":"actual browser captures of fictional demo library; conceptual import and e-reader animation"},indent=2))
+            "soundtrack":"Keys of Time (user-supplied licensed file)" if music else "SILENT INTERMEDIATE — not for review or publication","source":"actual browser captures of fictional demo library; conceptual import and e-reader animation"},indent=2))
     finally:
         server.shutdown()
 

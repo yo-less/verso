@@ -1,7 +1,8 @@
-/* Verso demo V5: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V6: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home"];
+names.push("import-empty","browse-typed","browse-results",...Array.from({length:25},(_,i)=>"browse-scroll-"+i),...Array.from({length:25},(_,i)=>"detail-scroll-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -41,28 +42,41 @@ function brand(t,opening){
 function automation(t){
  bg(false,t);title("From file to bookshelf",90,110,false,76,"left");
  text("Automatic import",94,225,35,C.rust,"Geist",600);
- const box=browser("import-library",770,220,1050);
- const b=window.data.importCard, sx=box.w/1440,sy=box.h/900;
- const bx=box.x+b.x*sx,by=box.y+b.y*sy,bw=b.width*sx,bh=b.height*sy;
- // Hide one actual demo card until the illustrated import reaches it.
- fade(1-step(t,3.0,3.48),()=>rect(bx-2,by-2,bw+4,bh+4,3,C.paper));
+ const box=browser("import-empty",770,220,1050),b=window.data.importCover,s=box.w/1440;
+ const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
+ // Keep the actual library empty until the illustration lands, then reveal the actual card in place.
+ fade(step(t,3.18,3.52),()=>browser("import-library",770,220,1050));
  tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,36,C.forest,"Geist",500)});
- let p=step(t,.25,3.05),x=mix(460,bx+bw*.5,p),y=mix(875,by+Math.min(bh*.36,95),p),w=mix(125,Math.min(bw*.78,105),p),h=w*1.48;
- fade(1-step(t,3.05,3.48),()=>{ctx.save();ctx.translate(x,y);ctx.rotate(-.12*(1-p));shadow(-w/2,-h/2,w,h,8,C.paper,24);let morph=step(t,1.4,2.25);fade(1-morph,()=>{text("EPUB",0,-7,w*.24,C.rust,"Geist",700,"center");line(-w*.28,h*.22,w*.28,h*.22,C.gold,3)});fade(morph,()=>img("moby-cover",-w/2,-h/2,w,h,"contain"));ctx.restore()});
- let glow=step(t,3.15,3.48)*(1-step(t,3.82,4));fade(glow,()=>{ctx.strokeStyle=C.gold;ctx.lineWidth=5;ctx.beginPath();ctx.roundRect(bx-5,by-5,bw+10,bh+10,9);ctx.stroke()});
+ const flight=step(t,1.75,3.18),morph=step(t,.88,1.7),lift=step(t,.12,.65);
+ const x=mix(560,target.x,flight),y=mix(865-40*lift,target.y,flight)-90*Math.sin(Math.PI*flight);
+ const w=mix(132,target.w,flight),h=mix(194,target.h,flight);
+ fade(step(t,0,.22)*(1-step(t,3.18,3.52)),()=>{
+  ctx.save();ctx.translate(x,y);ctx.rotate(-.09*(1-flight));
+  fade(1-morph,()=>{shadow(-w/2,-h/2,w,h,8,C.paper,18);text("EPUB",0,-7,w*.24,C.rust,"Geist",700,"center");line(-w*.28,h*.22,w*.28,h*.22,C.gold,3)});
+  fade(morph,()=>img("moby-cover",-w/2,-h/2,w,h,"cover"));
+  ctx.restore();
+ });
  text("Illustrated import sequence",95,1019,21,"#6b6f60");
 }
 function library(t){
  bg(true,t);title("Browse your library",960,84,true,76);
- const p=step(t,0,.55),w=1320,x=(W-w)/2,y=155+(1-p)*36;
- browser("hero-library",x,y,w);
- fade(step(t,1.65,2.1),()=>browser("library-light",x,y,w));
+ const w=1320,x=(W-w)/2,y=155;
+ if(t<1.8){
+  const i=Math.min(24,Math.floor(clamp((t-.25)/1.45)*24+.5));
+  browser("browse-scroll-"+i,x,y,w);
+ }else if(t<2.65){
+  browser("browse-scroll-0",x,y,w);
+  fade(step(t,1.8,2.05),()=>browser("browse-typed",x,y,w));
+ }else{
+  browser("browse-results",x,y,w);
+ }
+ const caption=t<1.8?"Explore the shelves":t<2.65?"Search by author":"Jane Austen · matching books";
+ text(caption,960,1020,30,C.ivory,"Geist",500,"center");
 }
 function details(t){
- bg(false,t);title("Read, shelve, discover",960,84,false,76);
- browser("book-light",300,155,1320);
- const q=step(t,2.0,2.5);
- if(q>0)fade(q,()=>{const im=assets.related,w=1220,h=Math.min(530,w*im.height/im.width);shadow(350,440,w,h+70,18,C.paper);img("related",365,455,w-30,h+40);});
+ bg(false,t);title(t<1.65?"Explore a book":"Discover related titles",960,84,false,76);
+ const i=Math.min(24,Math.floor(clamp((t-1.4)/1.65)*24+.5));
+ browser("detail-scroll-"+i,300,155,1320);
 }
 function devices(t){
  bg(true,t);title("Pick up where you left off",960,85,true,76);
@@ -92,26 +106,45 @@ function highlights(t){
  bg(true,t);title("Keep the words that matter",960,85,true,76);
  browser("highlights-light",90,190,1240);
  let p=step(t,.35,.95);ctx.save();ctx.translate(1045+(1-p)*85,350+(1-p)*40);
- fade(p,()=>{shadow(0,0,770,465,15,C.paper,30);text("“",48,88,105,C.rust,"Newsreader",600);rect(48,160,565*step(t,.95,1.5),62,3,"#ead69e");rect(48,230,315*step(t,1.5,2.05),62,3,"#ead69e");text("I am no bird; and no net",49,192,55,C.forest,"Newsreader",550);text("ensnares me.",49,262,55,C.forest,"Newsreader",550);text("Charlotte Brontë · Jane Eyre",50,370,26,C.rust,"Geist",500)});ctx.restore();
+ fade(p,()=>{
+  shadow(0,0,770,465,15,C.paper,30);text("“",48,88,105,C.rust,"Newsreader",600);
+  const quote=[["I am no bird; and no net",192,.85,1.55],["ensnares me.",262,1.55,2.12]];
+  for(const [s,y,a,b] of quote){
+   ctx.font="550 55px Newsreader";
+   const width=ctx.measureText(s).width+13;
+   rect(42,y-34,width*step(t,a,b),68,3,"#ead69e");
+   text(s,49,y,55,C.forest,"Newsreader",550);
+  }
+  text("Charlotte Brontë · Jane Eyre",50,370,26,C.rust,"Geist",500);
+ });ctx.restore();
 }
 function year(t){
- bg(true,t);title("Your year in books",960,79,true,78);let p=step(t,0,.55);
- // Each of the five captures appears in exactly one phone/slot.
- phone("story-rhythm",mix(730,535,p),609,342,-.10*p);
- phone("story-summary",mix(1190,1385,p),609,342,.10*p);
- const seq=["story-intro","story-finished","story-authors"],i=Math.min(2,Math.floor(t/1.5)),q=t-i*1.5;
- phone(seq[i],960,603,420,0);
- if(i>0&&q<.44)fade(1-step(q,0,.44),()=>phone(seq[i-1],960,603,420,0));
+ bg(true,t);title("Your year in books",960,79,true,78);
+ // A moving story carousel, not three independent stationary devices.
+ const seq=["story-intro","story-finished","story-authors","story-rhythm","story-summary"];
+ let pos=0;
+ for(let i=1;i<seq.length;i++)pos+=step(t,i*1.03-.32,i*1.03+.22);
+ const cards=seq.map((k,i)=>({k,i,delta:i-pos})).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+ for(const {k,delta} of cards){
+  if(Math.abs(delta)>2.5)continue;
+  const strength=1-clamp(Math.abs(delta)/1.6),w=mix(320,434,strength),x=960+delta*475,y=610+(1-strength)*35;
+  fade(mix(.46,1,strength),()=>phone(k,x,y,w,0));
+ }
+ seq.forEach((_,i)=>rect(960-64+i*32,1030,22,5,2,Math.abs(i-pos)<.5?C.gold:"#718579"));
 }
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
- const seq=["library-light","library-dark","styled-sunset-light","styled-ocean","branding-viewport"];
- const starts=[0,1.03,2.06,3.09,4.12];
- let i=starts.filter(s=>t>=s).length-1;i=Math.max(0,i);
- const q=t-starts[i];
- browser(seq[i],330,150,1260);
- if(i>0&&q<.52)fade(1-step(q,0,.52),()=>browser(seq[i-1],330,150,1260));
- if(i===4)fade(step(q,.1,.4),()=>{rect(630,967,660,61,30,C.forest);text("Custom logos & instance branding",960,998,29,C.ivory,"Geist",550,"center");});
+ const seq=["theme-light","theme-dark","theme-sunset","theme-ocean","branding-viewport"];
+ const labels=["Light","Dark","Sunset","Ocean","Custom logos & instance branding"];
+ const starts=[0,1.12,2.24,3.36,4.48];
+ const i=Math.max(0,starts.filter(s=>t>=s).length-1),q=t-starts[i],x=330,y=150,w=1260;
+ // Sliding separate windows in an opaque clipped viewport avoids double-image sidebars.
+ ctx.save();ctx.beginPath();ctx.rect(300,130,1320,830);ctx.clip();
+ const p=i===0?1:step(q,0,.38);
+ if(i>0&&p<1)browser(seq[i-1],x-1320*p,y,w);
+ browser(seq[i],x+1320*(1-p),y,w);
+ ctx.restore();
+ rect(630,967,660,61,30,C.forest);text(labels[i],960,998,29,C.ivory,"Geist",550,"center");
 }
 function install(t){
  bg(true,t);title("Run Verso yourself",960,105,true,76);
@@ -123,19 +156,22 @@ function install(t){
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
  {id:"automation",len:4,draw:automation},
- {id:"library",len:3,draw:library},
+ {id:"library",len:4,draw:library},
  {id:"details",len:4,draw:details},
  {id:"devices",len:4,draw:devices},
  {id:"statistics",len:3.5,draw:statistics},
  {id:"highlights",len:3,draw:highlights},
- {id:"year",len:4.5,draw:year},
- {id:"personalize",len:5.5,draw:personalize},
+ {id:"year",len:5.5,draw:year},
+ {id:"personalize",len:6,draw:personalize},
  {id:"install",len:3.5,draw:install},
- {id:"close",len:2.5,draw:t=>brand(t,false)}
+ {id:"close",len:3,draw:t=>brand(t,false)}
 ];
 window.timeline=scenes.map(s=>({id:s.id,seconds:s.len}));window.duration=scenes.reduce((n,s)=>n+s.len,0);
 function drawScene(i,t){ctx.save();scenes[i].draw(Math.max(0,t));ctx.restore()}
-window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);const transition=scenes[i].id==='close'?.7:.5;if(i>0&&t<transition)fade(1-step(t,0,transition),()=>drawScene(i-1,scenes[i-1].len-.001))};
+window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);if(i>0&&scenes[i].id==="close"&&t<.85){
+ const p=step(t,0,.85),edge=H*(1-p);ctx.save();ctx.translate(0,-H*p);drawScene(i-1,scenes[i-1].len-.001);ctx.restore();
+ if(edge>0){const g=ctx.createLinearGradient(0,edge,0,edge+25);g.addColorStop(0,"#00000044");g.addColorStop(1,"#00000000");ctx.fillStyle=g;ctx.fillRect(0,edge,W,25);}
+ }else if(i>0&&scenes[i].id!=="close"&&t<.35)fade(1-step(t,0,.35),()=>drawScene(i-1,scenes[i-1].len-.001))};
 // Test the actual rendered pixels at each circle, before and after its own reveal.
 // The check is dark forest against a solid gold circle; test only its inner square.
 window.verifyChecks=function(){function darkPixels(x,y){let d=ctx.getImageData(x-13,y-13,28,28).data,n=0;for(let i=0;i<d.length;i+=4)if(d[i]<45&&d[i+1]<95&&d[i+2]<65)n++;return n}
