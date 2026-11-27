@@ -16,7 +16,7 @@ from flask_babel import gettext as _, lazy_gettext as N_
 from sqlalchemy.orm.attributes import flag_modified
 
 from . import calibre_db, db, logger, ub
-from .appearance_styles import HUE_KEYS, OPTIONS, PRESETS, SETTINGS_KEY, html_attrs, sanitize
+from .appearance_styles import CLASSIC, HUE_KEYS, OPTIONS, PRESETS, SETTINGS_KEY, html_attrs, sanitize
 from .cw_login import current_user
 from .cover_quality import cover_quality_for, COVER_QUALITY_MODES, with_cover_quality
 from .render_template import render_title_template
@@ -100,6 +100,6 @@ def customize():
     presets = [{"key": key, "label": PRESET_LABELS[key], "values": values, "attrs": html_attrs(sanitize(values))}
                for key, values in PRESETS.items()]
     return render_title_template("appearance.html", title=_("Customize"), page="appearance",
-                                 current=current or sanitize(PRESETS["aurora"]), is_stock=not current,
+                                 current=current or CLASSIC, classic=CLASSIC, is_stock=not current,
                                  presets=presets, options=OPTIONS, sample_books=sample_books,
                                  cover_quality=cover_quality_for(current_user))

@@ -54,7 +54,7 @@
   'dots': _('Dots'), 'grid': _('Grid'), 'waves': _('Waves'), 'stripes': _('Stripes'), 'topo': _('Contours'), 'glass': _('Glass')} %}
 {%- set sidebar_labels = {'plain': _('Classic'), 'tinted': _('Tinted'), 'art': _('Coloured')} %}
 {%- set backdrop_labels = {'none': _('None'), 'glow': _('Glow'), 'dots': _('Dots')} %}
-{%- set surface_labels = {'neutral': _('Neutral'), 'tinted': _('Tinted'), 'paper': _('Paper')} %}
+{%- set surface_labels = {'neutral': _('Neutral'), 'tinted': _('Tinted'), 'paper': _('Paper'), 'verso': _('Verso paper')} %}
 {%- set buttons_labels = {'mono': _('Black & white'), 'accent': _('Colour'), 'gradient': _('Gradient')} %}
 {%- set radius_labels = {'default': _('Soft'), 'sharp': _('Sharp'), 'round': _('Round')} %}
 {%- set headings_labels = {'sans': _('Sans-serif'), 'serif': _('Serif')} %}
@@ -196,6 +196,7 @@
   'presetKeys': presets|map(attribute='key')|list,
   'options': options,
   'current': current,
+  'classic': classic,
   'stock': is_stock,
   'i18n': {'saved': _('Saved style'), 'unsaved': _('Not saved yet'), 'random': _('Random mix: save it if you like it, or try again.')}
 }|tojson }}</script>

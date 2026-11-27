@@ -17,13 +17,18 @@ OPTIONS = {
     "header": ("plain", "tint", "gradient", "mesh", "aurora", "dots", "grid", "waves", "stripes", "topo", "glass"),
     "sidebar": ("plain", "tinted", "art"),
     "backdrop": ("none", "glow", "dots"),
-    "surface": ("neutral", "tinted", "paper"),
+    "surface": ("neutral", "tinted", "paper", "verso"),
     "buttons": ("mono", "accent", "gradient"),
     "radius": ("default", "sharp", "round"),
     "headings": ("sans", "serif"),
     "vibrancy": ("soft", "vivid"),
 }
 HUE_KEYS = ("hue", "hue2")
+
+# Starting point for editing Classic: the same Verso typography, layout and palette.
+CLASSIC = {"hue": 155, "hue2": 35, "header": "plain", "sidebar": "plain",
+           "backdrop": "none", "surface": "verso", "buttons": "mono",
+           "radius": "default", "headings": "serif", "vibrancy": "soft"}
 
 # Ready-made styles. "stock" is the default design and stores nothing.
 PRESETS = {

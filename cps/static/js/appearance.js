@@ -91,10 +91,11 @@
   form.addEventListener("input", function (e) {
     if (!e.target.name || e.target.type === "hidden") return;
     state = readForm();
+    if (same(state, cfg.classic)) state = null;
     render();
   });
   form.addEventListener("change", function (e) {
-    if (e.target.type === "radio") { state = readForm(); render(); }
+    if (e.target.type === "radio") { state = readForm(); if (same(state, cfg.classic)) state = null; render(); }
   });
 
   // ---------- Presets, random mix, undo ----------
@@ -104,6 +105,7 @@
       var key = btn.getAttribute("data-ap-preset");
       if (key === "stock") {
         state = null;
+        fill(cfg.classic);
       } else {
         state = copy(cfg.presets[cfg.presetKeys.indexOf(key)]);
         fill(state);
@@ -132,7 +134,7 @@
 
   form.querySelector("[data-ap-revert]").addEventListener("click", function () {
     state = saved ? copy(saved) : null;
-    fill(state || cfg.current);
+    fill(state || cfg.classic);
     render();
   });
 

@@ -346,32 +346,32 @@
 }
 
 /* Verso stock edition: a permanent forest navigation rail and warm paper canvas. */
-:root:not([data-ap]) .sidebar, .ap-reset .ap-mock-side {
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar, .ap-reset .ap-mock-side {
   --ap-side-bg:#102e20; --ap-side-border:#284738; --ap-side-text:#fff1dc;
   --ap-side-text-2:#f4eadc; --ap-side-muted:#d7e0d2; --ap-side-faint:#a8bcaa;
   --ap-side-hover:#254a36; --ap-side-active:#345744; --ap-side-active-text:#fff7e8;
   --ap-side-active-icon:#fff7e8;
 }
-:root:not([data-ap]) .sidebar .brand { justify-content:center; padding:15px 12px 12px; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .brand { justify-content:center; padding:15px 12px 12px; }
 .sidebar .instance-wordmark--dark { display:none; }
-:root:not([data-ap]) .sidebar .instance-wordmark--light,
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .instance-wordmark--light,
 :root[data-theme="dark"] .sidebar .instance-wordmark--light,
 :root[data-ap-sidebar="art"] .sidebar .instance-wordmark--light { display:none; }
-:root:not([data-ap]) .sidebar .instance-wordmark--dark,
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .instance-wordmark--dark,
 :root[data-theme="dark"] .sidebar .instance-wordmark--dark,
 :root[data-ap-sidebar="art"] .sidebar .instance-wordmark--dark { display:block; }
 .sidebar .instance-wordmark { height:auto; max-height:64px; }
-:root:not([data-ap]) .page-title { font-family:var(--font-serif); font-size:clamp(28px,3.4vw,42px); font-weight:600; line-height:1.06; }
-:root:not([data-ap]) .section-header h2 { font-family:var(--font-serif); font-size:24px; }
-:root:not([data-ap]) .search-box { border-radius:10px; }
-:root:not([data-ap]) .book-card .cover { border-radius:8px; }
-:root:not([data-ap]) .cover-progress span { background:var(--accent); }
-:root:not([data-ap]) .sidebar .nav-swatch { background:var(--ap-side-faint); }
-:root:not([data-ap]) .sidebar .btn-ghost { --btn-fg:var(--ap-side-muted); --btn-hover:var(--ap-side-hover); }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-headings="serif"]) .page-title { font-family:var(--font-serif); font-size:clamp(28px,3.4vw,42px); font-weight:600; line-height:1.06; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-headings="serif"]) .section-header h2 { font-family:var(--font-serif); font-size:24px; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"]) .search-box { border-radius:10px; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"]) .book-card .cover { border-radius:8px; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"]) .cover-progress span { background:var(--accent); }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .nav-swatch { background:var(--ap-side-faint); }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .btn-ghost { --btn-fg:var(--ap-side-muted); --btn-hover:var(--ap-side-hover); }
 [data-ap][data-ap-headings="sans"] { --ap-heading-font:var(--font-sans); }
 @media(max-width:860px) {
-  :root:not([data-ap]) .page-title { font-size:30px; }
-  :root:not([data-ap]) .section-header h2 { font-size:22px; }
+  :root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-headings="serif"]) .page-title { font-size:30px; }
+  :root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-headings="serif"]) .section-header h2 { font-size:22px; }
 }
 
 /* Custom wordmarks without a dark asset retain a light rail in light mode. */
@@ -382,4 +382,42 @@
 }
 :root[data-theme="dark"]:not([data-ap]) body.verso-custom-light-wordmark .sidebar .brand {
   background:#f8f1e5; border-radius:9px;
+}
+
+/* Verso paper: preserve the classic palette's luminance and chroma; the two
+ * sliders rotate only the rail and accent hues. 155/35 is the exact stock look. */
+@supports (color: oklch(from #102e20 l c h)) {
+  [data-ap][data-ap-surface="verso"] {
+    --accent: oklch(from #a23e2a l c calc(h + var(--ap-h2) - 35));
+    --accent-hover: oklch(from #803020 l c calc(h + var(--ap-h2) - 35));
+    --accent-soft: oklch(from #f1ddd3 l c calc(h + var(--ap-h2) - 35));
+    --accent-text: oklch(from #8c3324 l c calc(h + var(--ap-h2) - 35));
+    --focus: var(--accent); --ap-nav-active: var(--accent-text);
+  }
+  [data-ap][data-ap-surface="verso"][data-ap-buttons="mono"] {
+    --primary: oklch(from #923622 l c calc(h + var(--ap-h2) - 35));
+    --primary-hover: oklch(from #762819 l c calc(h + var(--ap-h2) - 35));
+    --on-primary: #fff;
+  }
+  [data-theme="dark"][data-ap][data-ap-surface="verso"],
+  [data-theme="dark"] [data-ap][data-ap-surface="verso"] {
+    --accent: oklch(from #e5a18a l c calc(h + var(--ap-h2) - 35));
+    --accent-hover: oklch(from #f2b5a0 l c calc(h + var(--ap-h2) - 35));
+    --accent-soft: oklch(from #432d27 l c calc(h + var(--ap-h2) - 35));
+    --accent-text: oklch(from #f1b09c l c calc(h + var(--ap-h2) - 35));
+  }
+  [data-theme="dark"][data-ap][data-ap-surface="verso"][data-ap-buttons="mono"],
+  [data-theme="dark"] [data-ap][data-ap-surface="verso"][data-ap-buttons="mono"] {
+    --primary: oklch(from #a9432d l c calc(h + var(--ap-h2) - 35));
+    --primary-hover: oklch(from #bb5037 l c calc(h + var(--ap-h2) - 35));
+  }
+  :root[data-ap-surface="verso"][data-ap-sidebar="plain"] .sidebar,
+  [data-ap-surface="verso"][data-ap-sidebar="plain"] .ap-mock-side {
+    --ap-side-bg: oklch(from #102e20 l c calc(h + var(--ap-h) - 155));
+    --ap-side-border: oklch(from #284738 l c calc(h + var(--ap-h) - 155));
+    --ap-side-hover: oklch(from #254a36 l c calc(h + var(--ap-h) - 155));
+    --ap-side-active: oklch(from #345744 l c calc(h + var(--ap-h) - 155));
+    --ap-side-text:#fff1dc; --ap-side-text-2:#f4eadc; --ap-side-muted:#d7e0d2;
+    --ap-side-faint:#a8bcaa; --ap-side-active-text:#fff7e8; --ap-side-active-icon:#fff7e8;
+  }
 }

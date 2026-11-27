@@ -53,3 +53,10 @@ def test_every_option_value_is_styled():
     for key, values in styles.OPTIONS.items():
         for value in values[1:]:
             assert re.search(r'data-ap-{}="{}"'.format(key, value), css), (key, value)
+
+
+def test_classic_is_a_valid_editable_verso_palette():
+    assert styles.sanitize(styles.CLASSIC) == styles.CLASSIC
+    attrs = styles.html_attrs(styles.CLASSIC)
+    assert attrs["data-ap-surface"] == "verso"
+    assert attrs["style"] == "--ap-h:155;--ap-h2:35"

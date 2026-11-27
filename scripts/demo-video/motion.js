@@ -1,9 +1,9 @@
-/* Verso demo V24: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V25: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","branding-viewport","mobile-home","login","login-background"];
-names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"custom-stock","custom-library");
+names.push("import-empty",...Array.from({length:31},(_,i)=>"import-space-"+i),"browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:49},(_,i)=>"sync-scroll-"+i),...Array.from({length:10},(_,i)=>"sync-progress-"+(38+i)),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),...Array.from({length:37},(_,i)=>"custom-colour-"+i));
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -331,20 +331,20 @@ function year(t){
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
  const q=t-4.75,x=380,y=150,w=1160;
- // Show the very same library in its stock forest-and-ivory look,
- // then in the user's saved paper/slate palette. One fixed browser.
+ // Genuine colour controls, one fixed browser. Start at Classic,
+ // hold the olive-and-ochre result, then reverse the exact capture
+ // strip to return to the starting design before the branding scene.
  if(t<4.75){
-  const p=step(t,1.30,2.65);
-  browser("custom-stock",x,y,w,1,.5,.5,true,(bx,by,bw,bh)=>{
-   if(p>0)fade(p,()=>ctx.drawImage(assets["custom-library"],bx,by,bw,bh));
-  });
+  const f=t<2.35?clamp((t-.38)/1.52):1-clamp((t-2.55)/1.52);
+  const n=Math.round(36*f);
+  browser("custom-colour-"+n,x,y,w);
   rect(630,936,660,58,29,C.forest);
   text("Choose your own colours",960,965,29,C.ivory,"Geist",550,"center");
   return;
  }
- // Keep the existing instance branding segment and its timing.
- browser("branding-viewport",x,y,w);
- if(q<.48)fade(1-step(q,0,.48),()=>browser("custom-library",x,y,w));
+ browser("branding-viewport",x,y,w,1,.5,.5,true,(bx,by,bw,bh)=>{
+  if(q<.48)fade(1-step(q,0,.48),()=>ctx.drawImage(assets["custom-colour-0"],bx,by,bw,bh));
+ });
  rect(630,936,660,58,29,C.forest);text("Instance branding",960,965,29,C.ivory,"Geist",550,"center");
  // One last slide: the real admin page stays put while its actual
  // controls are lifted into a readable foreground inset.

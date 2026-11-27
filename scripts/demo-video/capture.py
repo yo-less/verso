@@ -382,62 +382,54 @@ def additional():
         stats_content = {"x":sidebar["x"] + sidebar["width"],"y":topbar["y"] + topbar["height"]}
         base.shot(page,"stats-detail.png")
         branding_focus = capture_branding(page)
-        # Two real library looks, photographed at 2x resolution. Preserve
-        # the same books and scroll position so only appearance changes.
+        # Film the genuine appearance controls in the original Verso
+        # palette, then change the two hues and return to Classic.
         base.set_theme(page,"light")
         base.preset(page,"stock")
         palette_ctx = browser.new_context(viewport={"width":1440,"height":900},
             device_scale_factor=2,storage_state=ctx.storage_state(),
             locale="en-US",color_scheme="light",reduced_motion="reduce",service_workers="block")
         palette_page = palette_ctx.new_page()
-        base.open_page(palette_page,"/")
+        base.open_page(palette_page,"/me/appearance")
         base.set_theme(palette_page,"light")
-        base.open_page(palette_page,"/")
+        base.open_page(palette_page,"/me/appearance")
+        main_hue = palette_page.locator("#ap-hue")
+        accent_hue = palette_page.locator("#ap-hue2")
+        colours = palette_page.locator("section[aria-labelledby='ap-colours-h']")
+        colours.evaluate("el => window.scrollTo(0,Math.max(0,el.getBoundingClientRect().top+scrollY-100))")
+        expect(main_hue).to_have_value("155")
+        expect(accent_hue).to_have_value("35")
+        expect(palette_page.locator("#ap-stage")).to_be_visible()
         assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
-        base.shot(palette_page,"custom-stock.png",".book-card")
-        # Use the real Customize form and save a quiet, bespoke paper and
-        # slate-blue style; no gradients, decorative patterns or random presets.
-        base.open_page(page,"/me/appearance")
-        page.evaluate("""() => {
-            const form=document.getElementById('ap-form');
-            const set=(name,value)=>{
-                const input=form.querySelector('input[name="'+name+'"][value="'+value+'"]');
-                if(!input) throw Error('missing appearance option '+name);
-                input.checked=true;
-                input.dispatchEvent(new Event('input',{bubbles:true}));
-            };
-            for(const [name,value] of Object.entries({header:'tint',sidebar:'tinted',
-                surface:'paper',buttons:'accent',headings:'serif',radius:'default',
-                backdrop:'none',vibrancy:'soft'})) set(name,value);
-            for(const [id,value] of [['ap-hue',245],['ap-hue2',220]]){
-                const input=document.getElementById(id);
-                input.value=String(value);
-                input.dispatchEvent(new Event('input',{bubbles:true}));
-            }
+        palette_page.evaluate("""async () => {
+            await document.fonts.ready;
+            await Promise.all([...document.images].filter(i=>i.getBoundingClientRect().top<innerHeight).map(i=>i.decode().catch(()=>{})));
         }""")
-        expect(page.locator("#ap-hue")).to_have_value("245")
-        save = page.locator("[data-ap-savebar] button[type=submit]")
-        expect(save).to_be_visible()
-        save.click()
-        page.wait_for_load_state("domcontentloaded")
-        base.open_page(page,"/")
-        assert page.locator("html").evaluate("el => el.style.getPropertyValue('--ap-h').trim()") == "245"
-        saved_attrs = page.locator("html").evaluate("""el => ({
-            attrs:[...el.attributes].filter(a=>a.name==='data-ap'||a.name.startsWith('data-ap-')).map(a=>[a.name,a.value]),
-            hue:el.style.getPropertyValue('--ap-h'),hue2:el.style.getPropertyValue('--ap-h2')
-        })""")
-        # Use exactly the persisted appearance values on the unchanged
-        # real library DOM; avoids different randomized Discover covers.
-        palette_page.locator("html").evaluate("""(el,s)=>{
-            for(const [name,value] of s.attrs) el.setAttribute(name,value);
-            el.style.setProperty('--ap-h',s.hue);
-            el.style.setProperty('--ap-h2',s.hue2);
-        }""", saved_attrs)
-        base.shot(palette_page,"custom-library.png",".book-card")
+        palette_controls = [main_hue.bounding_box(),accent_hue.bounding_box()]
+        assert all(b and 0 <= b["y"] < 900 for b in palette_controls), palette_controls
+        stock_rail = palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor")
+        for i in range(37):
+            # Real range controls dispatch the application's input events.
+            # Smooth the travel of each knob independently.
+            def ease(p):
+                p=max(0,min(1,p))
+                return p*p*(3-2*p)
+            main_hue.fill(str(round(155+(85-155)*ease(i/20))))
+            accent_hue.fill(str(round(35+(65-35)*ease((i-16)/20))))
+            palette_page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+            palette_page.screenshot(path=str(base.OUT / f"custom-colour-{i}.png"), animations="disabled")
+        expect(main_hue).to_have_value("85")
+        expect(accent_hue).to_have_value("65")
+        expect(palette_page.locator("html")).to_have_attribute("data-ap-surface","verso")
+        assert palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor") != stock_rail
+        main_hue.fill("155")
+        accent_hue.fill("35")
+        assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
+        expect(palette_page.locator("[data-ap-savebar]")).to_be_hidden()
+        assert palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor") == stock_rail
         palette_ctx.close()
-        base.preset(page,"stock")
         capture_year(browser)
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"importCount":import_count,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"importCount":import_count,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"paletteControls":palette_controls,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))
         ctx.close()
         browser.close()
 
