@@ -56,6 +56,17 @@ def additional():
         browser = pw.chromium.launch()
         ctx = browser.new_context(viewport={"width":1440,"height":900}, device_scale_factor=1,
                                   locale="en-US",color_scheme="light",reduced_motion="reduce",service_workers="block")
+        # Both closing plates use precisely the same browser viewport, CSS
+        # object-position, background image and colour scheme.
+        closing = browser.new_context(viewport={"width":1440,"height":900},
+                                      device_scale_factor=4/3,locale="en-US",
+                                      color_scheme="light",reduced_motion="reduce",service_workers="block")
+        login_page = closing.new_page()
+        base.open_page(login_page,"/login")
+        base.shot(login_page,"login.png","#username")
+        login_page.locator(".instance-login").evaluate("el => el.style.visibility = 'hidden'")
+        base.shot(login_page,"login-background.png",".login-landscape-background")
+        closing.close()
         page = ctx.new_page()
         base.login(page)
         base.set_theme(page,"light")
@@ -130,8 +141,9 @@ def additional():
         expect(related).to_be_visible()
         page.evaluate("window.scrollTo(0,0)")
         base.shot(page,"detail-scroll-0.png","h1")
-        # Extract the real related-title section; no simulated scroll in the edit.
-        related.evaluate("el => el.scrollIntoView({block:'center', behavior:'instant'})")
+        # Use the same actual scroll capture method as the library scene.
+        detail_end = related.evaluate("el => Math.min(document.scrollingElement.scrollHeight-innerHeight, Math.max(0,el.getBoundingClientRect().top+scrollY-100))")
+        scroll_strip(page,"detail-scroll",detail_end,frames=61)
         page.wait_for_timeout(400)
         related.screenshot(path=str(base.OUT/"related.png"),animations="disabled")
         section_box = related.bounding_box()
@@ -153,9 +165,11 @@ def additional():
         expect(page.locator(".rs-heatmap")).to_be_visible()
         base.shot(page,"stats.png",".rs-heatmap")
         stats = page.locator(".rs-tile-value").all_text_contents()
-        page.locator("#rs-30-h").scroll_into_view_if_needed()
-        page.evaluate("document.getElementById('rs-30-h').scrollIntoView({block:'start'})")
-        base.shot(page,"stats-detail.png","#rs-30-h")
+        page.evaluate("window.scrollTo(0,0)")
+        stats_end = page.evaluate("Math.max(0,document.scrollingElement.scrollHeight-innerHeight)")
+        assert stats_end > 0, stats_end
+        scroll_strip(page,"stats-scroll",stats_end,frames=97)
+        base.shot(page,"stats-detail.png")
         base.open_page(page,"/admin/branding")
         base.shot(page,"branding-viewport.png","#name")
         branding_focus = []

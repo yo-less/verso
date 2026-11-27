@@ -1,8 +1,8 @@
-/* Verso demo V10: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V11: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
-const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login"];
-names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),"detail-scroll-0","related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
+const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
+names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:61},(_,i)=>"detail-scroll-"+i),...Array.from({length:97},(_,i)=>"stats-scroll-"+i),"related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -38,37 +38,56 @@ function automation(t){
  bg(false,t);title("From file to bookshelf",960,85,false,76);
  const box=browser("import-empty",720,210,1120),b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
- const flight=step(t,3.60,5.25),land=step(t,5.25,5.52);
+ const organize=step(t,3.45,3.83),flight=step(t,3.83,5.35),land=step(t,5.35,5.60);
  const im=assets["import-library"],ratio=im.width/1440;
  fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
  const drop=step(t,.22,1.18),fx=450,fy=300;
- // An open, layered folder rather than a flat icon. The file slips
- // between its front and back, then the real cover emerges.
- ctx.save();ctx.shadowColor="#102e2026";ctx.shadowBlur=20;ctx.shadowOffsetY=12;
- rect(fx-133,fy-75,266,159,14,"#a47e42");ctx.restore();
- rect(fx-133,fy-95,112,35,9,"#a47e42");
- rect(fx-120,fy-64,240,136,10,"#edd5a5");
- fade(1-step(t,1.00,1.30),()=>{
-  const x=mix(155,fx,drop),y=mix(278,fy+25,drop)-60*Math.sin(Math.PI*drop);
-  ctx.save();ctx.translate(x,y);ctx.rotate(-.09*(1-drop));
-  shadow(-47,-65,94,130,7,"#fffaf0",12);
-  ctx.fillStyle="#d4b87e";ctx.beginPath();ctx.moveTo(18,-65);ctx.lineTo(47,-36);ctx.lineTo(18,-36);ctx.closePath();ctx.fill();
-  text("EPUB",0,-10,23,C.forest,"Geist",700,"center");
-  [-0,1,2].forEach(i=>line(-25,20+i*9,22-i*6,20+i*9,"#b58a40",2));
+ const converted=step(t,2.05,2.43),cover=step(t,2.75,3.13);
+ const wiggle=Math.sin((t-1.12)*19)*.045*(step(t,1.12,1.27)-step(t,1.95,2.15));
+ function paper(x,y,angle,alpha){
+  fade(alpha,()=>{
+   ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+   rect(-92,-50,184,100,6,"#fffcf4");
+   ctx.fillStyle="#d4b87e";ctx.beginPath();ctx.moveTo(66,-50);ctx.lineTo(92,-24);ctx.lineTo(66,-24);ctx.closePath();ctx.fill();
+   text("EPUB",0,-13,26,C.forest,"Geist",650,"center");
+   fade(1-converted,()=>{line(-46,14,45,14,"#cbb88f",2);line(-46,25,26,25,"#cbb88f",2)});
+   fade(converted,()=>text("Ready to import",0,20,16,C.forest,"Geist",500,"center"));
+   ctx.restore();
+  });
+ }
+ // The file is landscape-shaped and fully contained once it enters
+ // the folder. The interior clipping also prevents any stray pixels.
+ fade(1-organize,()=>{
+  ctx.save();ctx.translate(fx,fy);
+  ctx.scale(1-.06*organize,1-.16*organize);
+  shadow(-133,-75,266,159,14,"#a47e42",14);
+  rect(-133,-95,112,35,9,"#a47e42");
+  rect(-120,-64,240,136,10,"#edd5a5");
   ctx.restore();
+  if(drop<1){
+   const px=mix(155,fx,drop),py=mix(278,fy-22,drop)-52*Math.sin(Math.PI*drop);
+   // The approaching sheet remains visible outside the folder only
+   // until it enters; its bottom never reaches below the folder front.
+   paper(px,py,-.11*(1-drop),1-cover);
+  }else{
+   ctx.save();ctx.beginPath();ctx.roundRect(fx-120,fy-64,240,136,10);ctx.clip();
+   paper(fx,fy-18,wiggle,1-cover);ctx.restore();
+  }
+  // Folded front is drawn after the file, occluding the lower edge.
+  ctx.save();ctx.translate(fx,fy);ctx.scale(1-.06*organize,1-.16*organize);
+  ctx.fillStyle="#c9a467";ctx.beginPath();ctx.moveTo(-143,-1);ctx.lineTo(143,-1);ctx.lineTo(126,83);ctx.quadraticCurveTo(124,92,113,92);ctx.lineTo(-113,92);ctx.quadraticCurveTo(-124,92,-126,83);ctx.closePath();ctx.fill();
+  line(-130,7,130,7,"#ead3a5",2);ctx.restore();
+  text("Watched import folder",fx,fy+125,27,C.forest,"Newsreader",600,"center");
+  fade(1-step(t,.65,1.15),()=>text("Moby-Dick.epub",155,377,22,C.forest,"Geist",500,"center"));
  });
- // Folder front conceals the lower part of the file on entry.
- ctx.fillStyle="#c9a467";ctx.beginPath();ctx.moveTo(fx-143,fy-1);ctx.lineTo(fx+143,fy-1);ctx.lineTo(fx+126,fy+83);ctx.quadraticCurveTo(fx+124,fy+92,fx+113,fy+92);ctx.lineTo(fx-113,fy+92);ctx.quadraticCurveTo(fx-124,fy+92,fx-126,fy+83);ctx.closePath();ctx.fill();
- line(fx-130,fy+7,fx+130,fy+7,"#ead3a5",2);
- text("Watched import folder",fx,fy+125,27,C.forest,"Newsreader",600,"center");
- fade(1-step(t,.65,1.15),()=>text("Moby-Dick.epub",155,377,22,C.forest,"Geist",500,"center"));
- fade(step(t,1.18,1.5)*(1-step(t,3.15,3.55)),()=>{rect(fx+103,fy-88,36,36,18,C.forest);text("↓",fx+121,fy-69,25,C.ivory,"Geist",600,"center")});
+ // The real cover emerges in place as Metadata & cover is checked.
+ // Once Organize begins, the folder softly collapses and dissolves;
+ // the cover is the only element that travels to the shelf.
+ const x=mix(fx,target.x,flight),y=mix(fy-12,target.y,flight)-85*Math.sin(Math.PI*flight);
+ const w=mix(132,target.w,flight),hh=mix(190,target.h,flight);
+ fade(cover*(1-land),()=>{ctx.save();ctx.translate(x,y+34*(1-cover));ctx.rotate(-.035*(1-flight));img("moby-cover",-w/2,-hh/2,w,hh,"cover");ctx.restore()});
  line(120,529,120,769,"#d6c29a",2);
  tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,35,C.forest,"Geist",500)});
- const x=mix(fx,target.x,flight),y=mix(fy-18,target.y,flight)-95*Math.sin(Math.PI*flight);
- const w=mix(132,target.w,flight),h=mix(190,target.h,flight);
- // The flying element is just cover artwork, never a window or document.
- fade(step(t,3.2,3.55)*(1-land),()=>{ctx.save();ctx.translate(x,y);ctx.rotate(-.045*(1-flight));img("moby-cover",-w/2,-h/2,w,h,"cover");ctx.restore()});
 }
 function footer(s,dark=true){
  // Captions have a dedicated safe area above player controls.
@@ -77,10 +96,9 @@ function footer(s,dark=true){
 function library(t){
  bg(true,t);title("Browse your library",960,84,true,76);
  const w=1160,x=(W-w)/2,y=205;
- const a=step(t,1.55,1.85),b=step(t,4.42,4.72);
+ const a=step(t,1.55,1.85);
  fade(1-a,()=>text("Explore the shelves",960,151,31,C.ivory,"Geist",500,"center"));
- fade(a*(1-b),()=>text("Search by author",960,151,31,C.ivory,"Geist",500,"center"));
- fade(b,()=>text("Jane Austen · matching books",960,151,31,C.ivory,"Geist",500,"center"));
+ fade(a,()=>text("Search by author",960,151,31,C.ivory,"Geist",500,"center"));
  if(t<1.72){
   browser("browse-scroll-"+Math.round(clamp((t-.12)/1.60)*48),x,y,w);
  }else if(t<4.55){
@@ -97,12 +115,13 @@ function library(t){
 }
 function details(t){
  bg(false,t);
- const p=step(t,1.05,1.5);
- fade(1-p,()=>title("Explore a book",960,84,false,76));
- fade(p,()=>title("Discover related titles",960,84,false,76));
- browser("detail-scroll-0",350,155,1220);
- // Keep Moby-Dick and its detail page stable; bring the actual
- // recommendation section into the foreground as an editorial inset.
+ const heading=step(t,1.25,1.72),p=step(t,2.85,3.38);
+ fade(1-heading,()=>title("Explore a book",960,84,false,76));
+ fade(heading,()=>title("Discover related titles",960,84,false,76));
+ const i=Math.round(clamp((t-.85)/2.0)*60);
+ browser("detail-scroll-"+i,350,155,1220);
+ // Arrive at the real recommendation section before lifting it into
+ // the foreground; retain the editorial inset from V10.
  const im=assets["related-focus"],scale=Math.min(1030/im.width,475/im.height,1.65);
  const iw=im.width*scale,ih=im.height*scale,pad=24;
  const w=iw+pad*2,h=ih+pad*2,x=1810-w+(1-p)*65,y=Math.min(440,890-h)+(1-p)*25;
@@ -137,20 +156,27 @@ function devices(t){
  });
  rect(1520,865,130,6,3,"#6a7469");
  const spin=step(t,1.05,1.55),x=1290,y=520;
- rect(x-42,y-42,84,84,42,C.gold);ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI*2*spin);ctx.strokeStyle=C.forest;ctx.lineWidth=5;ctx.beginPath();ctx.arc(0,0,22,-2.7,.1);ctx.stroke();ctx.beginPath();ctx.arc(0,0,22,.45,3.25);ctx.stroke();line(22,2,14,-7,C.forest,5);line(22,2,29,-8,C.forest,5);line(-22,-2,-14,7,C.forest,5);line(-22,-2,-29,8,C.forest,5);ctx.restore();
+ rect(x-42,y-42,84,84,42,C.gold);
+ ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI*2*spin);
+ ctx.strokeStyle=C.forest;ctx.lineWidth=4.5;ctx.lineCap="round";ctx.lineJoin="round";
+ // Each head meets its own arc at the exact tangent endpoint.
+ // Draw the two sides of each arrowhead as one joined path.
+ for(const start of [-Math.PI+.42,.42]){
+  const end=start+Math.PI-.84,R=23,ex=R*Math.cos(end),ey=R*Math.sin(end);
+  const tx=-Math.sin(end),ty=Math.cos(end),nx=-ty,ny=tx;
+  ctx.beginPath();ctx.arc(0,0,R,start,end);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ex-10*tx+8*nx,ey-10*ty+8*ny);ctx.lineTo(ex,ey);ctx.lineTo(ex-10*tx-8*nx,ey-10*ty-8*ny);ctx.stroke();
+ }
+ ctx.restore();
  // Conceptual progress indicator, explicitly distinct from the captured UI.
  rect(96,875,1090,86,14,"#274739");text("Moby-Dick  ·  Reading progress",125,901,26,C.ivory,"Geist",550);line(125,936,950,936,"#637a6c",6);line(125,936,125+825*synced/100,936,C.gold,6);text(Math.round(synced)+"%",1100,936,32,C.ivory,"Geist",600,"right");
- text(b>.99?"Progress synchronized":"Verso  ·  Illustrated sync",640,990,25,C.muted,"Geist",500,"center");
- text("Kobo  ·  KOReader",1585,932,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
+ fade(step(t,2.15,2.45),()=>text("Progress synchronized",640,990,25,C.muted,"Geist",500,"center"));
+ text("KOReader  ·  Kobo",1585,932,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
 }
 function statistics(t){
  bg(false,t);title("Your reading, in perspective",960,85,false,74);
- const box=browser("stats",350,155,1220);
- // Dissolve only the captured chart content inside a stationary shell.
- fade(step(t,1.65,3.0),()=>{
-  ctx.save();ctx.beginPath();ctx.roundRect(box.x,box.y,box.w,box.h,[0,0,19,19]);ctx.clip();
-  ctx.drawImage(assets["stats-detail"],box.x,box.y,box.w,box.h);ctx.restore();
- });
+ const i=Math.round(clamp((t-1.15)/3.2)*96);
+ browser("stats-scroll-"+i,350,155,1220);
 }
 function highlights(t){
  bg(true,t);title("Keep the words that matter",960,85,true,76);
@@ -237,7 +263,9 @@ function installBrowser(t,ending=0){
  // Closing typography and landscape replace the login form within
  // the same browser viewport. No new shell or full-screen wipe.
  fade(ending,()=>{
-  img("landscape",x,y+bar,w,h,"cover");
+  img("login-background",x,y+bar,w,h,"cover");
+ });
+ fade(step(ending,.35,1),()=>{
   img("logo",x+w/2-255,y+bar+h*.20,510,170);
   text("Self-hosted  ·  Open source",x+w/2,y+bar+h*.47,38,C.forest,"Newsreader",550,"center");
   text("github.com/yo-less/verso",x+w/2,y+bar+h*.54,32,C.forest,"Newsreader",500,"center");
@@ -262,9 +290,9 @@ const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
  {id:"automation",len:6.1,draw:automation},
  {id:"library",len:5.8,draw:library},
- {id:"details",len:4.4,draw:details},
+ {id:"details",len:5.0,draw:details},
  {id:"devices",len:4,draw:devices},
- {id:"statistics",len:4.8,draw:statistics},
+ {id:"statistics",len:5.4,draw:statistics},
  {id:"highlights",len:3,draw:highlights},
  {id:"year",len:6,draw:year},
  {id:"personalize",len:13.1,draw:personalize},
