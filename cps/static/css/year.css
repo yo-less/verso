@@ -264,10 +264,11 @@
   .yr-years a[aria-current] { color: #102e20; background: #102e2020; }
   .yr-icon { background: #f8f1e5e6; color: #102e20; border: 1px solid #102e2033; }
   .yr-tap { top: 80px; }
-  .yr-slide { color: #102e20; padding-top: max(106px, calc(env(safe-area-inset-top) + 96px)); text-shadow: none; }
+  .yr-slide { --text: #102e20; --text-2: #294b39; --text-muted: #315b48; --text-faint: #315b48; color: #102e20; padding-top: max(106px, calc(env(safe-area-inset-top) + 96px)); text-shadow: none; }
+  .yr-slide h1, .yr-slide h2, .yr-slide h3 { color: #102e20; }
   .yr-slide:not(.yr-s-summary)::before {
     content: ""; position: absolute; inset: 84px 0 16px; z-index: -2; pointer-events: none;
-    background: radial-gradient(ellipse at 43% 50%, #f8f1e5ef 0%, #f8f1e5e6 49%, #f8f1e5b3 69%, transparent 100%);
+    background: radial-gradient(ellipse at 43% 50%, #f8f1e5d9 0%, #f8f1e5bf 49%, #f8f1e57a 69%, transparent 100%);
   }
   .yr-eyebrow, .yr-sub, .yr-hint, .yr-bar small, .yr-cover figcaption span { opacity: 1; }
   .yr-clock-face { fill: #102e2015; stroke: #102e204d; }

@@ -103,6 +103,10 @@ def capture_year(browser):
             active = story.locator(".yr-slide.is-active")
             classes = set(active.get_attribute("class").split())
             story.wait_for_timeout(1550)
+            # Global dark-theme heading rules must never override the
+            # mobile story palette (including on the intro and rhythm).
+            assert active.evaluate("""el => [...el.querySelectorAll('h1,h2,h3')].every(
+                heading => getComputedStyle(heading).color === 'rgb(16, 46, 32)')""")
             name = next((cls.removeprefix("yr-s-") for cls in classes if cls.startswith("yr-s-")), "unknown")
             if name in targets:
                 base.shot(story,f"year-mobile-{name}.png",".yr-slide.is-active")
