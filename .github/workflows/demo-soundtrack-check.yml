@@ -1,0 +1,35 @@
+name: Verify Verso demo soundtrack
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [demo-video-preview]
+    paths:
+      - '.github/workflows/demo-soundtrack-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify private soundtrack access and integrity
+        env:
+          MUSIC_URL: ${{ secrets.DEMO_MUSIC_URL }}
+          MUSIC_TOKEN: ${{ secrets.DEMO_MUSIC_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$MUSIC_URL" ] || [ -z "$MUSIC_TOKEN" ]; then
+            echo "::error::DEMO_MUSIC_URL or DEMO_MUSIC_TOKEN is missing"
+            exit 1
+          fi
+          music="$(mktemp "$RUNNER_TEMP/verso-audio.XXXXXX")"
+          trap 'rm -f "$music"' EXIT
+          curl --fail --silent --show-error --location --retry 2 --proto '=https' --proto-redir '=https' \
+            --header "Authorization: Bearer $MUSIC_TOKEN" \
+            --header "Accept: application/vnd.github.raw+json" \
+            --output "$music" "$MUSIC_URL"
+          echo "480cf9dc634e65f799fde5a0d7aa25b609c8c2b9f6bdd43a04a9809b08c27b26  $music" | sha256sum --check
+          echo "Private soundtrack download and original MP3 checksum verified."
