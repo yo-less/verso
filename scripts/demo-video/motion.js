@@ -231,7 +231,7 @@ function devices(handoff){
    text(Math.round(progress)+"%",1585,815,17,C.forest,"Geist",500,"center");
   });
   rect(1520,865,130,6,3,"#6a7469");
-  text("KOReader  ·  Kobo",1585,932,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
+  text("KOReader on Kindle",1585,932,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
  });
  relatedInset(box,1-step(handoff,0,.54));
  fade(step(t,2.75,3.04),()=>{
