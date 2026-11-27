@@ -8,8 +8,7 @@ Device problems are in the [Kobo](kobo.md#troubleshooting) and
 
 ## Look at the logs
 
-Logs tell you what actually happened, so this is always a good first step. From your Verso installation
-folder:
+Logs tell you what actually happened, so this is always a good first step. From your Verso installation folder:
 
 ```bash
 docker compose logs --tail 100

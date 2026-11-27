@@ -7,9 +7,7 @@
 
 <p align="center">
   <strong>A self-hosted ebook library and reading platform.</strong><br>
-  A fork of <a href="https://github.com/MrColoo/scriptorium-library">Scriptorium</a>, built on Calibre-Web-Automated and Calibre-Web.<br>
-  Retains the standard Calibre library format and adds customizable instance branding.
-  This project uses AI.
+  Standard Calibre libraries, automated imports and synchronized reading.
 </p>
 
 <p align="center">
@@ -25,7 +23,7 @@
   <a href="#features">Features</a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="docs/README.md">Docs</a> ·
-  <a href="#coming-from-calibre-web-automated">Coming from CWA?</a>
+  <a href="#coming-from-calibre-web-automated">Migration</a>
 </p>
 
 <p align="center">
@@ -35,66 +33,25 @@
 
 ---
 
-## Why Verso
-
-Most ebook servers are file browsers with a login page. Verso is a **library that keeps
-itself in order** and **a place you actually enjoy opening**.
-
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>📥&nbsp;Drop it in, forget it</h3>
-      Copy a file into one folder. Verso imports it, converts it to the format your reader
-      wants, fetches cover and metadata, catches duplicates and repairs EPUBs that Amazon would
-      reject. All automatically.
-    </td>
-    <td width="50%" valign="top">
-      <h3>📖&nbsp;Kobo-first, KOReader-friendly</h3>
-      Paste one line on your Kobo and your library, shelves and reading progress stay in step,
-      with no cables and no Calibre desktop app. KOReader syncs progress and highlights too.
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>✨&nbsp;Your reading life, remembered</h3>
-      Every highlight from your e-reader on one page. A full-screen story of your year in books.
-      Your Goodreads or StoryGraph history imported in a minute.
-    </td>
-    <td width="50%" valign="top">
-      <h3>🎨&nbsp;Beautiful, and yours</h3>
-      A clean, fast interface in light and dark, built for phones and installable as an app. Every
-      reader can give it their own colours, from a ready-made theme to a hand-tuned palette.
-    </td>
-  </tr>
-</table>
-
 ## See it in action
 
 https://github.com/user-attachments/assets/0daf9b44-333a-4edd-873a-d19131faa2f7
-<p align="center"><sub>Upstream Scriptorium demonstration: importing a book, the library, device synchronization, statistics, highlights and personal styles.</sub></p>
 
-## Cover quality
+<sub>Upstream Scriptorium demonstration. The screenshots below show the current Verso interface.</sub>
 
-In **Customize → Cover quality**, each reader can choose Optimized (smaller downloads),
-High quality (the default), or Original (unmodified cover artwork). Book-detail pages
-always display original covers. Covers are lazy-loaded and the setting does not affect
-Kobo or KOReader synchronization.
+## Features
 
-OPDS and JSON metadata advertise separate image resources: `/opds/cover/<id>` returns
-original artwork, while `/opds/thumb_240_240/<id>` returns an optimized thumbnail.
-These URLs are independent of personal cover-quality settings.
-
-## Instance branding
-
-Open **Settings → Branding** to customize the site name, upload SVG logos and choose the login colours and decoration. Settings persist alongside the application database. Download the KOReader plugin from the application to get the current instance name; existing devices must reinstall the ZIP to change their displayed name.
-
-Verso is the default identity for new and existing installations without saved custom branding. Restore default branding or upload your own artwork in Settings → Branding. Custom branding stays in the installation's configuration, not the repository.
+| Area | Capabilities |
+| --- | --- |
+| Library & automation | Watched-folder imports, conversion, metadata and covers, duplicate detection, EPUB repairs, original-file backups, smart shelves and related books. |
+| Reading & devices | Kobo sync for books, shelves and progress; KOReader sync for progress, highlights and statistics; browser readers for ebooks, comics, PDF and text; OPDS and email delivery. |
+| Reading history | Searchable highlights and notes with Markdown export, reading statistics, annual review and import from Goodreads or StoryGraph. |
+| Personalization | Light and dark themes, personal styles, per-user cover quality and custom instance branding, including separate light/dark wordmarks. Responsive and installable interface. |
+| Administration | Multiple users, permissions, per-user devices, LDAP, OAuth/OIDC, scheduled tasks, activity logs and translations. |
 
 ## Quick start
 
-All you need is [Docker](https://docs.docker.com/get-docker/) with the Compose plugin. New to
-self-hosting? **[Start here](docs/start-here.md)**: a friendly, step-by-step guide that assumes
-nothing.
+Requires Docker with the Compose plugin (amd64 or arm64).
 
 ```bash
 git clone https://github.com/yo-less/verso.git verso
@@ -102,112 +59,19 @@ cd verso
 docker compose up -d
 ```
 
-Open **http://localhost:8083** and create your account: the first page asks for a username and a
-password, then a short tour shows you around.
+Open **http://localhost:8083** and create your administrator account before sharing the address. Copy a finished ebook into `ingest` to import it. Files are removed from this folder after import.
 
-Now drop an EPUB, PDF, MOBI or any other ebook into the `ingest` folder next to the compose file
-and watch it appear in your library. Then [connect your Kobo](docs/kobo.md); it takes about
-two minutes.
+[Beginner walkthrough](docs/start-here.md) · [Installation reference](docs/installation.md) · [Remote access](docs/remote-access.md)
 
-<details>
-<summary><b>What's in <code>docker-compose.yml</code></b></summary>
+| Host folder | Container path |
+| --- | --- |
+| `./config` | `/config` |
+| `./ingest` | `/cwa-book-ingest` |
+| `./library` | `/calibre-library` |
 
-```yaml
-services:
-  scriptorium:
-    image: ghcr.io/yo-less/verso:latest
-    container_name: scriptorium
-    environment:
-      - PUID=1000        # run `id -u` to find yours
-      - PGID=1000        # run `id -g` to find yours
-      - TZ=Europe/London
-    volumes:
-      - ./config:/config                  # settings, users, logs, backups
-      - ./ingest:/cwa-book-ingest         # drop books here; files are removed after import
-      - ./library:/calibre-library        # your Calibre library (created if empty)
-    ports:
-      - 8083:8083
-    restart: unless-stopped
-```
-
-Already have a Calibre library? Point `./library` at it. Verso uses it as it is.
-</details>
-
-## How it works
-
-```mermaid
-flowchart LR
-    A["📂 Drop a file<br/>into /ingest"] --> B["🔄 Convert<br/>to KEPUB / EPUB"]
-    B --> C["🏷️ Cover & metadata<br/>from 12 providers"]
-    C --> D["🧹 Duplicates & EPUB fixes"]
-    D --> E["📚 Your library"]
-    E --> F["Kobo sync"]
-    E --> G["KOReader"]
-    E --> H["OPDS apps"]
-    E --> I["Email to Kindle<br/>& eReaders"]
-    E --> J["Read in the browser"]
-```
-
-Your books live in a standard Calibre library, so you can open it with Calibre desktop at any
-time. Nothing is locked in.
-
-## Features
-
-**Automation**
-- **Auto-import** from a watched folder, with web upload too. Works on NFS/SMB shares.
-- **Conversion** to your target format (KEPUB for Kobo, EPUB for everything else), plus a
-  one-click run for the whole library.
-- **Metadata and covers** from Google Books, Hardcover, Amazon, ComicVine, Kobo, DNB and more.
-  Fields are only replaced when the new value is better.
-- **Duplicate detection** with previews, merging and optional automatic resolution.
-- **EPUB fixer** that repairs the small errors Send-to-Kindle rejects.
-- **Automatic backups** of every original before it's touched.
-
-**Reading**
-- **Kobo sync**: books, shelves as collections, reading progress and a guided setup on your profile.
-- **KOReader sync** plugin for Kindle, PocketBook, Android and Kobo: progress, highlights and reading statistics.
-- **Your devices, your choice**: turn Kobo and KOReader on or off per user; progress shows where it came from.
-- **Continue reading** on the home page, fed by your devices, with time left in each book.
-- **Built-in readers**: EPUB with themes and typography settings, comics, PDF and plain text. The EPUB
-  reader picks up where your Kobo or KOReader left off, and its highlights and reading time join the rest.
-- **OPDS** catalogue for apps like KyBook, Moon+ Reader and Panels.
-- **Send to eReader** by email, automatically for new books if you like.
-
-**Your reading life**
-- **Your year in books**: a full-screen story of your reading year (books, hours, authors, genres,
-  streaks, your reading clock, the book you lived in, the line you kept) with a poster to save and share.
-- **Highlights**: every passage and note from your Kobo, KOReader or the built-in reader on one page,
-  searchable and exportable to Markdown for Obsidian, Notion or Readwise. Device highlights show in
-  the built-in reader, browser highlights reach KOReader, and the home page opens with a passage of
-  the day.
-- **Reading statistics**: time read, streaks, a calendar of your year and your habits, shared
-  between all your KOReader devices.
-- **Import from Goodreads or The StoryGraph**: finished books with their dates, what you are reading
-  and your want-to-read list, after a preview.
-- **More like this** on every book page, ranked from your own library.
-
-**Library**
-- **Shelves and smart shelves** that fill themselves from rules (for example "unread sci-fi" or "added since June").
-- **Multi-user** with permissions, per-user devices, LDAP, OAuth and generic OIDC sign-in.
-- **Reading statistics**, and an activity log for administrators.
-- **28 languages**.
-
-**Interface**
-- Designed page by page, light and dark, **fully usable on a phone** with a bottom navigation bar.
-- **Installable app**: add Verso to your home screen, and send a book to the library with
-  *Share → Verso* from any app (needs HTTPS).
-- **What's new** after every update, and an update button for administrators with the highlights of
-  the next release.
-- **Personal styles**: eleven themes, a "Surprise me" button and a palette editor, with a live preview.
-- **Security by default**: a strict Content-Security-Policy with no inline scripts, CSRF on every
-  action and a password change forced at first login. [More](docs/security.md)
+Mount your existing Calibre library at `/calibre-library`. Keep the three folders separate and back up both config and library. See [configuration](docs/configuration.md) for all environment variables.
 
 ## Screenshots
-
-<p align="center">
-  <img src="docs/screenshots/login.png" alt="Verso sign-in with its painted landscape" width="100%">
-  <br><sub><b>Login</b> — the default Verso identity; custom instance branding remains supported.</sub>
-</p>
 
 <p align="center">
   <picture>
@@ -216,6 +80,9 @@ time. Nothing is locked in.
   </picture>
   <br><sub><b>Home</b> — what you're reading on your Kobo, something to discover, and the whole library. It follows your light or dark theme.</sub>
 </p>
+
+<details>
+<summary>More screenshots: book details, Kobo, themes, highlights and mobile</summary>
 
 <table>
   <tr>
@@ -264,124 +131,48 @@ time. Nothing is locked in.
   <br><sub><b>On your phone</b> — the same library, built for one hand</sub>
 </p>
 
-## Configuration
+</details>
 
-### Volumes
+## Updates
 
-| Container path | What it holds |
-| --- | --- |
-| `/config` | `app.db` (users, settings, reading progress), `cwa.db` (automation settings, statistics), logs, profile pictures, backups in `processed_books/`. **Back this up.** |
-| `/cwa-book-ingest` | Drop zone. Supported files are imported and then **deleted** from here. Copy finished files in; don't download into it. |
-| `/calibre-library` | Your Calibre library (`metadata.db` and book folders). If it's empty, a new library is created. If there are several, the largest is used. |
-| `/config/.config/calibre/plugins` | Optional: Calibre plugins used during conversion. |
-
-### Environment variables
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `PUID` / `PGID` | `1000` | Owner of the files written to your volumes. |
-| `TZ` | `UTC` | Time zone for schedules and timestamps, e.g. `Europe/Rome`. |
-| `CWA_PORT_OVERRIDE` | `8083` | Port the web server listens on inside the container. |
-| `HARDCOVER_TOKEN` | – | API key for [Hardcover](https://hardcover.app) as a metadata provider (also settable in the UI). |
-| `NETWORK_SHARE_MODE` | `false` | `true` when the library or config live on NFS/SMB: safer SQLite settings, polling instead of inotify. |
-| `CWA_WATCH_MODE` | `inotify` | `poll` forces polling for new files. |
-| `TRUSTED_PROXY_COUNT` | `1` | Number of reverse proxies in front of Scriptorium. |
-| `DISABLE_LIBRARY_AUTOMOUNT` | `false` | `true` skips automatic library detection at start-up. |
-| `SCRIPTORIUM_DEFAULT_ADMIN` | `false` | `true` gives a new installation the `admin` / `admin123` account instead of the setup page, for automated installs. |
-
-The [configuration reference](docs/configuration.md) lists every variable and setting. Network
-shares and NAS setups are in the [installation reference](docs/installation.md), and HTTPS and
-reverse proxies in [Remote access](docs/remote-access.md).
-
-### Updating
+Back up your config and library before updating.
 
 ```bash
 docker compose pull && docker compose up -d
 ```
 
-When a new release is out, administrators get an update button in the top bar with its highlights
-and this command. After updating, every user gets a short *What's new*. To pin a version, use a release tag such as
-a published commit SHA tag instead of `latest`.
-
-### Backup
-
-Everything that matters lives in two folders, `config` and `library`. Stop the container to get
-a consistent copy:
-
-```bash
-docker compose stop
-tar czf scriptorium-backup-$(date +%F).tar.gz config library
-docker compose start
-```
-
-To restore, extract the archive in place of the two folders and start the container again.
-[Updating and backups](docs/updating-and-backups.md) covers automatic backups, version pinning and
-moving to a new server.
+The image is published as `ghcr.io/yo-less/verso:latest` and with full commit SHA tags. See [Updating and backups](docs/updating-and-backups.md) for pinning and rollback.
 
 ## Coming from Calibre-Web-Automated
 
-Scriptorium is built on [Calibre-Web-Automated](https://github.com/crocodilestick/Calibre-Web-Automated)
-v4.0.8 and reads and writes exactly the same data, so switching is an image swap:
+Verso uses the standard Calibre library and is based on Scriptorium and Calibre-Web-Automated v4.0.8.
 
-1. Back up your `config` and `library` folders ([how](#backup)).
-2. In your compose file, change only the image to `ghcr.io/yo-less/verso:latest`.
-   Keep the volumes, ports and environment variables as they are.
-3. Run `docker compose up -d`.
+1. Back up your config and library.
+2. Change only the image in your Compose file to `ghcr.io/yo-less/verso:latest`. Keep your existing volumes, ports, environment variables and service name.
+3. Run `docker compose pull && docker compose up -d`.
 
-What carries over, and what to know:
-- **Your data stays compatible.** Scriptorium changes no existing table or column. It adds one
-  table to `app.db` for your highlights, which CWA simply ignores. Users, shelves, smart shelves,
-  reading progress and Kobo and KOReader sync state all carry over, and you can switch back the
-  same way.
-- **Your devices keep working.** The Kobo sync address and the KOReader endpoint are unchanged.
-  Download the KOReader plugin again if you want your KOReader highlights in Scriptorium.
-- **Personal styles** are stored inside each user's existing view settings. CWA simply ignores them.
-- **Instance branding** is managed in *Settings → Branding*. Restore the Verso defaults or upload your own SVG artwork.
-- **Newer CWA releases** that changed the database have not been tested. Keep your backup at hand.
+Newer CWA database changes have not been tested. Keep your backup for rollback. The existing Kobo and KOReader endpoints are retained; update the KOReader plugin when needed.
 
-Coming from plain Calibre-Web? See [the installation guide](docs/installation.md#migrating-from-calibre-web).
+[Migration and existing libraries](docs/installation.md#migrating-from-calibre-web-automated) · [Migrating from Calibre-Web](docs/installation.md#migrating-from-calibre-web)
 
 ## Documentation
 
-**[Browse all the documentation →](docs/README.md)**
-
-| If you want to | Read |
+| Topic | Guides |
 | --- | --- |
-| Install it with no prior experience | [Start here](docs/start-here.md) |
-| Set it up well in ten minutes | [First steps](docs/first-steps.md) |
-| Learn what it can do | [Using Scriptorium](docs/using-scriptorium.md) |
-| Connect a device | [Kobo](docs/kobo.md), [KOReader](docs/koreader.md), [Kindle, email and OPDS](docs/ereaders.md) |
-| Deploy it on a NAS, Pi or server | [Installation reference](docs/installation.md) |
-| Reach it from anywhere, with HTTPS | [Remote access](docs/remote-access.md) |
-| Keep it updated and safe | [Updating and backups](docs/updating-and-backups.md), [Security](docs/security.md) |
-| Run it for others | [Administration](docs/administration.md), [Automation](docs/automation.md), [Configuration reference](docs/configuration.md) |
-| Fix a problem | [Troubleshooting](docs/troubleshooting.md) |
-| Contribute | [Development](docs/development.md), [Releasing](docs/releasing.md) |
+| Getting started | [Start here](docs/start-here.md), [First steps](docs/first-steps.md), [Using Verso](docs/using-scriptorium.md) |
+| Devices | [Kobo](docs/kobo.md), [KOReader](docs/koreader.md), [Kindle, email and OPDS](docs/ereaders.md) |
+| Server | [Installation](docs/installation.md), [Configuration](docs/configuration.md), [Remote access](docs/remote-access.md), [Backups](docs/updating-and-backups.md) |
+| Administration | [Automation](docs/automation.md), [Administration](docs/administration.md), [Security](docs/security.md), [Troubleshooting](docs/troubleshooting.md) |
+| Development | [Development](docs/development.md), [Publishing](docs/releasing.md), [Contributing](CONTRIBUTING.md) |
 
-## Contributing
+[All documentation](docs/README.md) · [Issues](https://github.com/yo-less/verso/issues) · [Report a security vulnerability](SECURITY.md)
 
-Bug reports, ideas, translations and pull requests are welcome. Start with
-[CONTRIBUTING.md](CONTRIBUTING.md). Backend fixes that also apply to Calibre-Web-Automated are
-best proposed [upstream](https://github.com/crocodilestick/Calibre-Web-Automated) too, so both
-projects benefit. To report a security issue, please follow [SECURITY.md](SECURITY.md).
+## Credits & license
 
-## Credits
+Verso is a fork of [Scriptorium](https://github.com/MrColoo/scriptorium-library) by MrColoo and contributors, which redesigned the interface and readers and added personal styles, highlights, the annual reading review and other reading features.
 
-Scriptorium stands on the shoulders of three projects and their contributors:
+It builds on [Calibre-Web-Automated](https://github.com/crocodilestick/Calibre-Web-Automated), [Calibre-Web](https://github.com/janeczku/calibre-web) and [Calibre](https://calibre-ebook.com). Verso adds its own visual identity, configurable branding, cover-quality controls and original-cover API support, along with device-sync refinements.
 
-- **[Calibre-Web-Automated](https://github.com/crocodilestick/Calibre-Web-Automated)** by
-  crocodilestick and contributors: the automation, Kobo and KOReader sync, duplicates, statistics
-  and much more that Scriptorium builds on.
-- **[Calibre-Web](https://github.com/janeczku/calibre-web)** by janeczku and contributors: the web
-  library at the core.
-- **[Calibre](https://calibre-ebook.com)** by Kovid Goyal and contributors: conversion and metadata.
+This project uses AI for development and visual assets.
 
-Scriptorium redesigns the whole interface and readers, adds personal styles, highlights, a year
-in books, history import, per-user devices and an installable app, and hardens security. The
-backend stays close to upstream so fixes can flow both ways.
-
-## License
-
-Verso is free software under the [GNU General Public License v3.0 or later](LICENSE) and
-comes with no warranty. Source files keep their original copyright notices. Third-party
-libraries and fonts are listed in [NOTICE](NOTICE) and [CONTRIBUTORS](CONTRIBUTORS).
+Licensed under [GPL-3.0 or later](LICENSE), without warranty. Original copyright notices remain intact. See [NOTICE](NOTICE) and [CONTRIBUTORS](CONTRIBUTORS) for third-party credits.

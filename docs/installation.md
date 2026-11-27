@@ -200,6 +200,7 @@ See [Remote access](remote-access.md).
 
 Swap the image and keep the volumes. See
 [Coming from Calibre-Web-Automated](../README.md#coming-from-calibre-web-automated) in the README.
+Back up both config and library first. Verso is based on CWA v4.0.8; newer database layouts have not been verified. Keep the existing service name, volume paths, ports and environment variables. The Kobo and KOReader endpoints remain the same. Existing personal styles and reading history remain in the configuration; restore the backup rather than assuming downgrade compatibility.
 
 ## Migrating from Calibre-Web
 
