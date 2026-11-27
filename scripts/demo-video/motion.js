@@ -199,7 +199,7 @@ function devices(handoff){
  bg(false,detailsHold);
  fade(move,()=>bg(true,Math.max(0,t)));
  fade(1-step(handoff,0,.38),()=>title("Discover related titles",960,84,false,76));
- fade(step(t,0,.44),()=>title("Pick up where you left off",960,85,true,76));
+ fade(step(t,0,.44),()=>title("Keep your reading in sync",960,85,true,76));
  const a=step(t,3.66,4.25),b=step(t,1.45,1.98),progress=38+9*b,synced=38+9*a;
  const x=mix(detailBrowser.x,96,move),y=mix(detailBrowser.y,180,move),w=mix(detailBrowser.w,1090,move);
  const key=handoff<=.54?"detail-scroll-60":handoff<syncHandoff?"sync-scroll-"+frame:"sync-progress-"+Math.round(synced);
@@ -231,7 +231,7 @@ function devices(handoff){
    text(Math.round(progress)+"%",1585,815,17,C.forest,"Geist",500,"center");
   });
   rect(1520,865,130,6,3,"#6a7469");
-  text("KOReader on Kindle Colorsoft",1585,932,25,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
+  text("KOReader on Kindle Colorsoft",1585,932,25,C.ivory,"Geist",550,"center");
  });
  relatedInset(box,1-step(handoff,0,.54));
  fade(step(t,2.75,3.04),()=>{
@@ -261,7 +261,6 @@ function devices(handoff){
   ctx.save();ctx.beginPath();ctx.roundRect(xx,yy,ww,hh,8);ctx.clip();
   ctx.drawImage(im,r.x,r.y,r.width,r.height,xx,yy,ww,hh);ctx.restore();
  }
- fade(step(t,4.25,4.57),()=>text("Progress synchronized",640,990,25,C.muted,"Geist",500,"center"));
 }
 function statistics(t){
  bg(false,t);title("Your reading, in perspective",960,85,false,74);
