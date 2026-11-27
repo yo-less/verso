@@ -130,11 +130,24 @@ def additional():
         expect(related).to_be_visible()
         page.evaluate("window.scrollTo(0,0)")
         base.shot(page,"detail-scroll-0.png","h1")
-        destination = related.evaluate("el => Math.min(document.scrollingElement.scrollHeight-innerHeight, Math.max(0,el.getBoundingClientRect().top+scrollY-110))")
-        scroll_strip(page,"detail-scroll",destination,frames=85)
-        related.scroll_into_view_if_needed()
+        # Extract the real related-title section; no simulated scroll in the edit.
+        related.evaluate("el => el.scrollIntoView({block:'center', behavior:'instant'})")
         page.wait_for_timeout(400)
         related.screenshot(path=str(base.OUT/"related.png"),animations="disabled")
+        section_box = related.bounding_box()
+        related_cards = related.locator(".book-card")
+        assert section_box and related_cards.count() > 0
+        card_boxes = [related_cards.nth(i).bounding_box() for i in range(related_cards.count())]
+        assert all(card_boxes), card_boxes
+        # Trim unused trailing grid columns without removing any book or header.
+        header_box = related.locator(".section-header").bounding_box()
+        header_text = related.locator(".section-header p").bounding_box()
+        right = max([b["x"]+b["width"] for b in card_boxes] +
+                    [header_text["x"]+header_text["width"]])
+        with Image.open(base.OUT/"related.png") as im:
+            crop_right = min(im.width, max(1, round(right - section_box["x"] + 16)))
+            # If the header spans the section, leave the entire real section.
+            im.crop((0,0,crop_right,im.height)).save(base.OUT/"related-focus.png")
         # The Moby-Dick artwork was already extracted from its image URL.
         base.open_page(page,"/reading-stats")
         expect(page.locator(".rs-heatmap")).to_be_visible()

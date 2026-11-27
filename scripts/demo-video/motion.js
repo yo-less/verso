@@ -1,8 +1,8 @@
-/* Verso demo V9: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V10: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login"];
-names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),...Array.from({length:85},(_,i)=>"detail-scroll-"+i),...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
+names.push("import-empty","browse-typed","browse-results",...Array.from({length:12},(_,i)=>"browse-type-"+i),...Array.from({length:12},(_,i)=>"search-sharp-"+i),...Array.from({length:49},(_,i)=>"browse-scroll-"+i),"detail-scroll-0","related-focus",...Array.from({length:5},(_,i)=>"branding-focus-"+i),"theme-light","theme-dark","theme-sunset","theme-ocean");
 const clamp=x=>Math.max(0,Math.min(1,x)),ease=x=>{x=clamp(x);return x*x*(3-2*x)},step=(t,a,b)=>ease((t-a)/(b-a)),mix=(a,b,p)=>a+(b-a)*p;
 function load(k,src){return new Promise((ok,no)=>{let im=new Image;im.onload=()=>{assets[k]=im;ok()};im.onerror=()=>no(new Error("Missing asset "+src));im.src=src})}
 window.ready=Promise.all(names.map(k=>load(k,"/captures/"+k+".png")).concat([
@@ -21,7 +21,7 @@ function shadow(x,y,w,h,r,c,blur=48){ctx.save();ctx.shadowColor="#00000050";ctx.
 function browser(k,x,y,w,zoom=1,focusX=.5,focusY=.5,withShadow=true){let im=assets[k],bar=w*.025,h=w*im.height/im.width;if(withShadow)shadow(x,y,w,h+bar,19,C.paper);else rect(x,y,w,h+bar,19,C.paper);ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();rect(x,y,w,bar,0,"#213c30");["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+bar*.45+i*bar*.52,y+bar*.36,bar*.24,bar*.24,bar*.12,c));ctx.save();ctx.beginPath();ctx.rect(x,y+bar,w,h);ctx.clip();let sw=im.width/zoom,sh=im.height/zoom;ctx.drawImage(im,clamp(focusX)*(im.width-sw),clamp(focusY)*(im.height-sh),sw,sh,x,y+bar,w,h);ctx.restore();ctx.restore();return {x,y:y+bar,w,h}}
 function phone(k,cx,cy,w,angle=0){let im=assets[k],bezel=12,iw=w-2*bezel,ih=iw*im.height/im.width,h=ih+2*bezel;ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);shadow(-w/2,-h/2,w,h,38,"#0d1410",32);ctx.strokeStyle="#818b80";ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,38);ctx.stroke();ctx.save();ctx.beginPath();ctx.roundRect(-iw/2,-ih/2,iw,ih,26);ctx.clip();img(k,-iw/2,-ih/2,iw,ih);ctx.restore();ctx.restore()}
 function reveal(t,a,b,fn,dy=26){let p=step(t,a,b);ctx.save();ctx.translate(0,(1-p)*dy);fade(p,fn);ctx.restore()}
-const tickRows=[{y:428,start:1.35,label:"Import"},{y:522,start:2.05,label:"Convert if needed"},{y:616,start:2.75,label:"Metadata & cover"},{y:710,start:3.45,label:"Organize"}];
+const tickRows=[{y:505,start:1.35,label:"Import"},{y:601,start:2.05,label:"Convert if needed"},{y:697,start:2.75,label:"Metadata & cover"},{y:793,start:3.45,label:"Organize"}];
 function tick(cx,cy,p){rect(cx-24,cy-24,48,48,24,C.gold);ctx.save();ctx.strokeStyle=C.forest;ctx.lineWidth=5;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(cx-11,cy);let a=clamp(p*2),b=clamp(p*2-1);ctx.lineTo(cx-11+8*a,cy+8*a);if(b>0)ctx.lineTo(cx-3+15*b,cy+8-19*b);if(p>0)ctx.stroke();ctx.restore()}
 function brand(t,opening){
  if(opening){
@@ -32,40 +32,43 @@ function brand(t,opening){
   const p=step(t,.65,1.75);ctx.save();ctx.translate(0,14*(1-p));
   fade(p,()=>img("logo",625,254,670,224));ctx.restore();
   fade(step(t,1.55,2.28),()=>text("Your personal library",960,550,46,C.forest,"Newsreader",500,"center"));
- }else{
-  const z=1+.018*step(t,0,2.5);img("landscape",-(z-1)*W/2,-(z-1)*H/2,W*z,H*z,"cover");
-  img("logo",625,220,670,224);
-  text("Self-hosted  ·  Open source",960,526,42,C.forest,"Newsreader",550,"center");
-  text("github.com/yo-less/verso",960,588,36,C.forest,"Newsreader",500,"center");
  }
 }
 function automation(t){
- bg(false,t);title("From file to bookshelf",90,110,false,76,"left");
- const box=browser("import-empty",770,220,1050),b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
+ bg(false,t);title("From file to bookshelf",960,85,false,76);
+ const box=browser("import-empty",720,210,1120),b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
  const flight=step(t,3.60,5.25),land=step(t,5.25,5.52);
  const im=assets["import-library"],ratio=im.width/1440;
  fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
- // A watched ingest folder, with a file visibly dropped into it.
- const drop=step(t,.22,1.18),fx=510,fy=270;
- rect(fx-103,fy-43,88,27,8,"#b58a40");
- rect(fx-103,fy-25,206,102,10,"#b58a40");
+ const drop=step(t,.22,1.18),fx=450,fy=300;
+ // An open, layered folder rather than a flat icon. The file slips
+ // between its front and back, then the real cover emerges.
+ ctx.save();ctx.shadowColor="#102e2026";ctx.shadowBlur=20;ctx.shadowOffsetY=12;
+ rect(fx-133,fy-75,266,159,14,"#a47e42");ctx.restore();
+ rect(fx-133,fy-95,112,35,9,"#a47e42");
+ rect(fx-120,fy-64,240,136,10,"#edd5a5");
  fade(1-step(t,1.00,1.30),()=>{
-  const x=mix(195,fx,drop),y=mix(282,fy+35,drop)-72*Math.sin(Math.PI*drop);
-  shadow(x-40,y-53,80,106,6,C.paper,8);
-  text("EPUB",x,y-5,21,C.rust,"Geist",700,"center");
-  line(x-24,y+23,x+24,y+23,C.gold,3);
+  const x=mix(155,fx,drop),y=mix(278,fy+25,drop)-60*Math.sin(Math.PI*drop);
+  ctx.save();ctx.translate(x,y);ctx.rotate(-.09*(1-drop));
+  shadow(-47,-65,94,130,7,"#fffaf0",12);
+  ctx.fillStyle="#d4b87e";ctx.beginPath();ctx.moveTo(18,-65);ctx.lineTo(47,-36);ctx.lineTo(18,-36);ctx.closePath();ctx.fill();
+  text("EPUB",0,-10,23,C.forest,"Geist",700,"center");
+  [-0,1,2].forEach(i=>line(-25,20+i*9,22-i*6,20+i*9,"#b58a40",2));
+  ctx.restore();
  });
- rect(fx-108,fy+4,216,77,9,"#d0aa65");
- text("Watched import folder",fx,fy+110,24,C.forest,"Geist",500,"center");
- fade(1-step(t,.65,1.15),()=>text("Moby-Dick.epub",195,365,21,C.forest,"Geist",500,"center"));
- fade(step(t,1.18,1.5)*(1-step(t,3.15,3.55)),()=>{rect(fx+75,fy-45,26,26,13,C.forest);text("↓",fx+88,fy-32,19,C.ivory,"Geist",600,"center")});
- tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,36,C.forest,"Geist",500)});
- const x=mix(fx,target.x,flight),y=mix(fy-14,target.y,flight)-85*Math.sin(Math.PI*flight);
- const w=mix(116,target.w,flight),h=mix(166,target.h,flight);
- // Only cover pixels are drawn during flight; no window or EPUB shell.
+ // Folder front conceals the lower part of the file on entry.
+ ctx.fillStyle="#c9a467";ctx.beginPath();ctx.moveTo(fx-143,fy-1);ctx.lineTo(fx+143,fy-1);ctx.lineTo(fx+126,fy+83);ctx.quadraticCurveTo(fx+124,fy+92,fx+113,fy+92);ctx.lineTo(fx-113,fy+92);ctx.quadraticCurveTo(fx-124,fy+92,fx-126,fy+83);ctx.closePath();ctx.fill();
+ line(fx-130,fy+7,fx+130,fy+7,"#ead3a5",2);
+ text("Watched import folder",fx,fy+125,27,C.forest,"Newsreader",600,"center");
+ fade(1-step(t,.65,1.15),()=>text("Moby-Dick.epub",155,377,22,C.forest,"Geist",500,"center"));
+ fade(step(t,1.18,1.5)*(1-step(t,3.15,3.55)),()=>{rect(fx+103,fy-88,36,36,18,C.forest);text("↓",fx+121,fy-69,25,C.ivory,"Geist",600,"center")});
+ line(120,529,120,769,"#d6c29a",2);
+ tickRows.forEach(row=>{let p=step(t,row.start,row.start+.38);tick(120,row.y,p);text(row.label,167,row.y,35,C.forest,"Geist",500)});
+ const x=mix(fx,target.x,flight),y=mix(fy-18,target.y,flight)-95*Math.sin(Math.PI*flight);
+ const w=mix(132,target.w,flight),h=mix(190,target.h,flight);
+ // The flying element is just cover artwork, never a window or document.
  fade(step(t,3.2,3.55)*(1-land),()=>{ctx.save();ctx.translate(x,y);ctx.rotate(-.045*(1-flight));img("moby-cover",-w/2,-h/2,w,h,"cover");ctx.restore()});
- text("Illustrated import sequence",95,973,23,"#6b6f60");
 }
 function footer(s,dark=true){
  // Captions have a dedicated safe area above player controls.
@@ -73,7 +76,11 @@ function footer(s,dark=true){
 }
 function library(t){
  bg(true,t);title("Browse your library",960,84,true,76);
- const w=1160,x=(W-w)/2,y=150;
+ const w=1160,x=(W-w)/2,y=205;
+ const a=step(t,1.55,1.85),b=step(t,4.42,4.72);
+ fade(1-a,()=>text("Explore the shelves",960,151,31,C.ivory,"Geist",500,"center"));
+ fade(a*(1-b),()=>text("Search by author",960,151,31,C.ivory,"Geist",500,"center"));
+ fade(b,()=>text("Jane Austen · matching books",960,151,31,C.ivory,"Geist",500,"center"));
  if(t<1.72){
   browser("browse-scroll-"+Math.round(clamp((t-.12)/1.60)*48),x,y,w);
  }else if(t<4.55){
@@ -86,16 +93,24 @@ function library(t){
    ctx.drawImage(im,cx-ww/2,cy-hh/2,ww,hh);
   });
  }else browser("browse-results",x,y,w);
- footer(t<1.72?"Explore the shelves":t<4.55?"Search by author":"Jane Austen · matching books");
+ // Explanation lives with the title; the area below the window stays clear.
 }
 function details(t){
  bg(false,t);
- const p=step(t,1.15,1.55);
+ const p=step(t,1.05,1.5);
  fade(1-p,()=>title("Explore a book",960,84,false,76));
  fade(p,()=>title("Discover related titles",960,84,false,76));
- // One sampled real browser position per 30fps output frame.
- const i=Math.min(84,Math.round(clamp((t-.55)/2.8)*84));
- browser("detail-scroll-"+i,350,155,1220);
+ browser("detail-scroll-0",350,155,1220);
+ // Keep Moby-Dick and its detail page stable; bring the actual
+ // recommendation section into the foreground as an editorial inset.
+ const im=assets["related-focus"],scale=Math.min(1030/im.width,475/im.height,1.65);
+ const iw=im.width*scale,ih=im.height*scale,pad=24;
+ const w=iw+pad*2,h=ih+pad*2,x=1810-w+(1-p)*65,y=Math.min(440,890-h)+(1-p)*25;
+ fade(p,()=>{
+  shadow(x,y,w,h,18,C.paper,34);
+  ctx.save();ctx.beginPath();ctx.roundRect(x+pad,y+pad,iw,ih,6);ctx.clip();
+  ctx.drawImage(im,x+pad,y+pad,iw,ih);ctx.restore();
+ });
 }
 function devices(t){
  bg(true,t);title("Pick up where you left off",960,85,true,76);
@@ -130,8 +145,12 @@ function devices(t){
 }
 function statistics(t){
  bg(false,t);title("Your reading, in perspective",960,85,false,74);
- browser("stats",350,155,1220);
- fade(step(t,1.3,1.85),()=>browser("stats-detail",350,155,1220));
+ const box=browser("stats",350,155,1220);
+ // Dissolve only the captured chart content inside a stationary shell.
+ fade(step(t,1.65,3.0),()=>{
+  ctx.save();ctx.beginPath();ctx.roundRect(box.x,box.y,box.w,box.h,[0,0,19,19]);ctx.clip();
+  ctx.drawImage(assets["stats-detail"],box.x,box.y,box.w,box.h);ctx.restore();
+ });
 }
 function highlights(t){
  bg(true,t);title("Keep the words that matter",960,85,true,76);
@@ -166,9 +185,9 @@ function year(t){
 }
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
- const seq=["theme-light","theme-dark","theme-sunset","theme-ocean"];
- const labels=["Light","Dark","Sunset","Ocean"];
- const starts=[0,1.15,2.30,3.45];
+ const seq=["theme-light","theme-dark","theme-sunset","theme-ocean","branding-viewport"];
+ const labels=["Light","Dark","Sunset","Ocean","Instance branding"];
+ const starts=[0,1.15,2.30,3.45,4.75];
  const i=Math.max(0,starts.filter(s=>t>=s).length-1),q=t-starts[i],x=380,y=150,w=1160;
  ctx.save();ctx.beginPath();ctx.rect(350,130,1220,790);ctx.clip();
  const p=i===0?1:step(q,0,.48);
@@ -176,30 +195,54 @@ function personalize(t){
  browser(seq[i],x+1220*(1-p),y,w,1,.5,.5,false);
  ctx.restore();
  rect(630,936,660,58,29,C.forest);text(labels[i],960,965,29,C.ivory,"Geist",550,"center");
-}
-function branding(t){
- bg(false,t);title("Give your library its own identity",960,85,false,72);
- const labels=["Custom library name","Your own logo","Custom colours","Custom favicon","Login artwork"];
- const descriptions=["Choose the name of your instance","Upload a navigation wordmark","Set background and accent colours","Use your own browser icon","Customize the login wordmark"];
- const i=Math.min(4,Math.floor(t/1.55)),q=t-i*1.55;
- const x=585,y=160,w=1245,scale=w/1440;
- const p=i===0?1:step(q,0,.22);
- const draw=(j,alpha)=>fade(alpha,()=>{
-  const box=browser("branding-focus-"+j,x,y,w,1,.5,.5,false);
-  const strength=step(j===i?q:1,0,.20);
-  window.data.brandingFocus[j].forEach(b=>{
-   const pad=6,xx=box.x+b.x*scale-pad,yy=box.y+b.y*scale-pad,ww=b.width*scale+2*pad,hh=b.height*scale+2*pad;
-   ctx.save();ctx.globalAlpha*=strength;ctx.strokeStyle=C.rust;ctx.lineWidth=3;
-   ctx.beginPath();ctx.roundRect(xx,yy,ww,hh,8);ctx.stroke();ctx.restore();
+ if(i<4)return;
+ // One last slide: the real admin page stays put while its actual
+ // controls are lifted into a readable foreground inset.
+ const label=["Site name","Your own logo","Custom colours","Custom favicon","Login artwork"];
+ const f=Math.max(0,q-.55),idx=Math.min(4,Math.floor(f/1.55)),local=f-idx*1.55;
+ const appear=step(q,.55,.90);
+ function inset(j,alpha,offset){
+  const im=assets["branding-focus-"+j],boxes=window.data.brandingFocus[j],ratio=im.width/1440;
+  const left=Math.max(0,Math.min(...boxes.map(b=>b.x))-12);
+  const top=Math.max(0,Math.min(...boxes.map(b=>b.y))-10);
+  const right=Math.min(1440,Math.max(...boxes.map(b=>b.x+b.width))+12);
+  const bottom=Math.min(900,Math.max(...boxes.map(b=>b.y+b.height))+10);
+  const sw=right-left,sh=bottom-top,scale=Math.min(850/sw,325/sh,1.20);
+  const iw=sw*scale,ih=sh*scale,pad=30,ww=Math.max(720,iw+pad*2),hh=ih+125;
+  const xx=1810-ww,yy=480-hh/2+offset;
+  fade(alpha,()=>{
+   shadow(xx,yy,ww,hh,18,C.paper,32);
+   text(label[j],xx+pad,yy+42,42,C.forest,"Newsreader",600);
+   line(xx+pad,yy+75,xx+ww-pad,yy+75,"#c8b994",2);
+   ctx.save();ctx.beginPath();ctx.roundRect(xx+pad,yy+88,iw,ih,7);ctx.clip();
+   ctx.drawImage(im,left*ratio,top*ratio,sw*ratio,sh*ratio,xx+pad,yy+88,iw,ih);ctx.restore();
   });
+ }
+ const blend=idx===0?1:step(local,0,.3);
+ if(idx>0&&blend<1)inset(idx-1,appear*(1-blend),-12*blend);
+ inset(idx,appear*blend,22*(1-appear)+12*(1-blend));
+}
+function installBrowser(t,ending=0){
+ const x=365,y=150,w=1190,bar=78,h=w*assets.login.height/assets.login.width;
+ shadow(x,y,w,h+bar,19,C.paper,32);
+ ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();
+ rect(x,y,w,bar,0,"#213c30");
+ ["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+19+i*24,y+15,12,12,6,c));
+ rect(x+110,y+14,w-134,49,12,C.paper);
+ const url="http://localhost:8083",n=Math.min(url.length,Math.floor(clamp((t-3.04)/1.02)*(url.length+1)));
+ text(url.slice(0,n),x+132,y+39,27,C.forest,"Geist",500);
+ if(n<url.length)line(x+132+ctx.measureText(url.slice(0,n)).width,y+25,x+132+ctx.measureText(url.slice(0,n)).width,y+53,C.forest,2);
+ rect(x,y+bar,w,h,0,C.paper);
+ fade(step(t,4.20,4.55),()=>img("login",x,y+bar,w,h,"cover"));
+ // Closing typography and landscape replace the login form within
+ // the same browser viewport. No new shell or full-screen wipe.
+ fade(ending,()=>{
+  img("landscape",x,y+bar,w,h,"cover");
+  img("logo",x+w/2-255,y+bar+h*.20,510,170);
+  text("Self-hosted  ·  Open source",x+w/2,y+bar+h*.47,38,C.forest,"Newsreader",550,"center");
+  text("github.com/yo-less/verso",x+w/2,y+bar+h*.54,32,C.forest,"Newsreader",500,"center");
  });
- if(i>0&&p<1)draw(i-1,1);
- draw(i,p);
- labels.forEach((s,j)=>{
-  const a=j<i?0.7:j===i?1:0;
-  fade(a,()=>{rect(90,280+j*108,12,12,6,j===i?C.rust:C.gold);text(s,116,285+j*108,31,C.forest,"Geist",j===i?650:500)});
- });
- reveal(q,.14,.46,()=>text(descriptions[i],90,855,25,C.rust,"Newsreader",550),10);
+ ctx.restore();
 }
 function install(t){
  bg(true,t);title("Run Verso yourself",960,105,true,76);
@@ -209,19 +252,11 @@ function install(t){
   let lines=["$ git clone https://github.com/yo-less/verso.git verso","$ cd verso","$ docker compose up -d"];
   lines.forEach((s,i)=>{let a=clamp((t-.12-i*.72)/.52);text(s.slice(0,Math.ceil(s.length*a)),280,405+i*106,37,C.ivory,"monospace",500)});
  });
- fade(p,()=>{
-  const x=365,y=150,w=1190,bar=78,h=w*assets.login.height/assets.login.width;
-  shadow(x,y,w,h+bar,19,C.paper,32);
-  ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h+bar,19);ctx.clip();
-  rect(x,y,w,bar,0,"#213c30");
-  ["#bf6853","#d7b368","#7e9c80"].forEach((c,i)=>rect(x+19+i*24,y+15,12,12,6,c));
-  rect(x+110,y+14,w-134,49,12,C.paper);
-  const url="http://localhost:8083",n=Math.min(url.length,Math.floor(clamp((t-3.04)/1.02)*(url.length+1)));
-  text(url.slice(0,n),x+132,y+39,27,C.forest,"Geist",500);
-  if(n<url.length)line(x+132+ctx.measureText(url.slice(0,n)).width,y+25,x+132+ctx.measureText(url.slice(0,n)).width,y+53,C.forest,2);
-  rect(x,y+bar,w,h,0,"#f8f1e5");
-  fade(step(t,4.20,4.55),()=>img("login",x,y+bar,w,h,"cover"));ctx.restore();
- });
+ fade(p,()=>installBrowser(t));
+}
+function close(t){
+ bg(true,6.25);fade(1-step(t,0,.9),()=>title("Run Verso yourself",960,105,true,76));
+ installBrowser(6.25,step(t,.15,1.05));
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
@@ -229,20 +264,16 @@ const scenes=[
  {id:"library",len:5.8,draw:library},
  {id:"details",len:4.4,draw:details},
  {id:"devices",len:4,draw:devices},
- {id:"statistics",len:3.5,draw:statistics},
+ {id:"statistics",len:4.8,draw:statistics},
  {id:"highlights",len:3,draw:highlights},
  {id:"year",len:6,draw:year},
- {id:"personalize",len:4.75,draw:personalize},
- {id:"branding",len:7.75,draw:branding},
+ {id:"personalize",len:13.1,draw:personalize},
  {id:"install",len:6.25,draw:install},
- {id:"close",len:3,draw:t=>brand(t,false)}
+ {id:"close",len:3.8,draw:close}
 ];
 window.timeline=scenes.map(s=>({id:s.id,seconds:s.len}));window.duration=scenes.reduce((n,s)=>n+s.len,0);
 function drawScene(i,t){ctx.save();scenes[i].draw(Math.max(0,t));ctx.restore()}
-window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);if(i>0&&scenes[i].id==="close"&&t<.85){
- const p=step(t,0,.85),edge=H*(1-p);ctx.save();ctx.translate(0,-H*p);drawScene(i-1,scenes[i-1].len-.001);ctx.restore();
- if(edge>0){const g=ctx.createLinearGradient(0,edge,0,edge+25);g.addColorStop(0,"#00000044");g.addColorStop(1,"#00000000");ctx.fillStyle=g;ctx.fillRect(0,edge,W,25);}
- }else if(i>0&&scenes[i].id==="automation"&&t<.65){
+window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);if(i>0&&scenes[i].id==="automation"&&t<.65){
  const p=step(t,0,.65);ctx.save();ctx.beginPath();ctx.rect(0,0,W*(1-p),H);ctx.clip();drawScene(i-1,scenes[i-1].len-.001);ctx.restore();
  }else if(i>0&&scenes[i].id!=="close"&&scenes[i].id!=="automation"&&t<.52)fade(1-step(t,0,.52),()=>drawScene(i-1,scenes[i-1].len-.001))};
 // Test the actual rendered pixels at each circle, before and after its own reveal.
