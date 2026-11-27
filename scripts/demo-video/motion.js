@@ -209,8 +209,8 @@ function devices(handoff){
    const excerpt=["It was the whiteness of","the whale that above all","things appalled me. But","how can I hope to explain","myself here; and yet, in","some dim, random way,","explain myself I must,","else all these chapters","might be naught."];
    excerpt.forEach((s,i)=>text(s,1445,365+i*36,24,C.forest,"Newsreader",500));
    line(1445,786,1725,786,"#b2b6aa",3);
-   line(1445,786,1445+280*synced/100,786,C.forest,3);
-   text(Math.round(synced)+"%",1585,815,17,C.forest,"Geist",500,"center");
+   line(1445,786,1445+280*progress/100,786,C.forest,3);
+   text(Math.round(progress)+"%",1585,815,17,C.forest,"Geist",500,"center");
   });
   rect(1520,865,130,6,3,"#6a7469");
   text("KOReader  ·  Kobo",1585,932,29,C.ivory,"Geist",550,"center");text("Illustrated device",1585,970,21,C.muted,"Geist",450,"center");
