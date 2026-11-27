@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render a deterministic MP4 with original sound effects and optional licensed music using Chromium canvas and FFmpeg."""
+"""Render a deterministic MP4 with optional licensed music using Chromium canvas and FFmpeg."""
 import functools
 import math
 import random
@@ -85,64 +85,27 @@ def run():
             subprocess.run(cmd+["-pass","2","-movflags","+faststart",str(tmp)],check=True)
             tmp.replace(target)
             for p in OUT.glob("encode-pass*"): p.unlink()
-        # Original deterministic foley, created from scratch (no stock audio).
-        sr=48000
-        rng=random.Random(412)
-        samples=[0.0]*round(duration*sr)
-        # Derive cues from actual scene start times so edits cannot desynchronize them.
-        starts={}
-        cursor=0
-        for scene in timeline:
-            starts[scene["id"]]=cursor
-            cursor+=scene["seconds"]
-        def effect(at,length,kind,gain):
-            prev=0.0
-            smooth=0.0
-            for n in range(round(length*sr)):
-                t=n/sr
-                u=t/length
-                noise=rng.uniform(-1,1)
-                prev=.92*prev+.08*noise
-                smooth=.64*smooth+.36*(noise-prev)
-                if kind=="chime":
-                    env=min(1,t/.025)*math.exp(-5.4*t)*min(1,(length-t)/.12)
-                    sound=(math.sin(2*math.pi*660*t)+.35*math.sin(2*math.pi*990*t))
-                else:
-                    env=math.sin(math.pi*u)**1.4
-                    sound=(smooth+.25*(noise-prev))*(.68+.32*math.sin(2*math.pi*(8*t+5*t*t)))
-                    if kind=="page":
-                        sound*=.55+.45*math.sin(math.pi*u*2)**2
-                i=round(at*sr)+n
-                if i<len(samples): samples[i]+=gain*env*sound
-        effect(starts["automation"]+.25,.48,"paper",.38)
-        effect(starts["devices"]+2.85,.55,"chime",.26)
-        effect(starts["year"]+1.5,.44,"page",.40)
-
-        foley=OUT/"foley-temp.wav"
-        with wave.open(str(foley),"wb") as w:
-            w.setparams((1,2,sr,0,"NONE","not compressed"))
-            w.writeframes(array.array("h",(int(max(-1,min(1,x))*32767) for x in samples)).tobytes())
+        # The final edit uses music alone. Do not redistribute the standalone track.
         music=os.environ.get("DEMO_MUSIC")
-        mixed=OUT/"mixed.mp4"
-        cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(target),"-i",str(foley)]
         if music:
             assert Path(music).is_file(),"DEMO_MUSIC must point to a licensed local file"
             offset=float(os.environ.get("DEMO_MUSIC_OFFSET","28.5"))
-            cmd+=["-ss",str(offset),"-i",music,"-filter_complex",
-                  f"[2:a]aresample=48000,atrim=duration={duration},asetpts=PTS-STARTPTS,volume=0.48,afade=t=in:d=0.20,afade=t=out:st={duration-1.7}:d=1.7,apad=whole_dur={duration}[m];[1:a][m]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.92[a]","-map","0:v:0","-map","[a]"]
-        else:
-            cmd+=["-map","0:v:0","-map","1:a:0"]
-        subprocess.run(cmd+["-c:v","copy","-c:a","aac","-b:a","128k","-t",str(duration),"-movflags","+faststart",str(mixed)],check=True)
-        mixed.replace(target)
-        foley.unlink()
+            mixed=OUT/"mixed.mp4"
+            subprocess.run(["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(target),
+                            "-ss",str(offset),"-i",music,"-map","0:v:0","-map","1:a:0",
+                            "-af",f"atrim=duration={duration},asetpts=PTS-STARTPTS,loudnorm=I=-17:TP=-1.5:LRA=9,aresample=48000,afade=t=in:d=0.35,afade=t=out:st={duration-2}:d=2",
+                            "-ac","2","-c:v","copy","-c:a","aac","-b:a","160k","-t",str(duration),
+                            "-movflags","+faststart",str(mixed)],check=True)
+            mixed.replace(target)
         probe=json.loads(subprocess.check_output(["ffprobe","-v","error","-show_format","-show_streams","-of","json",str(target)]))
         video=probe["streams"][0]
-        assert len(probe["streams"])==2 and video["codec_name"]=="h264" and probe["streams"][1]["codec_name"]=="aac"
+        assert len(probe["streams"])==(2 if music else 1) and video["codec_name"]=="h264"
+        if music: assert probe["streams"][1]["codec_name"]=="aac"
         assert (video["width"],video["height"],video["avg_frame_rate"])==(1920,1080,"30/1")
         assert abs(float(probe["format"]["duration"])-duration)<.1
         assert target.stat().st_size<10_000_000
         (OUT/"manifest.json").write_text(json.dumps({"commit":os.getenv("GITHUB_SHA"),"seconds":duration,"fps":FPS,"bytes":target.stat().st_size,"timeline":timeline,
-            "soundtrack":"Keys of Time (user-supplied licensed file)" if music else "Original foley only; music pending","source":"actual browser captures of fictional demo library; conceptual import and e-reader animation"},indent=2))
+            "soundtrack":"Keys of Time (user-supplied licensed file)" if music else "Silent preview; licensed soundtrack pending","source":"actual browser captures of fictional demo library; conceptual import and e-reader animation"},indent=2))
     finally:
         server.shutdown()
 

@@ -1,4 +1,4 @@
-/* Verso demo V4: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V5: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","related","moby-cover","pride-cover","frankenstein-cover","story-intro","story-finished","story-authors","story-rhythm","story-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home"];
@@ -101,7 +101,7 @@ function year(t){
  phone("story-summary",mix(1190,1385,p),609,342,.10*p);
  const seq=["story-intro","story-finished","story-authors"],i=Math.min(2,Math.floor(t/1.5)),q=t-i*1.5;
  phone(seq[i],960,603,420,0);
- if(i>0&&q<.24)fade(1-step(q,0,.24),()=>phone(seq[i-1],960,603,420,0));
+ if(i>0&&q<.44)fade(1-step(q,0,.44),()=>phone(seq[i-1],960,603,420,0));
 }
 function personalize(t){
  bg(false,t);title("Make it yours",960,85,false,82);
@@ -110,7 +110,7 @@ function personalize(t){
  let i=starts.filter(s=>t>=s).length-1;i=Math.max(0,i);
  const q=t-starts[i];
  browser(seq[i],330,150,1260);
- if(i>0&&q<.28)fade(1-step(q,0,.28),()=>browser(seq[i-1],330,150,1260));
+ if(i>0&&q<.52)fade(1-step(q,0,.52),()=>browser(seq[i-1],330,150,1260));
  if(i===4)fade(step(q,.1,.4),()=>{rect(630,967,660,61,30,C.forest);text("Custom logos & instance branding",960,998,29,C.ivory,"Geist",550,"center");});
 }
 function install(t){
@@ -135,7 +135,7 @@ const scenes=[
 ];
 window.timeline=scenes.map(s=>({id:s.id,seconds:s.len}));window.duration=scenes.reduce((n,s)=>n+s.len,0);
 function drawScene(i,t){ctx.save();scenes[i].draw(Math.max(0,t));ctx.restore()}
-window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);if(i>0&&t<.25)fade(1-step(t,0,.25),()=>drawScene(i-1,scenes[i-1].len-.001))};
+window.render=function(time){let t=Math.max(0,Math.min(window.duration-.001,time)),i=0;while(t>=scenes[i].len){t-=scenes[i++].len}drawScene(i,t);const transition=scenes[i].id==='close'?.7:.5;if(i>0&&t<transition)fade(1-step(t,0,transition),()=>drawScene(i-1,scenes[i-1].len-.001))};
 // Test the actual rendered pixels at each circle, before and after its own reveal.
 // The check is dark forest against a solid gold circle; test only its inner square.
 window.verifyChecks=function(){function darkPixels(x,y){let d=ctx.getImageData(x-13,y-13,28,28).data,n=0;for(let i=0;i<d.length;i+=4)if(d[i]<45&&d[i+1]<95&&d[i+2]<65)n++;return n}
