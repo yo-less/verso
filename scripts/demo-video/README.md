@@ -15,4 +15,6 @@ Follow the seed, capture and render order in `.github/workflows/demo-video.yml`.
 
 Use English Chromium for the capture run. The Branding captures leave native file controls intact, so their labels use the browser's UI language. The Year in Books carousel uses portrait screenshots of the actual Verso page. The page itself controls the layout, instance artwork, palette and swipe behavior. The video compositor provides the phone frames and forest-green backdrop.
 
+The Actions preview is 1080p at 30 fps. The renderer feeds lossless PNG frames to the H.264 encoder at CRF 17. The artifact size varies with the footage.
+
 The default MP4 is a silent preview. To render with the licensed [Keys of Time by Good_B_Music](https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/), set `DEMO_MUSIC` to your local copy and optionally set `DEMO_MUSIC_OFFSET` in seconds. The default offset is 28.5 seconds. Keep the download certificate and the standalone music file out of the repository.

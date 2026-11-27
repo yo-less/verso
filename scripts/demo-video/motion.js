@@ -1,4 +1,4 @@
-/* Verso demo V17: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V18: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 const assets={},names=["import-library","hero-library","library-light","library-dark","book-light","highlights-light","stats","stats-detail","search","moby-cover","pride-cover","frankenstein-cover","year-mobile-intro","year-mobile-finished","year-mobile-authors","year-mobile-rhythm","year-mobile-summary","styled-sunset-light","styled-ocean","branding-viewport","mobile-home","login","login-background"];
@@ -65,6 +65,7 @@ function automation(t){
  const b=window.data.importCover,card=window.data.importCard,s=box.w/1440;
  const target={x:box.x+(b.x+b.width/2)*s,y:box.y+(b.y+b.height/2)*s,w:b.width*s,h:b.height*s};
  const dissolve=step(t,3.45,4.13),flight=step(t,3.45,5.35),land=step(t,5.35,5.60);
+ const shelfArtwork=step(t,4.62,5.30);
  const im=assets["import-library"],ratio=im.width/1440;
  fade(land,()=>ctx.drawImage(im,card.x*ratio,card.y*ratio,card.width*ratio,card.height*ratio,box.x+card.x*s,box.y+card.y*s,card.width*s,card.height*s));
  const drop=step(t,.17,1.32),fx=460,fy=326;
@@ -86,29 +87,34 @@ function automation(t){
  const x=mix(mix(145,fx,drop),target.x,flight);
  const y=mix(mix(274,fy-35-18*cover,drop)-75*Math.sin(Math.PI*drop),target.y,flight)-140*Math.sin(Math.PI*flight);
  const w=mix(mix(113,132,cover),target.w,flight),h=mix(mix(212,198,cover),target.h,flight);
- fade(1-land,()=>{
-  ctx.translate(x,y);
-  const rotation=mix(-Math.PI/2,-.045,cover)-.10*(1-drop);
-  ctx.rotate(rotation*(1-flight));
-  ctx.scale(1+.07*fold,1-.22*fold);
-  ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,3*(1-flight));ctx.clip();
-  rect(-w/2,-h/2,w,h,0,"#fffcf4");
-  fade(1-cover,()=>{
-   ctx.rotate(Math.PI/2);
-   text("Moby-Dick",0,-34,23,C.forest,"Newsreader",600,"center");
-   fade(1-converted,()=>rect(-43,-19,86,28,5,"#eddfc0"));
-   fade(converted,()=>rect(-43,-19,86,28,5,C.forest));
-   const epub=converted>=.5;
-   fade(1-.75*fold,()=>text(epub?"EPUB":"MOBI",0,-5,19,epub?C.ivory:C.forest,"Geist",650,"center"));
-   fade(fold,()=>{
-    const crease=mix(-106,106,converted);
-    const sheen=ctx.createLinearGradient(crease-20,0,crease+20,0);
-    sheen.addColorStop(0,"#b58a4000");sheen.addColorStop(.5,"#b58a4066");sheen.addColorStop(1,"#b58a4000");
-    rect(crease-20,-58,40,116,0,sheen);
-   });
+ // Keep the cover opaque atop the card while its title and metadata appear.
+ // Match the captured shelf artwork before landing so the cover stays put.
+ ctx.save();
+ ctx.translate(x,y);
+ const rotation=mix(-Math.PI/2,-.045,cover)-.10*(1-drop);
+ ctx.rotate(rotation*(1-flight));
+ ctx.scale(1+.07*fold,1-.22*fold);
+ ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,3*(1-flight));ctx.clip();
+ rect(-w/2,-h/2,w,h,0,"#fffcf4");
+ fade(1-cover,()=>{
+  ctx.rotate(Math.PI/2);
+  text("Moby-Dick",0,-34,23,C.forest,"Newsreader",600,"center");
+  fade(1-converted,()=>rect(-43,-19,86,28,5,"#eddfc0"));
+  fade(converted,()=>rect(-43,-19,86,28,5,C.forest));
+  const epub=converted>=.5;
+  fade(1-.75*fold,()=>text(epub?"EPUB":"MOBI",0,-5,19,epub?C.ivory:C.forest,"Geist",650,"center"));
+  fade(fold,()=>{
+   const crease=mix(-106,106,converted);
+   const sheen=ctx.createLinearGradient(crease-20,0,crease+20,0);
+   sheen.addColorStop(0,"#b58a4000");sheen.addColorStop(.5,"#b58a4066");sheen.addColorStop(1,"#b58a4000");
+   rect(crease-20,-58,40,116,0,sheen);
   });
-  fade(cover,()=>img("moby-cover",-w/2,-h/2,w,h,"cover"));
  });
+ fade(cover,()=>{
+  if(shelfArtwork<1)img("moby-cover",-w/2,-h/2,w,h,"cover");
+  fade(shelfArtwork,()=>ctx.drawImage(im,b.x*ratio,b.y*ratio,b.width*ratio,b.height*ratio,-w/2,-h/2,w,h));
+ });
+ ctx.restore();
  folder(()=>{
   const front=ctx.createLinearGradient(0,-10,0,91);
   front.addColorStop(0,"#d6b479");front.addColorStop(1,"#bd9558");
@@ -369,7 +375,7 @@ function close(t){
 }
 const scenes=[
  {id:"intro",len:3.5,draw:t=>brand(t,true)},
- {id:"automation",len:7.1,draw:automation,review:[.26,.8,1.5,2.2,2.55,3.15,4.4,5.35,6.05,6.95]},
+ {id:"automation",len:7.1,draw:automation,review:[.26,.8,1.5,2.2,2.55,3.15,4.4,5.30,5.45,5.60,6.05,6.95]},
  {id:"library",len:5.8,draw:library,review:[1.6,2.5,3.6,4.55,4.85,5.3]},
  {id:"details",len:5.0,draw:details,review:[.4,1.2,2,2.85,3.15,3.48,4.98]},
  {id:"devices",len:5.35+syncHandoff,draw:devices,entry:"continuous",review:[0,1.42,2.08,2.95,3.42,4.13,4.65,5.85,6.75]},

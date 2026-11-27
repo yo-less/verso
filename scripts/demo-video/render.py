@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CAPTURES = Path(os.environ["DEMO_OUT"])
 OUT = Path(os.environ["VIDEO_OUT"])
 FPS = 30
+VIDEO_CRF = 17
 
 class Server(http.server.SimpleHTTPRequestHandler):
     def translate_path(self, path):
@@ -63,13 +64,13 @@ def run():
                 page.evaluate("(t)=>window.render(t)",t)
                 page.screenshot(path=str(OUT/f"scene-{i+1:02}-{scene['id']}.jpg"),type="jpeg",quality=85)
             args=["ffmpeg","-hide_banner","-loglevel","error","-y","-f","image2pipe","-framerate",str(FPS),
-                  "-vcodec","mjpeg","-i","pipe:0","-an","-c:v","libx264","-preset","fast","-crf","23",
+                  "-vcodec","png","-i","pipe:0","-an","-c:v","libx264","-preset","fast","-crf",str(VIDEO_CRF),
                   "-pix_fmt","yuv420p","-movflags","+faststart",str(target)]
             proc=subprocess.Popen(args,stdin=subprocess.PIPE)
             try:
                 for frame in range(round(duration*FPS)):
                     page.evaluate("(t)=>window.render(t)",frame/FPS)
-                    proc.stdin.write(page.screenshot(type="jpeg",quality=90))
+                    proc.stdin.write(page.screenshot(type="png"))
                     if frame%150==0: print(f"Rendered {frame}/{duration*FPS}",flush=True)
                 proc.stdin.close()
                 assert proc.wait()==0,"FFmpeg failed"
@@ -78,16 +79,6 @@ def run():
                     proc.kill()
                     proc.wait()
             browser.close()
-        if target.stat().st_size>9_100_000:
-            # Two-pass bitrate cap provides predictable size; retain 1080p/30 fps.
-            tmp=OUT/"bounded.mp4"
-            bitrate=int(8_650_000*8/duration)
-            cmd=["ffmpeg","-hide_banner","-loglevel","error","-y","-i",str(target),"-an","-c:v","libx264","-preset","slow",
-                 "-b:v",str(bitrate),"-pix_fmt","yuv420p","-passlogfile",str(OUT/"encode-pass")]
-            subprocess.run(cmd+["-pass","1","-f","null",os.devnull],check=True)
-            subprocess.run(cmd+["-pass","2","-movflags","+faststart",str(tmp)],check=True)
-            tmp.replace(target)
-            for p in OUT.glob("encode-pass*"): p.unlink()
         # The final edit uses music alone. Do not redistribute the standalone track.
         music=os.environ.get("DEMO_MUSIC")
         if music:
@@ -107,8 +98,8 @@ def run():
         assert (video["width"],video["height"],video["avg_frame_rate"])==(1920,1080,"30/1")
         assert video.get("field_order") == "progressive", video.get("field_order")
         assert abs(float(probe["format"]["duration"])-duration)<.1
-        assert target.stat().st_size<10_000_000
         (OUT/"manifest.json").write_text(json.dumps({"commit":os.getenv("GITHUB_SHA"),"seconds":duration,"fps":FPS,"bytes":target.stat().st_size,"timeline":timeline,
+            "encoding":{"codec":"h264","crf":VIDEO_CRF,"frame_format":"png"},
             "soundtrack":"Keys of Time (user-supplied licensed file)" if music else "SILENT INTERMEDIATE — not for review or publication","source":"actual browser captures of fictional demo library; conceptual import and e-reader animation"},indent=2))
     finally:
         server.shutdown()
