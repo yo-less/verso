@@ -9,6 +9,7 @@
   <strong>A self-hosted ebook library and reading platform.</strong><br>
   A fork of <a href="https://github.com/MrColoo/scriptorium-library">Scriptorium</a>, built on Calibre-Web-Automated and Calibre-Web.<br>
   Retains the standard Calibre library format and adds customizable instance branding.
+  This project uses AI.
 </p>
 
 <p align="center">
