@@ -42,8 +42,14 @@ def run():
             page.evaluate("window.ready")
             duration=page.evaluate("window.duration")
             timeline=page.evaluate("window.timeline")
-            assert 60<=duration<=65,duration
-            page.evaluate("window.render(1.5)")
+            assert duration == 40, duration
+            checks = page.evaluate("window.verifyChecks()")
+            assert all(row['ok'] for row in checks), checks
+            (OUT/"checkmarks.json").write_text(json.dumps(checks,indent=2))
+            for n,t in enumerate((.9,1.6,2.3,3.2,4.1)):
+                page.evaluate("(t)=>window.render(t+1.5)",t)
+                page.screenshot(path=str(OUT/f"import-step-{n+1}.jpg"),type="jpeg",quality=90)
+            page.evaluate("window.render(0.75)")
             page.screenshot(path=str(OUT/"verso-demo-poster.jpg"),type="jpeg",quality=94)
             for i,scene in enumerate(timeline):
                 t=sum(x["seconds"] for x in timeline[:i])+scene["seconds"]*.65

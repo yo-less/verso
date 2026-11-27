@@ -49,6 +49,13 @@ def additional():
         base.login(page)
         base.set_theme(page,"light")
         base.open_page(page,"/")
+        page.evaluate("window.scrollTo(0, document.getElementById('books-heading').getBoundingClientRect().top + scrollY - 88)")
+        card = page.locator(".book-card").filter(has_text="Moby-Dick").first
+        expect(card).to_be_visible()
+        base.shot(page,"import-library.png",".book-card")
+        import_card = card.bounding_box()
+        assert import_card and import_card["y"] >= 0 and import_card["y"] + import_card["height"] <= 900, import_card
+        page.evaluate("window.scrollTo(0,0)")
         page.locator("#query").fill("Jane Austen")
         page.locator("#query").press("Enter")
         page.wait_for_load_state("domcontentloaded")
@@ -69,20 +76,37 @@ def additional():
         expect(page.locator(".rs-heatmap")).to_be_visible()
         base.shot(page,"stats.png",".rs-heatmap")
         stats = page.locator(".rs-tile-value").all_text_contents()
+        page.locator("#rs-30-h").scroll_into_view_if_needed()
+        page.evaluate("document.getElementById('rs-30-h').scrollIntoView({block:'start'})")
+        base.shot(page,"stats-detail.png","#rs-30-h")
         base.open_page(page,"/admin/branding")
         base.shot(page,"branding-viewport.png","#name")
         base.preset(page,"ocean")
         base.open_page(page,"/")
         base.shot(page,"styled-ocean.png",".book-card")
         base.preset(page,"stock")
-        # Portrait story panels crop out the desktop letterbox; no simulated UI.
-        for name in ("intro","finished","authors","rhythm","summary"):
-            path = base.OUT/f"year-{name}.png"
-            with Image.open(path) as im:
-                w,h = im.size
-                sw = round(w*520/1440)
-                im.crop(((w-sw)//2,0,(w+sw)//2,h)).save(base.OUT/f"story-{name}.png")
-        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats}))
+        # Capture actual portrait story layouts, including complete headers.
+        portrait = browser.new_context(viewport={"width":420,"height":840},device_scale_factor=2,
+                                       locale="en-US",color_scheme="dark",reduced_motion="reduce",service_workers="block")
+        story = portrait.new_page()
+        base.login(story)
+        base.open_page(story,"/year")
+        expect(story.locator(".yr-brand img")).to_be_visible()
+        story.locator("[data-yr-pause]").click()
+        targets = {"intro","finished","authors","rhythm","summary"}
+        found = set()
+        for _ in range(story.locator(".yr-slide").count()):
+            active = story.locator(".yr-slide.is-active")
+            classes = active.get_attribute("class") or ""
+            for name in targets:
+                if f"yr-s-{name}" in classes:
+                    base.shot(story,f"story-{name}.png",".yr-slide.is-active")
+                    found.add(name)
+            story.keyboard.press("ArrowRight")
+            story.wait_for_timeout(450)
+        assert found == targets, (found, targets)
+        portrait.close()
+        (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"importCard":import_card}))
         ctx.close()
         browser.close()
 
