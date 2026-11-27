@@ -49,9 +49,9 @@ function automation(t){
    ctx.save();ctx.translate(x,y);ctx.rotate(angle);
    rect(-92,-50,184,100,6,"#fffcf4");
    ctx.fillStyle="#d4b87e";ctx.beginPath();ctx.moveTo(66,-50);ctx.lineTo(92,-24);ctx.lineTo(66,-24);ctx.closePath();ctx.fill();
-   text("EPUB",0,-13,26,C.forest,"Geist",650,"center");
-   fade(1-converted,()=>{line(-46,14,45,14,"#cbb88f",2);line(-46,25,26,25,"#cbb88f",2)});
-   fade(converted,()=>text("Ready to import",0,20,16,C.forest,"Geist",500,"center"));
+   text("EPUB",0,-28,26,C.forest,"Geist",650,"center");
+   fade(1-converted,()=>{line(-46,-3,45,-3,"#cbb88f",2);line(-46,7,26,7,"#cbb88f",2)});
+   fade(converted,()=>text("Ready to import",0,0,16,C.forest,"Geist",500,"center"));
    ctx.restore();
   });
  }
