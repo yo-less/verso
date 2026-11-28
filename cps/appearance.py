@@ -28,6 +28,7 @@ appearance = Blueprint('appearance', __name__)
 
 PRESET_LABELS = {
     "stock": N_("Classic"),
+    "smoky-aubergine": N_("Smoky Aubergine"),
     "aurora": N_("Aurora"),
     "sunset": N_("Sunset"),
     "ocean": N_("Ocean"),

@@ -382,8 +382,8 @@ def additional():
         stats_content = {"x":sidebar["x"] + sidebar["width"],"y":topbar["y"] + topbar["height"]}
         base.shot(page,"stats-detail.png")
         branding_focus = capture_branding(page)
-        # Film the real Verso paper tone slider at 2x resolution. Keep the
-        # forest-green rail and terracotta accents throughout.
+        # Film the genuine Verso palette slider at 2x resolution. The
+        # layout stays fixed while its colours move to Smoky Aubergine.
         base.set_theme(page,"light")
         base.preset(page,"stock")
         palette_ctx = browser.new_context(viewport={"width":1440,"height":900},
@@ -393,35 +393,44 @@ def additional():
         base.open_page(palette_page,"/me/appearance")
         base.set_theme(palette_page,"light")
         base.open_page(palette_page,"/me/appearance")
-        paper = palette_page.locator("#ap-paper-depth")
+        palette = palette_page.locator("#ap-palette-mix")
         colours = palette_page.locator("section[aria-labelledby='ap-colours-h']")
         colours.evaluate("el => window.scrollTo(0,Math.max(0,el.getBoundingClientRect().top+scrollY-100))")
-        expect(paper).to_have_value("0")
-        expect(paper).to_be_visible()
+        expect(palette).to_have_value("0")
+        expect(palette).to_be_visible()
         expect(palette_page.locator("#ap-stage")).to_be_visible()
         assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
         palette_page.evaluate("""async () => {
             await document.fonts.ready;
             await Promise.all([...document.images].filter(i=>i.getBoundingClientRect().top<innerHeight).map(i=>i.decode().catch(()=>{})));
         }""")
-        palette_controls = [paper.bounding_box()]
+        palette_controls = [palette.bounding_box()]
         assert all(b and 0 <= b["y"] < 900 for b in palette_controls), palette_controls
         stock_rail = palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor")
         stock_paper = palette_page.locator("body").evaluate("el => getComputedStyle(el).backgroundColor")
         for i in range(61):
             p=i/60
             eased=p*p*(3-2*p)
-            paper.fill(str(round(90*eased)))
+            palette.fill(str(round(100*eased)))
             palette_page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
             palette_page.screenshot(path=str(base.OUT / f"custom-colour-{i}.png"), animations="disabled")
-        expect(paper).to_have_value("90")
+        expect(palette).to_have_value("100")
         expect(palette_page.locator("html")).to_have_attribute("data-ap-surface","verso")
         assert palette_page.locator("body").evaluate("el => getComputedStyle(el).backgroundColor") != stock_paper
-        # Equivalent relative-color syntax can serialize differently, so
-        # compare the resolved sidebar in a temporary computed color sample.
+        assert palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor") != stock_rail
+        # Exact endpoints, compare resolved pixels.
         assert palette_page.locator("#ap-hue").input_value() == "155"
         assert palette_page.locator("#ap-hue2").input_value() == "35"
-        paper.fill("0")
+        assert palette_page.locator("html").evaluate("""el => {
+            const canvas=document.createElement("canvas");canvas.width=canvas.height=1;
+            const ctx=canvas.getContext("2d");
+            function rgb(value){ctx.clearRect(0,0,1,1);ctx.fillStyle=value;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data];}
+            function near(a,b){return a.every((v,i)=>Math.abs(v-b[i])<=1);}
+            return near(rgb(getComputedStyle(document.querySelector("#sidebar")).backgroundColor),rgb("#39313f")) &&
+                   near(rgb(getComputedStyle(document.body).backgroundColor),rgb("#f4eee7")) &&
+                   near(rgb(getComputedStyle(el).getPropertyValue("--primary")),rgb("#89534f"));
+        }"""), "Smoky Aubergine palette endpoints do not match"
+        palette.fill("0")
         assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
         expect(palette_page.locator("[data-ap-savebar]")).to_be_hidden()
         assert palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor") == stock_rail

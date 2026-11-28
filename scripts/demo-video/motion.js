@@ -1,4 +1,4 @@
-/* Verso demo V26: time-driven motion, real UI, feature-specific compositions. */
+/* Verso demo V27: time-driven motion, real UI, feature-specific compositions. */
 const W=1920,H=1080,C={forest:"#102e20",paper:"#f8f1e5",rust:"#a23e2a",gold:"#b58a40",ivory:"#fff1dc",muted:"#a8bcaa"};
 const ctx=document.querySelector("canvas").getContext("2d",{willReadFrequently:true});
 ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";

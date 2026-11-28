@@ -24,10 +24,10 @@ OPTIONS = {
     "vibrancy": ("soft", "vivid"),
 }
 HUE_KEYS = ("hue", "hue2")
-NUMERIC_KEYS = HUE_KEYS + ("paper_depth",)
+NUMERIC_KEYS = HUE_KEYS + ("paper_depth", "palette_mix")
 
 # Starting point for editing Classic: the same Verso typography, layout and palette.
-CLASSIC = {"hue": 155, "hue2": 35, "paper_depth": 0, "header": "plain", "sidebar": "plain",
+CLASSIC = {"hue": 155, "hue2": 35, "paper_depth": 0, "palette_mix": 0, "header": "plain", "sidebar": "plain",
            "backdrop": "none", "surface": "verso", "buttons": "mono",
            "radius": "default", "headings": "serif", "vibrancy": "soft"}
 
@@ -61,6 +61,9 @@ PRESETS = {
 for _preset in PRESETS.values():
     if _preset:
         _preset["paper_depth"] = 0
+        _preset["palette_mix"] = 0
+
+PRESETS["smoky-aubergine"] = dict(CLASSIC, palette_mix=100)
 
 
 def sanitize(raw):
@@ -80,6 +83,10 @@ def sanitize(raw):
         clean["paper_depth"] = max(0, min(100, int(raw.get("paper_depth", 0))))
     except (TypeError, ValueError, OverflowError):
         clean["paper_depth"] = 0
+    try:
+        clean["palette_mix"] = max(0, min(100, int(raw.get("palette_mix", 0))))
+    except (TypeError, ValueError, OverflowError):
+        clean["palette_mix"] = 0
     return clean
 
 
@@ -90,5 +97,5 @@ def html_attrs(ap):
     attrs = {"data-ap": ""}
     for key in OPTIONS:
         attrs["data-ap-" + key] = ap[key]
-    attrs["style"] = "--ap-h:{};--ap-h2:{};--ap-paper-depth:{}%".format(int(ap["hue"]), int(ap["hue2"]), ap.get("paper_depth", 0))
+    attrs["style"] = "--ap-h:{};--ap-h2:{};--ap-palette-mix:{}%;--ap-paper-depth:{}%".format(int(ap["hue"]), int(ap["hue2"]), ap.get("palette_mix", 0), ap.get("paper_depth", 0))
     return attrs

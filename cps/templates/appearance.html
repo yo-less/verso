@@ -122,6 +122,14 @@
         <span class="ap-hue-dot" data-hue-dot="hue2"></span>
         <input type="range" id="ap-hue2" name="hue2" min="0" max="359" step="1" value="{{ current.hue2 }}" class="ap-hue-range">
       </div>
+      <div class="ap-hue" data-palette-mix{% if current.surface != "verso" %} hidden{% endif %}>
+        <label for="ap-palette-mix">{{ _('Verso palette') }}</label>
+        <span class="ap-palette-dot" aria-hidden="true"></span>
+        <div class="ap-palette-track">
+          <input type="range" id="ap-palette-mix" name="palette_mix" min="0" max="100" step="1" value="{{ current.palette_mix }}" class="ap-hue-range ap-palette-range" aria-label="{{ _('Classic to Smoky Aubergine') }}">
+          <div class="ap-palette-labels"><span>{{ _('Classic') }}</span><span>{{ _('Smoky Aubergine') }}</span></div>
+        </div>
+      </div>
       <div class="ap-hue" data-paper-tone{% if current.surface != "verso" %} hidden{% endif %}>
         <label for="ap-paper-depth">{{ _('Paper tone') }}</label>
         <span class="ap-paper-dot" aria-hidden="true"></span>

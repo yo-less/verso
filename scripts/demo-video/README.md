@@ -26,4 +26,4 @@ The workflow first attempts to resolve the published [Pixabay track page](https:
 
 The workflow verifies the SHA-256 of the original licensed MP3, stores it in runner-temporary storage, and passes it to the renderer. The resulting artifact is `verso-demo.mp4` with integrated stereo AAC. If the track cannot be resolved, the workflow fails explicitly instead of producing a silent Actions video. A wrong explicitly configured download fails the job rather than silently using another track.
 
-The demo edits the real Verso paper-tone range from Classic ivory to warm parchment and back to Classic, preserving the forest green rail and terracotta accents. The slider is part of the persisted appearance engine, not a mock UI. The slower customization and metadata holds intentionally extend the video.
+The demo moves the real Verso palette range from Classic to Smoky Aubergine and back to Classic. The slider is part of the persisted appearance engine; the sidebar, paper and accent colours change without a layout or artwork change. The slower customization and metadata holds intentionally extend the video.
