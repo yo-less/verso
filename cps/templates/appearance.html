@@ -135,6 +135,14 @@
         <span class="ap-paper-dot" aria-hidden="true"></span>
         <input type="range" id="ap-paper-depth" name="paper_depth" min="0" max="100" step="1" value="{{ current.paper_depth }}" class="ap-hue-range ap-paper-range" aria-label="{{ _('Paper tone from ivory to parchment') }}">
       </div>
+      <div class="ap-hue">
+        <label for="ap-saturation">{{ _('Saturation') }}</label>
+        <span class="ap-saturation-dot" aria-hidden="true"></span>
+        <div class="ap-palette-track">
+          <input type="range" id="ap-saturation" name="saturation" min="0" max="150" step="1" value="{{ current.saturation }}" class="ap-hue-range ap-saturation-range" aria-describedby="ap-saturation-labels">
+          <div class="ap-palette-labels" id="ap-saturation-labels"><span>{{ _('Muted') }}</span><output id="ap-saturation-value" for="ap-saturation">{{ current.saturation }}%</output><span>{{ _('Rich') }}</span></div>
+        </div>
+      </div>
       <fieldset class="ap-group">
         <legend>{{ _('Intensity') }}</legend>
         <div class="ap-choices ap-choices--text">{% for v in options.vibrancy %}{{ choice('vibrancy', v, vibrancy_labels[v]) }}{% endfor %}</div>

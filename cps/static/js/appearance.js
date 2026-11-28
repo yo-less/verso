@@ -19,9 +19,10 @@
   var state = saved ? copy(saved) : null;   // null = the classic (stock) look
 
   function copy(o) { return JSON.parse(JSON.stringify(o)); }
+  function saturation(s) { return s.saturation == null ? 100 : s.saturation; }
   function same(a, b) {
     if (!a || !b) return a === b;
-    return KEYS.concat(["hue", "hue2", "paper_depth", "palette_mix"]).every(function (k) { return String(a[k]) === String(b[k]); });
+    return KEYS.concat(["hue", "hue2", "paper_depth", "palette_mix", "saturation"]).every(function (k) { return String(a[k]) === String(b[k]); });
   }
 
   // ---------- Apply a style to a scope element ----------
@@ -33,6 +34,7 @@
     el.style.removeProperty("--ap-h2");
     el.style.removeProperty("--ap-paper-depth");
     el.style.removeProperty("--ap-palette-mix");
+    el.style.removeProperty("--ap-saturation");
     if (!s) {
       if (el !== root) el.classList.add("ap-reset");
       return;
@@ -44,18 +46,21 @@
     el.style.setProperty("--ap-h2", s.hue2);
     el.style.setProperty("--ap-paper-depth", (s.paper_depth || 0) + "%");
     el.style.setProperty("--ap-palette-mix", (s.palette_mix || 0) + "%");
+    el.style.setProperty("--ap-saturation", saturation(s) / 100);
   }
 
   function render() {
     applyTo(root, state);
     if (stage) applyTo(stage, state);
     var shown = state || copy(cfg.classic);
+    form.querySelector("#ap-saturation-value").textContent = saturation(shown) + "%";
     form.querySelector("[data-paper-tone]").hidden = shown.surface !== "verso";
     form.querySelector("[data-palette-mix]").hidden = shown.surface !== "verso";
     // Swatches preview each option in the current colours.
     Array.prototype.forEach.call(form.querySelectorAll(".ap-swatch"), function (sw) {
       sw.style.setProperty("--ap-h", shown.hue);
       sw.style.setProperty("--ap-h2", shown.hue2);
+      sw.style.setProperty("--ap-saturation", saturation(shown) / 100);
       sw.setAttribute("data-ap-vibrancy", shown.vibrancy);
     });
     Array.prototype.forEach.call(form.querySelectorAll("[data-hue-dot]"), function (dot) {
@@ -84,6 +89,7 @@
     form.querySelector("input[name='hue2']").value = s.hue2;
     form.querySelector("input[name='paper_depth']").value = s.paper_depth || 0;
     form.querySelector("input[name='palette_mix']").value = s.palette_mix || 0;
+    form.querySelector("input[name='saturation']").value = saturation(s);
   }
   function readForm() {
     var s = {};
@@ -95,6 +101,8 @@
     s.hue2 = parseInt(form.querySelector("input[name='hue2']").value, 10) || 0;
     s.paper_depth = parseInt(form.querySelector("input[name='paper_depth']").value, 10) || 0;
     s.palette_mix = parseInt(form.querySelector("input[name='palette_mix']").value, 10) || 0;
+    s.saturation = parseInt(form.querySelector("input[name='saturation']").value, 10);
+    if (!Number.isFinite(s.saturation)) s.saturation = 100;
     return s;
   }
 
@@ -135,6 +143,7 @@
     s.hue2 = (s.hue + (Math.random() < 0.5 ? -offset : offset) + 360) % 360;
     s.paper_depth = 0;
     s.palette_mix = 0;
+    s.saturation = 100;
     state = s;
     fill(s);
     render();

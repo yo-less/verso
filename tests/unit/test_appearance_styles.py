@@ -35,7 +35,7 @@ def test_unknown_values_fall_back_to_defaults():
 
 def test_attributes_only_contain_whitelisted_values():
     attrs = styles.html_attrs(styles.sanitize({"header": "mesh", "hue": "12;background:url(x)"}))
-    assert attrs["style"] == "--ap-h:230;--ap-h2:190;--ap-palette-mix:0%;--ap-paper-depth:0%"
+    assert attrs["style"] == "--ap-h:230;--ap-h2:190;--ap-palette-mix:0%;--ap-saturation:1;--ap-paper-depth:0%"
     for key, value in attrs.items():
         if key.startswith("data-ap-"):
             assert value in styles.OPTIONS[key[len("data-ap-"):]]
@@ -59,7 +59,7 @@ def test_classic_is_a_valid_editable_verso_palette():
     assert styles.sanitize(styles.CLASSIC) == styles.CLASSIC
     attrs = styles.html_attrs(styles.CLASSIC)
     assert attrs["data-ap-surface"] == "verso"
-    assert attrs["style"] == "--ap-h:155;--ap-h2:35;--ap-palette-mix:0%;--ap-paper-depth:0%"
+    assert attrs["style"] == "--ap-h:155;--ap-h2:35;--ap-palette-mix:0%;--ap-saturation:1;--ap-paper-depth:0%"
 
 
 @pytest.mark.parametrize("raw,expected", [(-1,0),(0,0),(80,80),(120,100),("invalid",0)])
@@ -78,3 +78,26 @@ def test_palette_mix_is_bounded(raw,expected):
 
 def test_aubergine_is_classic_layout_with_new_palette():
     assert styles.PRESETS["smoky-aubergine"] == dict(styles.CLASSIC, palette_mix=100)
+
+
+@pytest.mark.parametrize("raw,expected", [(-1,0),(0,0),(50,50),(100,100),(150,150),(151,150),("bad",100),(None,100),(float("inf"),100)])
+def test_saturation_is_bounded(raw, expected):
+    clean = styles.sanitize(dict(styles.CLASSIC, saturation=raw))
+    assert clean["saturation"] == expected
+    assert "--ap-saturation:{:g};".format(expected / 100) in styles.html_attrs(clean)["style"]
+
+
+def test_existing_styles_keep_original_saturation():
+    for preset in styles.PRESETS.values():
+        if preset:
+            previous = {k: v for k, v in preset.items() if k != "saturation"}
+            assert styles.sanitize(previous) == preset
+            assert preset["saturation"] == 100
+    assert styles.sanitize({}) == {}
+
+
+def test_saturation_scales_both_native_palette_endpoints():
+    css = (REPO / "cps" / "static" / "css" / "themes.css").read_text(encoding="utf-8")
+    assert "oklch(from #102e20 l calc(c * var(--ap-saturation))" in css
+    assert "oklch(from #39313f l calc(c * var(--ap-saturation)) h)" in css
+    assert "oklch(from #89534f l calc(c * var(--ap-saturation)) h)" in css

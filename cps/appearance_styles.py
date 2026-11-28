@@ -24,10 +24,12 @@ OPTIONS = {
     "vibrancy": ("soft", "vivid"),
 }
 HUE_KEYS = ("hue", "hue2")
-NUMERIC_KEYS = HUE_KEYS + ("paper_depth", "palette_mix")
+NUMERIC_KEYS = HUE_KEYS + ("paper_depth", "palette_mix", "saturation")
+DEFAULT_SATURATION = 100
+MAX_SATURATION = 150
 
 # Starting point for editing Classic: the same Verso typography, layout and palette.
-CLASSIC = {"hue": 155, "hue2": 35, "paper_depth": 0, "palette_mix": 0, "header": "plain", "sidebar": "plain",
+CLASSIC = {"hue": 155, "hue2": 35, "paper_depth": 0, "palette_mix": 0, "saturation": DEFAULT_SATURATION, "header": "plain", "sidebar": "plain",
            "backdrop": "none", "surface": "verso", "buttons": "mono",
            "radius": "default", "headings": "serif", "vibrancy": "soft"}
 
@@ -62,6 +64,7 @@ for _preset in PRESETS.values():
     if _preset:
         _preset["paper_depth"] = 0
         _preset["palette_mix"] = 0
+        _preset["saturation"] = DEFAULT_SATURATION
 
 PRESETS["smoky-aubergine"] = dict(CLASSIC, palette_mix=100)
 
@@ -87,6 +90,10 @@ def sanitize(raw):
         clean["palette_mix"] = max(0, min(100, int(raw.get("palette_mix", 0))))
     except (TypeError, ValueError, OverflowError):
         clean["palette_mix"] = 0
+    try:
+        clean["saturation"] = max(0, min(MAX_SATURATION, int(raw.get("saturation", DEFAULT_SATURATION))))
+    except (TypeError, ValueError, OverflowError):
+        clean["saturation"] = DEFAULT_SATURATION
     return clean
 
 
@@ -97,5 +104,5 @@ def html_attrs(ap):
     attrs = {"data-ap": ""}
     for key in OPTIONS:
         attrs["data-ap-" + key] = ap[key]
-    attrs["style"] = "--ap-h:{};--ap-h2:{};--ap-palette-mix:{}%;--ap-paper-depth:{}%".format(int(ap["hue"]), int(ap["hue2"]), ap.get("palette_mix", 0), ap.get("paper_depth", 0))
+    attrs["style"] = "--ap-h:{};--ap-h2:{};--ap-palette-mix:{}%;--ap-saturation:{:g};--ap-paper-depth:{}%".format(int(ap["hue"]), int(ap["hue2"]), ap.get("palette_mix", 0), ap.get("saturation", DEFAULT_SATURATION) / 100, ap.get("paper_depth", 0))
     return attrs
