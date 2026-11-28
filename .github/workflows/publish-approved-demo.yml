@@ -1,0 +1,97 @@
+name: Publish approved Verso demo
+
+on:
+  push:
+    branches: [demo-video-preview]
+    paths:
+      - '.github/workflows/publish-approved-demo.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: publish-approved-verso-demo
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      APPROVED_RUN: '46087683547'
+      APPROVED_SOURCE: e4222bb1a65cdf08c04874fe7d30fefc04f87519
+      DEMO_SHA256: c66c6de060fd8ea7d574bd93bf8ec86c2dac49fdd4a0422a4b65f354d18eddc6
+      DEMO_TAG: demo-video-v1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Retrieve the approved MP4
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/approved-demo"
+          mkdir -p "$dir"
+          test "$(gh run view "$APPROVED_RUN" --repo "$GITHUB_REPOSITORY" --json headSha,conclusion --jq '.headSha + " " + .conclusion')" = "$APPROVED_SOURCE success"
+          gh run download "$APPROVED_RUN" --repo "$GITHUB_REPOSITORY" --name verso-demo-video --dir "$dir"
+          video="$dir/verso-demo.mp4"
+          echo "$DEMO_SHA256  $video" | sha256sum --check
+          echo "APPROVED_VIDEO=$video" >> "$GITHUB_ENV"
+      - name: Validate video and prepare README preview
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ffprobe -v error -show_format -show_streams -of json "$APPROVED_VIDEO" > "$RUNNER_TEMP/demo-probe.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = json.loads((Path(os.environ["RUNNER_TEMP"]) / "demo-probe.json").read_text())
+          v, a = p["streams"]
+          assert v["codec_name"] == "h264"
+          assert (v["width"], v["height"], v["avg_frame_rate"]) == (1920, 1080, "30/1")
+          assert a["codec_name"] == "aac" and a["channels"] == 2
+          assert abs(float(p["format"]["duration"]) - 73.5) < 0.05
+          PY
+          mkdir -p docs/screenshots
+          ffmpeg -v error -y -ss 13.1 -i "$APPROVED_VIDEO" -frames:v 1 -q:v 2 docs/screenshots/demo-poster.jpg
+      - name: Publish the finished video as a permanent media asset
+        run: |
+          set -euo pipefail
+          if gh release view "$DEMO_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::The demo media release already exists; refusing to overwrite it."
+            exit 1
+          fi
+          gh release create "$DEMO_TAG" "$APPROVED_VIDEO" \
+            --repo "$GITHUB_REPOSITORY" --target "$APPROVED_SOURCE" --latest=false \
+            --title "Verso demo video" \
+            --notes "The approved Verso demonstration video (73.5 seconds, 1080p, stereo audio). This is a media release, not a software version. Recorded on the demo-video-preview branch. Music: Keys of Time (No AI) by Good_B_Music, licensed through Pixabay."
+      - name: Replace the inherited demo link in the current README
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("README.md")
+          s = p.read_text()
+          old = """https://github.com/user-attachments/assets/0daf9b44-333a-4edd-873a-d19131faa2f7
+
+          <sub>Upstream Scriptorium demonstration. The screenshots below show the current Verso interface.</sub>"""
+          # Match only the known inherited media section; never overwrite an
+          # independently rewritten README.
+          old = old.replace("\n          ", "\n")
+          assert s.count(old) == 1, "Unexpected README; refusing to replace"
+          new = """[![Watch the Verso demo — library, automated import, synchronized reading and customization](docs/screenshots/demo-poster.jpg)](https://github.com/yo-less/verso/releases/download/demo-video-v1/verso-demo.mp4)
+
+          **[Watch or download the Verso demo](https://github.com/yo-less/verso/releases/download/demo-video-v1/verso-demo.mp4)** · 1:13 · 1080p · with sound.
+
+          <sub>Recorded with the Verso demonstration library on the development branch. Music: <a href="https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/">Keys of Time (No AI)</a> by Good_B_Music (Pixabay).</sub>"""
+          new = new.replace("\n          ", "\n")
+          p.write_text(s.replace(old, new))
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md docs/screenshots/demo-poster.jpg
+          git commit -m "Feature the official Verso demo video in the README"
+          git push origin HEAD:main
