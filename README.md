@@ -62,9 +62,13 @@ Update with `docker compose pull && docker compose up -d`.
 
 ### Documentation
 
-[All documentation](docs/README.md)  
-[Installation](docs/installation.md) · [Configuration](docs/configuration.md) · [Migration](docs/installation.md#migrating-from-calibre-web-automated) · [Backups](docs/updating-and-backups.md)  
-[KOReader](docs/koreader.md) · [Kobo](docs/kobo.md) · [Remote access](docs/remote-access.md) · [Issues](https://github.com/yo-less/verso/issues)
+[Browse the documentation](docs/README.md)
+
+**Setup** — [Installation](docs/installation.md) · [Configuration](docs/configuration.md) · [Migration](docs/installation.md#migrating-from-calibre-web-automated)  
+**Reading** — [KOReader](docs/koreader.md) · [Kobo](docs/kobo.md)  
+**Maintenance** — [Remote access](docs/remote-access.md) · [Backups & updates](docs/updating-and-backups.md) · [Troubleshooting](docs/troubleshooting.md)
+
+[Report an issue](https://github.com/yo-less/verso/issues)
 
 ---
 
