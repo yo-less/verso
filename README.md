@@ -35,7 +35,9 @@
 
 ## See it in action
 
-[**Watch the Verso feature video**](https://github.com/yo-less/verso/releases/download/feature-video-v1/verso-features.mp4) · 1:13 · 1080p · with sound
+https://github.com/user-attachments/assets/452935af-4322-41e1-8c60-38b1abe9a43c
+
+[**Verso feature video (Download - High quality)**](https://github.com/yo-less/verso/releases/download/feature-video-v1/verso-features.mp4) · 1:13 · 1080p · with sound
 
 <sub>Music: <a href="https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/">Keys of Time (No AI)</a> by Good_B_Music, via Pixabay.</sub>
 
