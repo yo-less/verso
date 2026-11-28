@@ -428,6 +428,7 @@ def additional():
                 (row, i) => row.every((v, j) => Math.abs(v - expected[i][j]) <= 1));
         }""")
         stock_colors = palette_page.evaluate("window.demoPaletteColors()")
+        print("Initial Classic colors:", stock_colors, flush=True)
         assert palette_page.evaluate("window.demoPaletteMatches([[16,46,32,255],[248,241,229,255],[146,54,34,255]])"), stock_colors
         for i in range(61):
             p=i/60
