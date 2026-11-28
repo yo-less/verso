@@ -1,5 +1,8 @@
 {% extends "layout.html" %}
 {% block content_class %}content--narrow{% endblock %}
+{% block header %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/branding-preview.css') }}">
+{% endblock %}
 {% block body %}
 <div class="page-header"><div><span class="page-eyebrow"><a href="{{ url_for('admin.admin') }}">Settings</a></span><h1 class="page-title">Branding</h1><p class="muted">Choose the identity of this installation. Your books and users are unaffected.</p></div></div>
 <section class="card">
@@ -10,22 +13,35 @@
   </form>
   <p class="muted small">Restoring defaults removes uploaded assets and custom colours. Save your originals before resetting.</p>
 </section>
-<form class="card" method="post" enctype="multipart/form-data">
+<form class="card" method="post" enctype="multipart/form-data" id="branding-form" data-preview-url="{{ url_for('admin.branding_preview') }}">
   {{ ui.csrf_field() }}
   <h2 class="card-title">Custom identity</h2>
   <div class="field"><label for="name">Site name</label><input class="input" id="name" name="name" value="{{ branding.name }}" maxlength="60" required></div>
   <div class="field"><label for="background">Login background colour</label><input id="background" name="background" type="color" value="{{ branding.background }}"></div>
   <div class="field"><label for="accent">Accent colour</label><input id="accent" name="accent" type="color" value="{{ branding.accent }}"></div>
   <div class="field"><label for="decoration">Login decoration</label><select class="input" id="decoration" name="decoration">{% for value,label in [('watermark','Watermark'),('ribbon','Hanging bookmark'),('none','None')] %}<option value="{{ value }}"{% if branding.decoration == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <p class="muted small">{{ _('Select an SVG to preview it here before saving. The preview does not change your active branding.') }}</p>
   {% for kind,label in [('favicon','Favicon'),('wordmark','Navigation wordmark'),('wordmark-dark','Navigation wordmark — dark background'),('login','Login wordmark'),('login-dark','Login wordmark — dark background'),('background','Login decoration')] %}
-  <div class="field">
+  {% set stock_url = url_for('static', filename='verso-login-landscape.webp' if kind == 'background' else 'verso-' ~ kind ~ '.svg') %}
+  {% set saved_url = url_for('admin.branding_landscape') if kind == 'background' and 'background' not in branding.assets else url_for('admin.branding_asset', kind=kind) %}
+  <div class="field branding-asset" data-branding-kind="{{ kind }}" data-custom="{{ 'true' if kind in branding.assets else 'false' }}" data-saved-src="{{ saved_url }}" data-stock-src="{{ stock_url }}">
     <label for="asset-{{ kind }}">{{ label }}</label>
-    <div><img src="{{ url_for('admin.branding_asset', kind=kind) }}" alt="{{ label }}" width="{{ 48 if kind in ['favicon','background'] else 180 }}" height="48"></div>
-    <input class="input" id="asset-{{ kind }}" type="file" name="{{ kind }}" accept=".svg,image/svg+xml">
+    <div class="branding-preview{% if kind.endswith('-dark') %} branding-preview--dark{% endif %}{% if kind == 'background' %} branding-preview--landscape{% endif %}">
+      <img data-branding-image src="{{ saved_url }}" alt="{{ label }}" width="{{ 48 if kind == 'favicon' else 180 }}" height="48">
+    </div>
+    <div class="row">
+      <input class="input" id="asset-{{ kind }}" type="file" name="{{ kind }}" accept=".svg,image/svg+xml" aria-describedby="status-{{ kind }}">
+      <button class="btn btn-sm" type="button" data-clear-upload hidden>{{ _('Clear selection') }}</button>
+    </div>
+    <p class="hint branding-preview-status" id="status-{{ kind }}" role="status" data-preview-status></p>
     {% if kind in branding.assets %}<label class="check"><input type="checkbox" name="reset_{{ kind }}" value="1"> Restore default asset</label>{% endif %}
   </div>
   {% endfor %}
   <p class="muted small">If no dark variant is uploaded, the custom light logo is reused. SVG only, up to 128 KiB per asset. Simple paths, shapes and styles are supported. To use a hanging bookmark, upload a decoration SVG and choose that layout. Scripts, external references and embedded HTML are not allowed.</p>
   <button class="btn btn-primary" type="submit" name="action" value="save">Save branding</button>
 </form>
+{% endblock %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/branding-preview.js') }}"></script>
 {% endblock %}

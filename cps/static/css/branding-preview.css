@@ -1,0 +1,14 @@
+/* Instance branding previews use fixed contrast surfaces, independent of the user's theme. */
+.branding-preview {
+  min-height: 78px; display: flex; align-items: center; justify-content: center;
+  padding: 12px 18px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: #f8f1e5; overflow: hidden;
+}
+.branding-preview--dark { background: #102e20; }
+.branding-preview img { display: block; max-width: 100%; object-fit: contain; }
+.branding-preview--landscape { min-height: 110px; }
+.branding-preview--landscape img { width: min(100%, 380px); height: 96px; }
+.branding-asset .row { flex-wrap: wrap; }
+.branding-asset .row input { flex: 1 1 240px; min-width: 0; }
+.branding-preview-status:empty { display: none; }
+.branding-preview-error { color: var(--danger); }

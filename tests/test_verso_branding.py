@@ -176,3 +176,39 @@ def test_login_decoration_is_independent_of_instance_name(name, assets, decorati
     assert (' login-landscape"' in html) == (expected == "landscape")
     assert ('class="login-decoration"' in html) == (expected in ("watermark", "ribbon"))
     assert f'alt="{name}"' in html
+
+
+def test_branding_revision_changes_only_with_settings():
+    base = dict(branding.DEFAULT)
+    original = branding.revision(base)
+    assert branding.revision(dict(reversed(list(base.items())))) == original
+    for changed in (
+        dict(base, name="My library"),
+        dict(base, accent="#123456"),
+        dict(base, background="#123456"),
+        dict(base, assets={"wordmark-dark": "<svg/>"}),
+        dict(base, decoration="none"),
+    ):
+        assert branding.revision(changed) != original
+    assert len(original) == 16
+
+
+def test_preview_and_save_share_svg_validation():
+    from werkzeug.datastructures import FileStorage
+    svg = b'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L1 1"/></svg>'
+    assert branding.validate_upload(FileStorage(stream=io.BytesIO(svg), filename="logo.svg")) == svg.decode()
+    for raw in (b"<svg", b"<script/>", b"x" * (branding.MAX_SVG + 1)):
+        with pytest.raises(ValueError):
+            branding.validate_upload(FileStorage(stream=io.BytesIO(raw), filename="invalid.svg"))
+
+
+def test_branding_previews_use_image_context_and_versioned_urls():
+    from pathlib import Path
+    cps = Path(branding.__file__).parent
+    admin = (cps / "admin.py").read_text(encoding="utf-8")
+    script = (cps / "static" / "js" / "branding-preview.js").read_text(encoding="utf-8")
+    assert '@admi.app_url_defaults' in admin
+    assert 'values["v"] = g.branding_revision' in admin
+    assert 'instance_branding.validate_upload(upload)' in admin
+    assert "data:image/svg+xml" in script
+    assert "innerHTML" not in script

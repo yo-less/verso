@@ -3135,6 +3135,31 @@ from . import branding as instance_branding
 def branding_context():
     return {"branding": instance_branding.load()}
 
+@admi.app_url_defaults
+def version_branding_urls(endpoint, values):
+    # Native favicon caches may retain the old URL despite no-store.
+    if endpoint in {"admin.branding_asset", "admin.branding_landscape",
+                    "admin.branding_css", "admin.branding_manifest"}:
+        if "v" not in values:
+            if not hasattr(g, "branding_revision"):
+                g.branding_revision = instance_branding.revision()
+            values["v"] = g.branding_revision
+
+@admi.route("/admin/branding/preview", methods=["POST"])
+@user_login_required
+@admin_required
+def branding_preview():
+    upload = request.files.get("asset")
+    if not upload or not upload.filename:
+        return jsonify(error=_("Choose an SVG file.")), 400
+    try:
+        svg = instance_branding.validate_upload(upload)
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 400
+    response = jsonify(svg=svg)
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
 @admi.route("/admin/branding", methods=["GET", "POST"])
 @user_login_required
 @admin_required

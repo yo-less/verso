@@ -1,5 +1,6 @@
 """Persistent, instance-specific branding. GPL-3.0-or-later."""
 import io
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -39,6 +40,13 @@ def load():
 def site_name():
     return load()["name"]
 
+def revision(state=None):
+    """Stable URL revision for saved branding, including dark fallbacks and colours."""
+    if state is None:
+        state = load()
+    data = json.dumps(state, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()[:16]
+
 def safe_svg(data):
     if len(data) > MAX_SVG:
         raise ValueError("SVG files must be smaller than 128 KiB.")
@@ -62,6 +70,13 @@ def safe_svg(data):
                 raise ValueError("Only simple SVG styles are supported.")
     return text
 
+def validate_upload(upload):
+    """Validate selected branding files identically for preview and save."""
+    try:
+        return safe_svg(upload.stream.read(MAX_SVG + 1))
+    except (ET.ParseError, UnicodeError) as exc:
+        raise ValueError("Invalid SVG file.") from exc
+
 def update(form, files):
     action = form.get("action", "save")
     if action == "verso":
@@ -84,9 +99,9 @@ def update(form, files):
             upload = files.get(kind)
             if upload and upload.filename:
                 try:
-                    assets[kind] = safe_svg(upload.stream.read(MAX_SVG + 1))
-                except (ET.ParseError, UnicodeError) as exc:
-                    raise ValueError("Invalid SVG: " + kind) from exc
+                    assets[kind] = validate_upload(upload)
+                except ValueError as exc:
+                    raise ValueError(kind + ": " + str(exc)) from exc
         if decoration == "ribbon" and "background" not in assets:
             raise ValueError("Upload a decoration SVG to use the hanging bookmark layout.")
         state = {**state, "name": name, "background": background, "accent": accent,
