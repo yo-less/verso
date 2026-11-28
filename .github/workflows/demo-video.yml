@@ -2,6 +2,11 @@ name: Generate Verso demo video
 
 on:
   workflow_dispatch:
+    inputs:
+      review_frames:
+        description: 'Export optional visual review screenshots'
+        type: boolean
+        default: false
   push:
     branches: [demo-video-preview]
     paths:
@@ -25,6 +30,7 @@ jobs:
       DEMO_URL: http://127.0.0.1:18083
       DEMO_OUT: /tmp/verso-screenshots
       VIDEO_OUT: /tmp/verso-video
+      DEMO_REVIEW: ${{ inputs.review_frames && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -102,19 +108,30 @@ jobs:
           docker logs verso-screenshot > "$VIDEO_OUT/container.log" 2>&1 || true
           docker rm -f verso-screenshot || true
           rm -f "$RUNNER_TEMP/verso-demo-music.mp3"
-      - name: Upload preview MP4
+      - name: Upload final MP4
         uses: actions/upload-artifact@v4
         with:
           name: verso-demo-video
-          path: ${{ env.VIDEO_OUT }}/*.mp4
+          path: ${{ env.VIDEO_OUT }}/verso-demo.mp4
           if-no-files-found: error
           retention-days: 14
-      - name: Upload review frames and logs
+      - name: Upload optional review frames and logs
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ !cancelled() && inputs.review_frames }}
         with:
           name: verso-demo-review
           path: |
             ${{ env.VIDEO_OUT }}
             !${{ env.VIDEO_OUT }}/*.mp4
           retention-days: 14
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verso-demo-diagnostics
+          path: |
+            ${{ env.VIDEO_OUT }}/container.log
+            ${{ env.VIDEO_OUT }}/sidebar-check.json
+            ${{ env.VIDEO_OUT }}/manifest.json
+          if-no-files-found: ignore
+          retention-days: 7

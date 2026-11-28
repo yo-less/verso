@@ -102,7 +102,9 @@ def capture_year(browser):
         progress = story.locator(".yr-progress").bounding_box()
         assert brand and progress and brand["y"] >= progress["y"] + progress["height"] + 8, (brand, progress)
         review = Path(os.environ.get("VIDEO_OUT", str(base.OUT))) / "year-review"
-        review.mkdir(parents=True, exist_ok=True)
+        export_review = os.getenv("DEMO_REVIEW", "0") == "1"
+        if export_review:
+            review.mkdir(parents=True, exist_ok=True)
         targets = {"intro","finished","authors","rhythm","summary"}
         captured = set()
         for _ in range(story.locator(".yr-slide").count()):
@@ -117,7 +119,8 @@ def capture_year(browser):
             if name in targets:
                 base.shot(story,f"year-mobile-{name}.png",".yr-slide.is-active")
                 captured.add(name)
-            story.screenshot(path=str(review / f"mobile-{name}.png"), animations="disabled")
+            if export_review:
+                story.screenshot(path=str(review / f"mobile-{name}.png"), animations="disabled")
             if captured == targets:
                 break
             story.locator(".yr-tap--next").tap()

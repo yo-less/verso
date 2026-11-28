@@ -53,20 +53,23 @@ def run():
             sidebar_check = page.evaluate("window.verifyDetailSidebar()")
             (OUT/"sidebar-check.json").write_text(json.dumps(sidebar_check,indent=2))
             assert sidebar_check["ok"], sidebar_check
-            start = 0
+            # Validate timeline even when optional review images are disabled.
             for scene in timeline:
-                scene_id = scene["id"]
                 assert scene["seconds"] > 0 and all(0 <= t < scene["seconds"] for t in scene["review"]), scene
-                for n, t in enumerate(scene["review"]):
-                    page.evaluate("(t)=>window.render(t)",start+t)
-                    page.screenshot(path=str(OUT/f"review-{scene_id}-{n+1}.jpg"),type="jpeg",quality=90)
-                start += scene["seconds"]
-            page.evaluate("window.render(2.75)")
-            page.screenshot(path=str(OUT/"verso-demo-poster.jpg"),type="jpeg",quality=94)
-            for i,scene in enumerate(timeline):
-                t=sum(x["seconds"] for x in timeline[:i])+scene["seconds"]*.65
-                page.evaluate("(t)=>window.render(t)",t)
-                page.screenshot(path=str(OUT/f"scene-{i+1:02}-{scene['id']}.jpg"),type="jpeg",quality=85)
+            if os.getenv("DEMO_REVIEW", "0") == "1":
+                start = 0
+                for scene in timeline:
+                    scene_id = scene["id"]
+                    for n, t in enumerate(scene["review"]):
+                        page.evaluate("(t)=>window.render(t)",start+t)
+                        page.screenshot(path=str(OUT/f"review-{scene_id}-{n+1}.jpg"),type="jpeg",quality=90)
+                    start += scene["seconds"]
+                page.evaluate("window.render(2.75)")
+                page.screenshot(path=str(OUT/"verso-demo-poster.jpg"),type="jpeg",quality=94)
+                for i,scene in enumerate(timeline):
+                    t=sum(x["seconds"] for x in timeline[:i])+scene["seconds"]*.65
+                    page.evaluate("(t)=>window.render(t)",t)
+                    page.screenshot(path=str(OUT/f"scene-{i+1:02}-{scene['id']}.jpg"),type="jpeg",quality=85)
             args=["ffmpeg","-hide_banner","-loglevel","error","-y","-f","image2pipe","-framerate",str(FPS),
                   "-vcodec","png","-i","pipe:0","-an","-c:v","libx264","-preset",VIDEO_PRESET,"-crf",str(VIDEO_CRF),
                   "-pix_fmt","yuv420p","-color_primaries","bt709","-color_trc","bt709","-colorspace","bt709","-movflags","+faststart",str(target)]
