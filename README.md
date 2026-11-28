@@ -11,19 +11,28 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick start</a> · <a href="#see-it-in-action">See it in action</a> · <a href="docs/README.md">Documentation</a>
+  <a href="#quick-start">Quick start</a> · <a href="#see-it-in-action">See it in action</a> · <a href="#features">Features</a> · <a href="docs/README.md">Documentation</a>
 </p>
 
 ![The Verso library: passage of the day, reading progress and recommendations](docs/screenshots/library-light.png)
 
+---
+
 ## See it in action
 
 https://github.com/user-attachments/assets/452935af-4322-41e1-8c60-38b1abe9a43c
+
 <sub>Music: <a href="https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/">Keys of Time (No AI)</a> by Good_B_Music, via Pixabay.</sub>
+
+---
+
+## Features
 
 ![A library that goes with you — an illustration of Verso across desktop, e-reader and phone](docs/screenshots/verso-reading-across-devices.jpg)
 
 Automatically import and organize ebooks, synchronize reading with Kobo and KOReader, and revisit your highlights and reading history. Your books remain in a standard Calibre library.
+
+---
 
 ## Quick start
 
@@ -49,15 +58,21 @@ Back up your config and library before updating or migrating. To update, run `do
 
 [Installation and configuration](docs/installation.md) · [Migration from Calibre-Web or CWA](docs/installation.md) · [Updates and backups](docs/updating-and-backups.md)
 
+---
+
+## Personalization
+
 ![Make it yours — an illustration of Classic and Smoky Aubergine](docs/screenshots/verso-personalization.jpg)
 
 Choose a personal colour palette, light or dark appearance, and cover quality. Administrators can customize the instance branding.
 
-<sub>The opening library screenshot and demo show the actual application. The two editorial illustrations are AI-generated conceptual artwork.</sub>
+---
 
 ## Documentation
 
 [All documentation](docs/README.md) · [Kobo](docs/kobo.md) · [KOReader](docs/koreader.md) · [Remote access](docs/remote-access.md) · [Issues](https://github.com/yo-less/verso/issues)
+
+---
 
 ## Credits & license
 
