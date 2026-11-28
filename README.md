@@ -35,9 +35,9 @@
 
 ## See it in action
 
-https://github.com/user-attachments/assets/0daf9b44-333a-4edd-873a-d19131faa2f7
+[**Watch the Verso feature video**](https://github.com/yo-less/verso/releases/download/feature-video-v1/verso-features.mp4) · 1:13 · 1080p · with sound
 
-<sub>Upstream Scriptorium demonstration. The screenshots below show the current Verso interface.</sub>
+<sub>Music: <a href="https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/">Keys of Time (No AI)</a> by Good_B_Music, via Pixabay.</sub>
 
 ## Features
 
