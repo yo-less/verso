@@ -406,8 +406,29 @@ def additional():
         }""")
         palette_controls = [palette.bounding_box()]
         assert all(b and 0 <= b["y"] < 900 for b in palette_controls), palette_controls
-        stock_rail = palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor")
-        stock_paper = palette_page.locator("body").evaluate("el => getComputedStyle(el).backgroundColor")
+        # CSS color-mix/relative colors may serialize differently from
+        # equivalent rgb() values. Compare their resolved sRGB pixels.
+        palette_page.evaluate("""() => {
+            const canvas = document.createElement("canvas");
+            canvas.width = canvas.height = 1;
+            const ctx = canvas.getContext("2d");
+            const rgb = value => {
+                ctx.clearRect(0, 0, 1, 1);
+                ctx.fillStyle = "#000";
+                ctx.fillStyle = value;
+                ctx.fillRect(0, 0, 1, 1);
+                return [...ctx.getImageData(0, 0, 1, 1).data];
+            };
+            window.demoPaletteColors = () => [
+                rgb(getComputedStyle(document.querySelector("#sidebar")).backgroundColor),
+                rgb(getComputedStyle(document.body).backgroundColor),
+                rgb(getComputedStyle(document.documentElement).getPropertyValue("--primary"))
+            ];
+            window.demoPaletteMatches = expected => window.demoPaletteColors().every(
+                (row, i) => row.every((v, j) => Math.abs(v - expected[i][j]) <= 1));
+        }""")
+        stock_colors = palette_page.evaluate("window.demoPaletteColors()")
+        assert palette_page.evaluate("window.demoPaletteMatches([[16,46,32,255],[248,241,229,255],[146,54,34,255]])"), stock_colors
         for i in range(61):
             p=i/60
             eased=p*p*(3-2*p)
@@ -416,25 +437,25 @@ def additional():
             palette_page.screenshot(path=str(base.OUT / f"custom-colour-{i}.png"), animations="disabled")
         expect(palette).to_have_value("100")
         expect(palette_page.locator("html")).to_have_attribute("data-ap-surface","verso")
-        assert palette_page.locator("body").evaluate("el => getComputedStyle(el).backgroundColor") != stock_paper
-        assert palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor") != stock_rail
-        # Exact endpoints, compare resolved pixels.
         assert palette_page.locator("#ap-hue").input_value() == "155"
         assert palette_page.locator("#ap-hue2").input_value() == "35"
-        assert palette_page.locator("html").evaluate("""el => {
-            const canvas=document.createElement("canvas");canvas.width=canvas.height=1;
-            const ctx=canvas.getContext("2d");
-            function rgb(value){ctx.clearRect(0,0,1,1);ctx.fillStyle=value;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data];}
-            function near(a,b){return a.every((v,i)=>Math.abs(v-b[i])<=1);}
-            return near(rgb(getComputedStyle(document.querySelector("#sidebar")).backgroundColor),rgb("#39313f")) &&
-                   near(rgb(getComputedStyle(document.body).backgroundColor),rgb("#f4eee7")) &&
-                   near(rgb(getComputedStyle(el).getPropertyValue("--primary")),rgb("#89534f"));
-        }"""), "Smoky Aubergine palette endpoints do not match"
+        aubergine = [[57,49,63,255],[244,238,231,255],[137,83,79,255]]
+        palette_page.wait_for_function("expected => window.demoPaletteMatches(expected)", arg=aubergine, timeout=3000)
+        print("Smoky Aubergine resolved colors:", palette_page.evaluate("window.demoPaletteColors()"), flush=True)
         palette.fill("0")
-        assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
+        expect(palette).to_have_value("0")
         expect(palette_page.locator("[data-ap-savebar]")).to_be_hidden()
-        assert palette_page.locator("#sidebar").evaluate("el => getComputedStyle(el).backgroundColor") == stock_rail
-        assert palette_page.locator("body").evaluate("el => getComputedStyle(el).backgroundColor") == stock_paper
+        assert not palette_page.locator("html").evaluate("el => el.hasAttribute('data-ap')")
+        # Wait for the restored appearance to settle before reading styles.
+        # Retain the exact RGB endpoint assertion, not just the slider value.
+        palette_page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+        print("Restored Classic colors:", palette_page.evaluate("window.demoPaletteColors()"),
+              "expected:", stock_colors, flush=True)
+        palette_page.wait_for_function("expected => window.demoPaletteMatches(expected)", arg=stock_colors, timeout=3000)
+        # Capture the real restored state as the return strip's final frame.
+        # The existing compositor reverses this strip, ensuring a stable
+        # Classic frame before branding.
+        palette_page.screenshot(path=str(base.OUT / "custom-colour-0.png"), animations="disabled")
         palette_ctx.close()
         capture_year(browser)
         (base.OUT/"video-data.json").write_text(json.dumps({"stats":stats,"statsContent":stats_content,"importCard":import_card,"importCover":import_cover,"importCount":import_count,"searchBox":search_box,"resultsBox":results_box,"brandingFocus":branding_focus,"paletteControls":palette_controls,"relatedFocus":related_focus,"detailSidebar":detail_sidebar,"syncBox":sync_box}))
