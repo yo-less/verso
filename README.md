@@ -60,7 +60,9 @@ Docker image: `ghcr.io/yo-less/verso:latest`
 Back up your config and library before updating or migrating.  
 Update with `docker compose pull && docker compose up -d`.
 
-### Documentation
+---
+
+## Documentation
 
 [Browse the documentation](docs/README.md)
 
