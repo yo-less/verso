@@ -54,7 +54,7 @@
   'dots': _('Dots'), 'grid': _('Grid'), 'waves': _('Waves'), 'stripes': _('Stripes'), 'topo': _('Contours'), 'glass': _('Glass')} %}
 {%- set sidebar_labels = {'plain': _('Classic'), 'tinted': _('Tinted'), 'art': _('Coloured')} %}
 {%- set backdrop_labels = {'none': _('None'), 'glow': _('Glow'), 'dots': _('Dots')} %}
-{%- set surface_labels = {'neutral': _('Neutral'), 'tinted': _('Tinted'), 'paper': _('Paper')} %}
+{%- set surface_labels = {'neutral': _('Neutral'), 'tinted': _('Tinted'), 'paper': _('Paper'), 'verso': _('Verso paper')} %}
 {%- set buttons_labels = {'mono': _('Black & white'), 'accent': _('Colour'), 'gradient': _('Gradient')} %}
 {%- set radius_labels = {'default': _('Soft'), 'sharp': _('Sharp'), 'round': _('Round')} %}
 {%- set headings_labels = {'sans': _('Sans-serif'), 'serif': _('Serif')} %}
@@ -121,6 +121,19 @@
         <label for="ap-hue2">{{ _('Second colour') }}</label>
         <span class="ap-hue-dot" data-hue-dot="hue2"></span>
         <input type="range" id="ap-hue2" name="hue2" min="0" max="359" step="1" value="{{ current.hue2 }}" class="ap-hue-range">
+      </div>
+      <div class="ap-hue" data-palette-mix{% if current.surface != "verso" %} hidden{% endif %}>
+        <label for="ap-palette-mix">{{ _('Verso palette') }}</label>
+        <span class="ap-palette-dot" aria-hidden="true"></span>
+        <div class="ap-palette-track">
+          <input type="range" id="ap-palette-mix" name="palette_mix" min="0" max="100" step="1" value="{{ current.palette_mix }}" class="ap-hue-range ap-palette-range" aria-label="{{ _('Classic to Smoky Aubergine') }}">
+          <div class="ap-palette-labels"><span>{{ _('Classic') }}</span><span>{{ _('Smoky Aubergine') }}</span></div>
+        </div>
+      </div>
+      <div class="ap-hue" data-paper-tone{% if current.surface != "verso" %} hidden{% endif %}>
+        <label for="ap-paper-depth">{{ _('Paper tone') }}</label>
+        <span class="ap-paper-dot" aria-hidden="true"></span>
+        <input type="range" id="ap-paper-depth" name="paper_depth" min="0" max="100" step="1" value="{{ current.paper_depth }}" class="ap-hue-range ap-paper-range" aria-label="{{ _('Paper tone from ivory to parchment') }}">
       </div>
       <fieldset class="ap-group">
         <legend>{{ _('Intensity') }}</legend>
@@ -196,6 +209,7 @@
   'presetKeys': presets|map(attribute='key')|list,
   'options': options,
   'current': current,
+  'classic': classic,
   'stock': is_stock,
   'i18n': {'saved': _('Saved style'), 'unsaved': _('Not saved yet'), 'random': _('Random mix: save it if you like it, or try again.')}
 }|tojson }}</script>

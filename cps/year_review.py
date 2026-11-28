@@ -24,7 +24,7 @@ from datetime import date, datetime, timedelta, timezone
 from flask import Blueprint, abort, redirect, url_for
 from flask_babel import gettext as _
 
-from . import calibre_db, db, logger, ub
+from . import branding, calibre_db, db, logger, ub
 from .cw_login import current_user
 from .usermanagement import user_login_required
 
@@ -321,10 +321,13 @@ def show(year):
     biggest_day = None
     if summary["biggest_day"]:
         biggest_day = format_date(date.fromisoformat(summary["biggest_day"]["date"]), "d MMMM")
+    accent = branding.load().get("accent")
+    if not isinstance(accent, str) or not branding.COLOR.fullmatch(accent):
+        accent = branding.DEFAULT["accent"]
     return render_template("year.html", summary=summary, years=years, has_story=has_story(summary),
                            user_name=current_user.name, months=months, busiest_month=busiest, weekday=weekday,
                            hours=round(summary["minutes"] / 60), clock=clock_rays(summary["clock"]),
-                           biggest_day=biggest_day, title=_("Your %(year)s in books", year=year))
+                           biggest_day=biggest_day, story_accent=accent, title=_("Your %(year)s in books", year=year))
 
 
 def clock_rays(minutes_per_hour, center=130, inner=50, longest=72):

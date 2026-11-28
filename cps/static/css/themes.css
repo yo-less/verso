@@ -346,32 +346,32 @@
 }
 
 /* Verso stock edition: a permanent forest navigation rail and warm paper canvas. */
-:root:not([data-ap]) .sidebar, .ap-reset .ap-mock-side {
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar, .ap-reset .ap-mock-side {
   --ap-side-bg:#102e20; --ap-side-border:#284738; --ap-side-text:#fff1dc;
   --ap-side-text-2:#f4eadc; --ap-side-muted:#d7e0d2; --ap-side-faint:#a8bcaa;
   --ap-side-hover:#254a36; --ap-side-active:#345744; --ap-side-active-text:#fff7e8;
   --ap-side-active-icon:#fff7e8;
 }
-:root:not([data-ap]) .sidebar .brand { justify-content:center; padding:15px 12px 12px; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .brand { justify-content:center; padding:15px 12px 12px; }
 .sidebar .instance-wordmark--dark { display:none; }
-:root:not([data-ap]) .sidebar .instance-wordmark--light,
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .instance-wordmark--light,
 :root[data-theme="dark"] .sidebar .instance-wordmark--light,
 :root[data-ap-sidebar="art"] .sidebar .instance-wordmark--light { display:none; }
-:root:not([data-ap]) .sidebar .instance-wordmark--dark,
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .instance-wordmark--dark,
 :root[data-theme="dark"] .sidebar .instance-wordmark--dark,
 :root[data-ap-sidebar="art"] .sidebar .instance-wordmark--dark { display:block; }
 .sidebar .instance-wordmark { height:auto; max-height:64px; }
-:root:not([data-ap]) .page-title { font-family:var(--font-serif); font-size:clamp(28px,3.4vw,42px); font-weight:600; line-height:1.06; }
-:root:not([data-ap]) .section-header h2 { font-family:var(--font-serif); font-size:24px; }
-:root:not([data-ap]) .search-box { border-radius:10px; }
-:root:not([data-ap]) .book-card .cover { border-radius:8px; }
-:root:not([data-ap]) .cover-progress span { background:var(--accent); }
-:root:not([data-ap]) .sidebar .nav-swatch { background:var(--ap-side-faint); }
-:root:not([data-ap]) .sidebar .btn-ghost { --btn-fg:var(--ap-side-muted); --btn-hover:var(--ap-side-hover); }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-headings="serif"]) .page-title { font-family:var(--font-serif); font-size:clamp(28px,3.4vw,42px); font-weight:600; line-height:1.06; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-headings="serif"]) .section-header h2 { font-family:var(--font-serif); font-size:24px; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"]) .search-box { border-radius:10px; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"]) .book-card .cover { border-radius:8px; }
+:root:is(:not([data-ap]),[data-ap-surface="verso"]) .cover-progress span { background:var(--accent); }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .nav-swatch { background:var(--ap-side-faint); }
+:root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-sidebar="plain"]) .sidebar .btn-ghost { --btn-fg:var(--ap-side-muted); --btn-hover:var(--ap-side-hover); }
 [data-ap][data-ap-headings="sans"] { --ap-heading-font:var(--font-sans); }
 @media(max-width:860px) {
-  :root:not([data-ap]) .page-title { font-size:30px; }
-  :root:not([data-ap]) .section-header h2 { font-size:22px; }
+  :root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-headings="serif"]) .page-title { font-size:30px; }
+  :root:is(:not([data-ap]),[data-ap-surface="verso"][data-ap-headings="serif"]) .section-header h2 { font-size:22px; }
 }
 
 /* Custom wordmarks without a dark asset retain a light rail in light mode. */
@@ -383,3 +383,71 @@
 :root[data-theme="dark"]:not([data-ap]) body.verso-custom-light-wordmark .sidebar .brand {
   background:#f8f1e5; border-radius:9px;
 }
+
+/* Verso paper: preserve the classic palette's luminance and chroma; the two
+ * sliders rotate only the rail and accent hues. 155/35 is the exact stock look. */
+@supports (color: oklch(from #102e20 l c h)) {
+  [data-ap][data-ap-surface="verso"] {
+    --accent: color-mix(in oklab, oklch(from #a23e2a l c calc(h + var(--ap-h2) - 35)), #89534f var(--ap-palette-mix));
+    --accent-hover: color-mix(in oklab, oklch(from #803020 l c calc(h + var(--ap-h2) - 35)), #73423f var(--ap-palette-mix));
+    --accent-soft: color-mix(in oklab, oklch(from #f1ddd3 l c calc(h + var(--ap-h2) - 35)), #ead9d9 var(--ap-palette-mix));
+    --accent-text: color-mix(in oklab, oklch(from #8c3324 l c calc(h + var(--ap-h2) - 35)), #774642 var(--ap-palette-mix));
+    --focus: var(--accent); --ap-nav-active: var(--accent-text);
+  }
+  [data-ap][data-ap-surface="verso"][data-ap-buttons="mono"] {
+    --primary: color-mix(in oklab, oklch(from #923622 l c calc(h + var(--ap-h2) - 35)), #89534f var(--ap-palette-mix));
+    --primary-hover: color-mix(in oklab, oklch(from #762819 l c calc(h + var(--ap-h2) - 35)), #73423f var(--ap-palette-mix));
+    --on-primary: #fff;
+  }
+  [data-theme="dark"][data-ap][data-ap-surface="verso"],
+  [data-theme="dark"] [data-ap][data-ap-surface="verso"] {
+    --accent: oklch(from #e5a18a l c calc(h + var(--ap-h2) - 35));
+    --accent-hover: oklch(from #f2b5a0 l c calc(h + var(--ap-h2) - 35));
+    --accent-soft: oklch(from #432d27 l c calc(h + var(--ap-h2) - 35));
+    --accent-text: oklch(from #f1b09c l c calc(h + var(--ap-h2) - 35));
+  }
+  [data-theme="dark"][data-ap][data-ap-surface="verso"][data-ap-buttons="mono"],
+  [data-theme="dark"] [data-ap][data-ap-surface="verso"][data-ap-buttons="mono"] {
+    --primary: oklch(from #a9432d l c calc(h + var(--ap-h2) - 35));
+    --primary-hover: oklch(from #bb5037 l c calc(h + var(--ap-h2) - 35));
+  }
+  :root[data-ap-surface="verso"][data-ap-sidebar="plain"] .sidebar,
+  [data-ap-surface="verso"][data-ap-sidebar="plain"] .ap-mock-side {
+    --ap-side-bg: color-mix(in oklab, oklch(from #102e20 l c calc(h + var(--ap-h) - 155)), #39313f var(--ap-palette-mix));
+    --ap-side-border: color-mix(in oklab, oklch(from #284738 l c calc(h + var(--ap-h) - 155)), #504656 var(--ap-palette-mix));
+    --ap-side-hover: color-mix(in oklab, oklch(from #254a36 l c calc(h + var(--ap-h) - 155)), #4a4051 var(--ap-palette-mix));
+    --ap-side-active: color-mix(in oklab, oklch(from #345744 l c calc(h + var(--ap-h) - 155)), #665269 var(--ap-palette-mix));
+    --ap-side-text:#fff1dc; --ap-side-text-2:#f4eadc; --ap-side-muted:#d7e0d2;
+    --ap-side-faint:#a8bcaa; --ap-side-active-text:#fff7e8; --ap-side-active-icon:#fff7e8;
+  }
+}
+
+/* Verso paper tone: retain forest, terracotta, type and spacing; deepen the
+ * light surfaces together. At zero the original stock tokens are unchanged. */
+[data-ap], .ap-reset { --ap-paper-depth: 0%; --ap-palette-mix: 0%; }
+[data-ap][data-ap-surface="verso"]:not([data-theme="dark"]) {
+  --bg: color-mix(in srgb, color-mix(in srgb, #f8f1e5, #e2d3bc var(--ap-paper-depth)), #f4eee7 var(--ap-palette-mix));
+  --bg-sunken: color-mix(in srgb, color-mix(in srgb, #eee4d3, #d8c9b0 var(--ap-paper-depth)), #ebe3de var(--ap-palette-mix));
+  --surface: color-mix(in srgb, color-mix(in srgb, #fffbf4, #f0e5d3 var(--ap-paper-depth)), #fcf8f4 var(--ap-palette-mix));
+  --surface-2: color-mix(in srgb, color-mix(in srgb, #f7efe1, #e6d8c1 var(--ap-paper-depth)), #f2ebe6 var(--ap-palette-mix));
+  --surface-hover: color-mix(in srgb, color-mix(in srgb, #f0e6d8, #dfcfb6 var(--ap-paper-depth)), #ece2dc var(--ap-palette-mix));
+  --surface-active: color-mix(in srgb, color-mix(in srgb, #e6dac8, #d3c0a4 var(--ap-paper-depth)), #e4d8d4 var(--ap-palette-mix));
+  --border: color-mix(in srgb, color-mix(in srgb, #e5d9c7, #ccbaa0 var(--ap-paper-depth)), #dfd3ce var(--ap-palette-mix));
+  --border-strong: color-mix(in srgb, color-mix(in srgb, #cbbda8, #b5a087 var(--ap-paper-depth)), #c7b7b3 var(--ap-palette-mix));
+}
+/* In dark mode paper depth is intentionally inert. */
+[data-theme="dark"] [data-ap][data-ap-surface="verso"] {
+  --bg:#101e19; --bg-sunken:#0b1712; --surface:#182b23; --surface-2:#14251e;
+  --surface-hover:#223a2e; --surface-active:#2c4738; --border:#30463a; --border-strong:#476051;
+}
+.ap-paper-dot { width:18px; height:18px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 1px var(--border-strong); }
+.ap-hue-range.ap-paper-range { background:linear-gradient(90deg,#f8f1e5,#e2d3bc); box-shadow:inset 0 0 0 1px var(--border-strong); }
+[data-paper-tone][hidden] { display:none; }
+
+/* Native Verso palette blending. */
+.ap-palette-dot { width:18px; height:18px; border-radius:50%; background:color-mix(in oklab,#102e20,#39313f var(--ap-palette-mix,0%)); box-shadow:inset 0 0 0 1px var(--border-strong); }
+.ap-palette-track { min-width:0; display:grid; gap:5px; }
+.ap-hue-range.ap-palette-range { background:linear-gradient(90deg,#102e20,#39313f); box-shadow:inset 0 0 0 1px var(--border-strong); }
+.ap-palette-labels { display:flex; justify-content:space-between; gap:8px; font-size:11px; color:var(--text-muted); }
+[data-palette-mix][hidden] { display:none; }
+@media(max-width:860px) { .ap-palette-track { grid-column:1 / -1; } }

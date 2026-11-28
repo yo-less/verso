@@ -17,13 +17,19 @@ OPTIONS = {
     "header": ("plain", "tint", "gradient", "mesh", "aurora", "dots", "grid", "waves", "stripes", "topo", "glass"),
     "sidebar": ("plain", "tinted", "art"),
     "backdrop": ("none", "glow", "dots"),
-    "surface": ("neutral", "tinted", "paper"),
+    "surface": ("neutral", "tinted", "paper", "verso"),
     "buttons": ("mono", "accent", "gradient"),
     "radius": ("default", "sharp", "round"),
     "headings": ("sans", "serif"),
     "vibrancy": ("soft", "vivid"),
 }
 HUE_KEYS = ("hue", "hue2")
+NUMERIC_KEYS = HUE_KEYS + ("paper_depth", "palette_mix")
+
+# Starting point for editing Classic: the same Verso typography, layout and palette.
+CLASSIC = {"hue": 155, "hue2": 35, "paper_depth": 0, "palette_mix": 0, "header": "plain", "sidebar": "plain",
+           "backdrop": "none", "surface": "verso", "buttons": "mono",
+           "radius": "default", "headings": "serif", "vibrancy": "soft"}
 
 # Ready-made styles. "stock" is the default design and stores nothing.
 PRESETS = {
@@ -51,6 +57,14 @@ PRESETS = {
 }
 
 
+# Existing presets retain their previous appearance.
+for _preset in PRESETS.values():
+    if _preset:
+        _preset["paper_depth"] = 0
+        _preset["palette_mix"] = 0
+
+PRESETS["smoky-aubergine"] = dict(CLASSIC, palette_mix=100)
+
 
 def sanitize(raw):
     """Return a complete, valid appearance dict, or {} for the stock look."""
@@ -65,6 +79,14 @@ def sanitize(raw):
             clean[key] = int(raw.get(key)) % 360
         except (TypeError, ValueError):
             clean[key] = 230 if key == "hue" else 190
+    try:
+        clean["paper_depth"] = max(0, min(100, int(raw.get("paper_depth", 0))))
+    except (TypeError, ValueError, OverflowError):
+        clean["paper_depth"] = 0
+    try:
+        clean["palette_mix"] = max(0, min(100, int(raw.get("palette_mix", 0))))
+    except (TypeError, ValueError, OverflowError):
+        clean["palette_mix"] = 0
     return clean
 
 
@@ -75,5 +97,5 @@ def html_attrs(ap):
     attrs = {"data-ap": ""}
     for key in OPTIONS:
         attrs["data-ap-" + key] = ap[key]
-    attrs["style"] = "--ap-h:{};--ap-h2:{}".format(int(ap["hue"]), int(ap["hue2"]))
+    attrs["style"] = "--ap-h:{};--ap-h2:{};--ap-palette-mix:{}%;--ap-paper-depth:{}%".format(int(ap["hue"]), int(ap["hue2"]), ap.get("palette_mix", 0), ap.get("paper_depth", 0))
     return attrs

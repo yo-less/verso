@@ -188,3 +188,32 @@ class TestWebDAV:
         response = app.test_client().open("/kosync/webdav/", method="PROPFIND")
         assert response.status_code == 401
         assert response.headers["WWW-Authenticate"].startswith("Basic")
+
+
+def test_library_books_resolves_local_web_ids_without_exposing_unmatched_books(monkeypatch):
+    import importlib
+    kosync = importlib.import_module("cps.progress_syncing.protocols.kosync")
+    monkeypatch.setattr(kosync, "get_book_by_checksum",
+                        lambda key: (9 if key == "known-checksum" else None, None, None, None, None))
+    visible = [SimpleNamespace(id=7, title="Dune", authors=[SimpleNamespace(name="Frank Herbert")]),
+               SimpleNamespace(id=9, title="Jane Eyre", authors=[SimpleNamespace(name="Charlotte Brontë")])]
+    query = SimpleNamespace()
+    query.filter = lambda *args: query
+    query.all = lambda: visible
+    monkeypatch.setattr(reading_stats.calibre_db, "session", SimpleNamespace(query=lambda *args: query))
+    monkeypatch.setattr(reading_stats.calibre_db, "common_filters", lambda: True)
+    offset = reading_stats.WEB_BOOK_OFFSET
+    def item(n, key, title="Dune", authors="Frank Herbert"):
+        return {"id": n, "md5": key, "title": title, "authors": authors}
+    matched = reading_stats.library_books([
+        item(offset+1, "scriptorium-7"),
+        item(offset+2, "scriptorium-7", title="Different book"),
+        item(offset+3, "scriptorium-7", authors="Different author"),
+        item(offset+4, "scriptorium-8"),  # not visible
+        item(5, "scriptorium-7"),        # not a local web history ID
+        item(offset+6, "scriptorium-0"),
+        item(7, "known-checksum"),
+    ])
+    assert set(matched) == {offset+1, 7}
+    assert matched[offset+1].id == 7
+    assert matched[7].id == 9

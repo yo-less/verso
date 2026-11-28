@@ -30,12 +30,12 @@ def test_unknown_values_fall_back_to_defaults():
     assert clean["hue"] == 999 % 360
     assert clean["hue2"] == 190
     assert "evil" not in clean
-    assert set(clean) == set(styles.OPTIONS) | set(styles.HUE_KEYS)
+    assert set(clean) == set(styles.OPTIONS) | set(styles.NUMERIC_KEYS)
 
 
 def test_attributes_only_contain_whitelisted_values():
     attrs = styles.html_attrs(styles.sanitize({"header": "mesh", "hue": "12;background:url(x)"}))
-    assert attrs["style"] == "--ap-h:230;--ap-h2:190"
+    assert attrs["style"] == "--ap-h:230;--ap-h2:190;--ap-palette-mix:0%;--ap-paper-depth:0%"
     for key, value in attrs.items():
         if key.startswith("data-ap-"):
             assert value in styles.OPTIONS[key[len("data-ap-"):]]
@@ -53,3 +53,28 @@ def test_every_option_value_is_styled():
     for key, values in styles.OPTIONS.items():
         for value in values[1:]:
             assert re.search(r'data-ap-{}="{}"'.format(key, value), css), (key, value)
+
+
+def test_classic_is_a_valid_editable_verso_palette():
+    assert styles.sanitize(styles.CLASSIC) == styles.CLASSIC
+    attrs = styles.html_attrs(styles.CLASSIC)
+    assert attrs["data-ap-surface"] == "verso"
+    assert attrs["style"] == "--ap-h:155;--ap-h2:35;--ap-palette-mix:0%;--ap-paper-depth:0%"
+
+
+@pytest.mark.parametrize("raw,expected", [(-1,0),(0,0),(80,80),(120,100),("invalid",0)])
+def test_paper_tone_is_bounded(raw,expected):
+    clean = styles.sanitize(dict(styles.CLASSIC, paper_depth=raw))
+    assert clean["paper_depth"] == expected
+    assert styles.html_attrs(clean)["style"].endswith("--ap-paper-depth:{}%".format(expected))
+
+
+@pytest.mark.parametrize("raw,expected", [(-1,0),(0,0),(50,50),(100,100),(110,100),("bad",0)])
+def test_palette_mix_is_bounded(raw,expected):
+    clean = styles.sanitize(dict(styles.CLASSIC, palette_mix=raw))
+    assert clean["palette_mix"] == expected
+    assert "--ap-palette-mix:{}%;".format(expected) in styles.html_attrs(clean)["style"]
+
+
+def test_aubergine_is_classic_layout_with_new_palette():
+    assert styles.PRESETS["smoky-aubergine"] == dict(styles.CLASSIC, palette_mix=100)

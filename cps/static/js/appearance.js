@@ -21,7 +21,7 @@
   function copy(o) { return JSON.parse(JSON.stringify(o)); }
   function same(a, b) {
     if (!a || !b) return a === b;
-    return KEYS.concat(["hue", "hue2"]).every(function (k) { return String(a[k]) === String(b[k]); });
+    return KEYS.concat(["hue", "hue2", "paper_depth", "palette_mix"]).every(function (k) { return String(a[k]) === String(b[k]); });
   }
 
   // ---------- Apply a style to a scope element ----------
@@ -31,6 +31,8 @@
     });
     el.style.removeProperty("--ap-h");
     el.style.removeProperty("--ap-h2");
+    el.style.removeProperty("--ap-paper-depth");
+    el.style.removeProperty("--ap-palette-mix");
     if (!s) {
       if (el !== root) el.classList.add("ap-reset");
       return;
@@ -40,12 +42,16 @@
     KEYS.forEach(function (k) { el.setAttribute("data-ap-" + k, s[k]); });
     el.style.setProperty("--ap-h", s.hue);
     el.style.setProperty("--ap-h2", s.hue2);
+    el.style.setProperty("--ap-paper-depth", (s.paper_depth || 0) + "%");
+    el.style.setProperty("--ap-palette-mix", (s.palette_mix || 0) + "%");
   }
 
   function render() {
     applyTo(root, state);
     if (stage) applyTo(stage, state);
-    var shown = state || copy(cfg.current);
+    var shown = state || copy(cfg.classic);
+    form.querySelector("[data-paper-tone]").hidden = shown.surface !== "verso";
+    form.querySelector("[data-palette-mix]").hidden = shown.surface !== "verso";
     // Swatches preview each option in the current colours.
     Array.prototype.forEach.call(form.querySelectorAll(".ap-swatch"), function (sw) {
       sw.style.setProperty("--ap-h", shown.hue);
@@ -76,6 +82,8 @@
     });
     form.querySelector("input[name='hue']").value = s.hue;
     form.querySelector("input[name='hue2']").value = s.hue2;
+    form.querySelector("input[name='paper_depth']").value = s.paper_depth || 0;
+    form.querySelector("input[name='palette_mix']").value = s.palette_mix || 0;
   }
   function readForm() {
     var s = {};
@@ -85,16 +93,19 @@
     });
     s.hue = parseInt(form.querySelector("input[name='hue']").value, 10) || 0;
     s.hue2 = parseInt(form.querySelector("input[name='hue2']").value, 10) || 0;
+    s.paper_depth = parseInt(form.querySelector("input[name='paper_depth']").value, 10) || 0;
+    s.palette_mix = parseInt(form.querySelector("input[name='palette_mix']").value, 10) || 0;
     return s;
   }
 
   form.addEventListener("input", function (e) {
     if (!e.target.name || e.target.type === "hidden") return;
     state = readForm();
+    if (same(state, cfg.classic)) state = null;
     render();
   });
   form.addEventListener("change", function (e) {
-    if (e.target.type === "radio") { state = readForm(); render(); }
+    if (e.target.type === "radio") { state = readForm(); if (same(state, cfg.classic)) state = null; render(); }
   });
 
   // ---------- Presets, random mix, undo ----------
@@ -104,6 +115,7 @@
       var key = btn.getAttribute("data-ap-preset");
       if (key === "stock") {
         state = null;
+        fill(cfg.classic);
       } else {
         state = copy(cfg.presets[cfg.presetKeys.indexOf(key)]);
         fill(state);
@@ -121,6 +133,8 @@
     s.hue = Math.floor(Math.random() * 360);
     var offset = 40 + Math.floor(Math.random() * 120);
     s.hue2 = (s.hue + (Math.random() < 0.5 ? -offset : offset) + 360) % 360;
+    s.paper_depth = 0;
+    s.palette_mix = 0;
     state = s;
     fill(s);
     render();
@@ -132,7 +146,7 @@
 
   form.querySelector("[data-ap-revert]").addEventListener("click", function () {
     state = saved ? copy(saved) : null;
-    fill(state || cfg.current);
+    fill(state || cfg.classic);
     render();
   });
 

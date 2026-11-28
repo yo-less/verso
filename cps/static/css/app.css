@@ -122,7 +122,7 @@
 }
 
 /* Verso stock edition. Customized scopes keep their own appearance tokens. */
-:root:not([data-ap]), .ap-reset {
+:root:not([data-ap]), .ap-reset, [data-ap][data-ap-surface="verso"] {
   --bg:#f8f1e5; --bg-sunken:#eee4d3; --surface:#fffbf4; --surface-2:#f7efe1;
   --surface-hover:#f0e6d8; --surface-active:#e6dac8; --border:#e5d9c7; --border-strong:#cbbda8;
   --text:#172b22; --text-2:#37463b; --text-muted:#616455; --text-faint:#756f61;
@@ -130,7 +130,8 @@
   --primary:#923622; --primary-hover:#762819; --on-primary:#fff; --focus:#a23e2a; --star:#9b6d22;
   --ap-heading-font:var(--font-serif); --radius:9px; --radius-lg:13px; --sidebar-w:240px;
 }
-:root[data-theme="dark"]:not([data-ap]), [data-theme="dark"] .ap-reset {
+:root[data-theme="dark"]:not([data-ap]), [data-theme="dark"] .ap-reset,
+:root[data-theme="dark"][data-ap-surface="verso"], [data-theme="dark"] [data-ap-surface="verso"] {
   --bg:#101e19; --bg-sunken:#0b1712; --surface:#182b23; --surface-2:#14251e;
   --surface-hover:#223a2e; --surface-active:#2c4738; --border:#30463a; --border-strong:#476051;
   --text:#f3e8d7; --text-2:#ddd5c7; --text-muted:#b2b8a8; --text-faint:#9da99a;
@@ -316,6 +317,22 @@ input[type="text"].input, input[type="email"].input {
   width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius);
   background: var(--surface); color: var(--text); outline: none; transition: border-color .12s, box-shadow .12s;
 }
+/* Native file selection, with the same typography and palette as Verso.
+   Keep keyboard access, native filename display and the platform picker. */
+.input[type="file"] {
+  min-height: 44px; padding: 4px; font: inherit; color: var(--text-muted); cursor: pointer;
+}
+.input[type="file"]::file-selector-button {
+  min-height: 34px; margin: 0 12px 0 0; padding: 0 14px;
+  border: 1px solid var(--primary); border-radius: calc(var(--radius) - 3px);
+  background: var(--primary); color: var(--on-primary);
+  font: 500 13px var(--font-sans); cursor: pointer;
+  transition: background .12s var(--ease), border-color .12s var(--ease);
+}
+.input[type="file"]::file-selector-button:hover {
+  background: var(--primary-hover); border-color: var(--primary-hover);
+}
+.input[type="file"]:disabled::file-selector-button { opacity: .5; cursor: not-allowed; }
 .input::placeholder, .textarea::placeholder { color: var(--text-faint); }
 .input:focus, .select:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .input:disabled, .select:disabled, .textarea:disabled { background: var(--bg-sunken); color: var(--text-muted); cursor: not-allowed; }

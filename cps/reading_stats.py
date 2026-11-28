@@ -476,13 +476,38 @@ def reading_time(seconds):
     return _("%(hours)s h %(minutes)02d min", hours=hours, minutes=minutes)
 
 
+def _web_library_id(item):
+    """Recognize the built-in reader's legacy local identifier, never a device ID."""
+    key = item.get("md5")
+    prefix = "scriptorium-"
+    if item["id"] < WEB_BOOK_OFFSET or not isinstance(key, str) or not key.startswith(prefix):
+        return None
+    value = key[len(prefix):]
+    if not value.isascii() or not value.isdigit() or len(value) > 10:
+        return None
+    return int(value) or None
+
+
+def _same_web_book(item, book):
+    # Avoid attaching stale history to a different book if its local ID was reused.
+    title = (item.get("title") or "").strip().casefold()
+    authors = (item.get("authors") or "").replace("\n", ", ").strip().casefold()
+    return (title == (book.title or "").strip().casefold()
+            and authors == ", ".join(a.name for a in book.authors).strip().casefold())
+
+
 def library_books(book_list):
-    """Library books for the statistics' books ({id, md5}), matched by file checksum, that the user may see."""
+    """Resolve checksums and local web-reader IDs to books the current user may see."""
     from .progress_syncing.protocols.kosync import get_book_by_checksum
     from . import db
     ids = {}
+    local = {}
     for item in book_list[:200]:
-        if item["md5"]:
+        book_id = _web_library_id(item)
+        if book_id:
+            ids[item["id"]] = book_id
+            local[item["id"]] = item
+        elif item.get("md5"):
             book_id = get_book_by_checksum(item["md5"])[0]
             if book_id:
                 ids[item["id"]] = book_id
@@ -490,8 +515,8 @@ def library_books(book_list):
         return {}
     visible = {b.id: b for b in calibre_db.session.query(db.Books)
                .filter(db.Books.id.in_(set(ids.values()))).filter(calibre_db.common_filters()).all()}
-    return {stats_id: visible[book_id] for stats_id, book_id in ids.items() if book_id in visible}
-
+    return {stats_id: visible[book_id] for stats_id, book_id in ids.items()
+            if book_id in visible and (stats_id not in local or _same_web_book(local[stats_id], visible[book_id]))}
 
 def _bars(values, height=120):
     """Bar heights in px for a small chart, and the largest value."""
