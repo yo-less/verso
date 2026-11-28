@@ -19,9 +19,6 @@
 ## See it in action
 
 https://github.com/user-attachments/assets/452935af-4322-41e1-8c60-38b1abe9a43c
-
-[Download the full-quality video](https://github.com/yo-less/verso/releases/download/feature-video-v1/verso-features.mp4) · 1080p
-
 <sub>Music: <a href="https://pixabay.com/music/modern-classical-keys-of-time-no-ai-335937/">Keys of Time (No AI)</a> by Good_B_Music, via Pixabay.</sub>
 
 ![A library that goes with you — an illustration of Verso across desktop, e-reader and phone](docs/screenshots/verso-reading-across-devices.jpg)
