@@ -71,7 +71,8 @@ Update with `docker compose pull && docker compose up -d`.
 ## Credits & license
 
 Verso is a fork of [Scriptorium](https://github.com/MrColoo/scriptorium-library) by MrColoo and contributors.  
-It builds on [Calibre-Web-Automated](https://github.com/crocodilestick/Calibre-Web-Automated), [Calibre-Web](https://github.com/janeczku/calibre-web) and [Calibre](https://calibre-ebook.com).  
+It builds on [Calibre-Web-Automated](https://github.com/crocodilestick/Calibre-Web-Automated), [Calibre-Web](https://github.com/janeczku/calibre-web) and [Calibre](https://calibre-ebook.com).
+
 Scriptorium introduced the redesigned interface, readers, personal styles, highlights and annual reading review.
 
 This project uses AI for development and visual assets.  
