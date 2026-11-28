@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick start</a> · <a href="#see-it-in-action">Demo</a> · <a href="docs/README.md">Documentation</a>
+  <a href="#quick-start">Quick start</a> · <a href="#see-it-in-action">See it in action</a> · <a href="docs/README.md">Documentation</a>
 </p>
 
 ![The Verso library: passage of the day, reading progress and recommendations](docs/screenshots/library-light.png)
