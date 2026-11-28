@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick start</a> · <a href="#see-it-in-action">See it in action</a> · <a href="#features">Features</a> · <a href="#personalization">Personalization</a> · <a href="docs/README.md">Documentation</a>
+  <a href="#quick-start">Quick start</a> · <a href="#see-it-in-action">See it in action</a> · <a href="#features">Features</a> · <a href="#personalization">Personalization</a> · <a href="#documentation">Documentation</a>
 </p>
 
 ![The Verso library: passage of the day, reading progress and recommendations](docs/screenshots/library-light.png)
@@ -29,6 +29,11 @@ https://github.com/user-attachments/assets/452935af-4322-41e1-8c60-38b1abe9a43c
 
 ![Verso features: library and discovery, automated imports, KOReader and Kobo synchronization, browser readers and OPDS, highlights and notes, reading statistics and Year in Books, personalization, and self-hosting](docs/screenshots/verso-features.webp)
 
+---
+
+## Personalization
+
+![Make it yours: themes and palettes, custom branding, shelves, cover quality, reading preferences and multiple users, illustrated with Classic and Smoky Aubergine](docs/screenshots/verso-personalization.webp)
 ---
 
 ## Quick start
@@ -55,20 +60,11 @@ Docker image: `ghcr.io/yo-less/verso:latest`
 Back up your config and library before updating or migrating.  
 Update with `docker compose pull && docker compose up -d`.
 
-[Installation](docs/installation.md) · [Configuration](docs/configuration.md) · [Migration](docs/installation.md#migrating-from-calibre-web-automated) · [Backups](docs/updating-and-backups.md)
+### Documentation
 
----
-
-## Personalization
-
-![Make it yours: themes and palettes, custom branding, shelves, cover quality, reading preferences and multiple users, illustrated with Classic and Smoky Aubergine](docs/screenshots/verso-personalization.webp)
-
----
-
-## Documentation
-
-[All documentation](docs/README.md) · [KOReader](docs/koreader.md) · [Kobo](docs/kobo.md) · [Remote access](docs/remote-access.md) · [Issues](https://github.com/yo-less/verso/issues)
-
+[All documentation](docs/README.md)  
+[Installation](docs/installation.md) · [Configuration](docs/configuration.md) · [Migration](docs/installation.md#migrating-from-calibre-web-automated) · [Backups](docs/updating-and-backups.md)  
+[KOReader](docs/koreader.md) · [Kobo](docs/kobo.md) · [Remote access](docs/remote-access.md) · [Issues](https://github.com/yo-less/verso/issues)
 ---
 
 ## Credits & license
