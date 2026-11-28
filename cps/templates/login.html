@@ -5,7 +5,8 @@
 <link rel="stylesheet" href="{{ url_for('admin.branding_css') }}">
 {% endblock %}
 {% block body %}
-{% set landscape = branding.name == 'Verso' and 'background' not in branding.assets and branding.decoration == 'watermark' %}
+{# The stock landscape is a decoration choice, not part of the site name. #}
+{% set landscape = 'background' not in branding.assets and branding.decoration == 'watermark' %}
 {% if landscape %}<img class="login-landscape-background" src="{{ url_for('admin.branding_landscape') }}" alt="" aria-hidden="true">{% endif %}
 <div class="auth-card instance-login decoration-{{ branding.decoration }}{% if landscape %} login-landscape{% endif %}">
   {% if branding.decoration == "watermark" and not landscape %}<img class="login-decoration" src="{{ url_for('admin.branding_asset', kind='background') }}" alt="" aria-hidden="true">{% endif %}

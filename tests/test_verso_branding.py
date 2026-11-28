@@ -142,3 +142,37 @@ def test_favicon_svg_sizes_share_master_geometry():
         with Image.open(static / file) as im:
             assert im.size == (size, size)
             im.verify()
+
+
+@pytest.mark.parametrize("name, assets, decoration, expected", [
+    ("Verso", {}, "watermark", "landscape"),
+    ("Y!BOOKS", {"login": "<svg/>"}, "watermark", "landscape"),
+    ("My library", {"background": "<svg/>"}, "watermark", "watermark"),
+    ("My library", {"background": "<svg/>"}, "ribbon", "ribbon"),
+    ("My library", {}, "none", "none"),
+])
+def test_login_decoration_is_independent_of_instance_name(name, assets, decoration, expected):
+    from pathlib import Path
+    from types import SimpleNamespace
+    from jinja2 import Environment, DictLoader
+
+    template = (Path(branding.__file__).parent / "templates" / "login.html").read_text(encoding="utf-8")
+    env = Environment(loader=DictLoader({
+        "login.html": template,
+        "layout.html": "{% block header %}{% endblock %}{% block body %}{% endblock %}",
+    }), autoescape=True)
+    html = env.get_template("login.html").render(
+        branding={**branding.DEFAULT, "name": name, "assets": assets, "decoration": decoration},
+        config=SimpleNamespace(config_disable_standard_login=False, config_login_type=0,
+                               config_remote_login=False),
+        g=SimpleNamespace(allow_registration=False, allow_anonymous=False),
+        ui=SimpleNamespace(icon=lambda *args: "", csrf_field=lambda: ""),
+        url_for=lambda endpoint, **kwargs: endpoint,
+        get_flashed_messages=lambda **kwargs: [],
+        _=lambda text: text,
+        mail=False,
+    )
+    assert ('class="login-landscape-background"' in html) == (expected == "landscape")
+    assert (' login-landscape"' in html) == (expected == "landscape")
+    assert ('class="login-decoration"' in html) == (expected in ("watermark", "ribbon"))
+    assert f'alt="{name}"' in html
