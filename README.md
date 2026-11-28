@@ -28,9 +28,9 @@ https://github.com/user-attachments/assets/452935af-4322-41e1-8c60-38b1abe9a43c
 
 ## Features
 
-![A library that goes with you — an illustration of Verso across desktop, e-reader and phone](docs/screenshots/verso-reading-across-devices.jpg)
+![Verso features: library and discovery, automated imports, KOReader and Kobo synchronization, browser readers and OPDS, highlights and notes, reading statistics and Year in Books, personalization, and self-hosting](docs/screenshots/verso-features.webp)
 
-Automatically import and organize ebooks, synchronize reading with Kobo and KOReader, and revisit your highlights and reading history. Your books remain in a standard Calibre library.
+Automatically import and organize ebooks, synchronize reading with KOReader and Kobo, and revisit your highlights and reading history. Your books remain in a standard Calibre library.
 
 ---
 
@@ -70,7 +70,7 @@ Choose a personal colour palette, light or dark appearance, and cover quality. A
 
 ## Documentation
 
-[All documentation](docs/README.md) · [Kobo](docs/kobo.md) · [KOReader](docs/koreader.md) · [Remote access](docs/remote-access.md) · [Issues](https://github.com/yo-less/verso/issues)
+[All documentation](docs/README.md) · [KOReader](docs/koreader.md) · [Kobo](docs/kobo.md) · [Remote access](docs/remote-access.md) · [Issues](https://github.com/yo-less/verso/issues)
 
 ---
 
